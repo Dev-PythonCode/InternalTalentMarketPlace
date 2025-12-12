@@ -2,7 +2,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TalentMarketPlace.Data;
 
@@ -16,57 +15,51 @@ namespace TalentMarketPlace.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.22")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
-
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.22");
 
             modelBuilder.Entity("Application", b =>
                 {
                     b.Property<int>("ApplicationId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("AIRecommendation")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("AIScore")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime>("AppliedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("CoverLetter")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ManagerFeedback")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("MatchPercentage")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("RequirementId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("ReviewedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("ApplicationId");
 
@@ -81,71 +74,69 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("EmployeeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmployeeId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("AvailabilityStatus")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Designation")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsVectorIndexed")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("JoiningDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("LastResumeUpdate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ResumeUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("TeamId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("VectorIndexedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("YearsOfExperience")
                         .HasColumnType("decimal(4,2)");
@@ -167,7 +158,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 1,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1671),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480),
                             Designation = "Senior Software Engineer",
                             Email = "arun.kumar@company.com",
                             FullName = "Arun Kumar",
@@ -176,7 +167,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543210",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1671),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480),
                             UserId = 1,
                             YearsOfExperience = 5m
                         },
@@ -184,7 +175,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 2,
                             AvailabilityStatus = "Limited",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1690),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             Designation = "DevOps Engineer",
                             Email = "beena.singh@company.com",
                             FullName = "Beena Singh",
@@ -193,7 +184,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543211",
                             TeamId = 3,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1691),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             UserId = 2,
                             YearsOfExperience = 4m
                         },
@@ -201,7 +192,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 3,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1696),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             Designation = "Full Stack Developer",
                             Email = "rajesh.nair@company.com",
                             FullName = "Rajesh Veerasamy",
@@ -210,7 +201,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Chennai",
                             PhoneNumber = "9876543212",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1697),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             UserId = 3,
                             YearsOfExperience = 3m
                         },
@@ -218,7 +209,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 4,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1702),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             Designation = "Backend Developer",
                             Email = "priya.sharma@company.com",
                             FullName = "Priya Sharma",
@@ -227,7 +218,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543213",
                             TeamId = 2,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1702),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
                             UserId = 4,
                             YearsOfExperience = 2m
                         },
@@ -235,7 +226,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 5,
                             AvailabilityStatus = "Not Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1707),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             Designation = "Tech Lead",
                             Email = "vikram.reddy@company.com",
                             FullName = "Vikram Raja",
@@ -244,7 +235,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Chennai",
                             PhoneNumber = "9876543214",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1707),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             UserId = 5,
                             YearsOfExperience = 8m
                         },
@@ -252,7 +243,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 6,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1712),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             Designation = "HR Manager",
                             Email = "hr.manager@company.com",
                             FullName = "HR Manager",
@@ -260,7 +251,7 @@ namespace TalentMarketPlace.Migrations
                             JoiningDate = new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Location = "Bangalore",
                             PhoneNumber = "9876543215",
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1712),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             UserId = 6,
                             YearsOfExperience = 10m
                         },
@@ -268,7 +259,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 7,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1717),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             Designation = "Engineering Manager",
                             Email = "tech.manager@company.com",
                             FullName = "Tech Manager",
@@ -277,7 +268,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543216",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1717),
+                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
                             UserId = 7,
                             YearsOfExperience = 12m
                         });
@@ -287,41 +278,39 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("ProjectId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Client")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ProjectName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("ProjectId");
 
@@ -334,37 +323,35 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("EmployeeSkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmployeeSkillId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsVerified")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("LastUsedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ProficiencyLevel")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal>("YearsOfExperience")
                         .HasColumnType("decimal(4,2)");
@@ -382,37 +369,35 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("RecommendationId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RecommendationId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RecommendedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("RequirementId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ResourceId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("RecommendationId");
 
@@ -429,25 +414,23 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("ResourceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResourceId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("DurationHours")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Level")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Provider")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Rating")
                         .HasColumnType("decimal(3,2)");
@@ -455,20 +438,20 @@ namespace TalentMarketPlace.Migrations
                     b.Property<string>("ResourceTitle")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ResourceType")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ResourceUrl")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("ResourceId");
 
@@ -481,39 +464,37 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("NotificationId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ReadDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("RequirementId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("NotificationId");
 
@@ -528,15 +509,13 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("ProjectSkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectSkillId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ProjectId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("YearsUsed")
                         .HasColumnType("decimal(4,2)");
@@ -554,63 +533,61 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("RequirementId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequirementId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ApplicationCount")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Duration")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("PostedById")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("PostedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("TeamId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ViewCount")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("RequirementId");
 
@@ -625,12 +602,10 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("RequirementSkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequirementSkillId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsMandatory")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("MinYearsRequired")
                         .HasColumnType("decimal(4,2)");
@@ -638,16 +613,16 @@ namespace TalentMarketPlace.Migrations
                     b.Property<string>("ProficiencyLevel")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("RequirementId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Weightage")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("RequirementSkillId");
 
@@ -662,36 +637,34 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("SearchId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SearchId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Filters")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsSaved")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ResultCount")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SavedSearchName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("SearchDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("SearchQuery")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SearchedById")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("SearchId");
 
@@ -704,28 +677,26 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("SkillId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SkillId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SkillName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("SkillId");
 
@@ -741,7 +712,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 1,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1220),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Python programming language",
                             IsActive = true,
                             SkillName = "Python"
@@ -750,7 +721,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 2,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1226),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Java programming language",
                             IsActive = true,
                             SkillName = "Java"
@@ -759,7 +730,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 3,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1229),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "C# programming language",
                             IsActive = true,
                             SkillName = "C#"
@@ -768,7 +739,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 4,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1230),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "JavaScript programming language",
                             IsActive = true,
                             SkillName = "JavaScript"
@@ -777,7 +748,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 5,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1232),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "TypeScript programming language",
                             IsActive = true,
                             SkillName = "TypeScript"
@@ -786,7 +757,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 6,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1234),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Amazon Web Services",
                             IsActive = true,
                             SkillName = "AWS"
@@ -795,7 +766,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 7,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1237),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Microsoft Azure",
                             IsActive = true,
                             SkillName = "Azure"
@@ -804,7 +775,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 8,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1239),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Docker containerization",
                             IsActive = true,
                             SkillName = "Docker"
@@ -813,7 +784,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 9,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1240),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Kubernetes orchestration",
                             IsActive = true,
                             SkillName = "Kubernetes"
@@ -822,7 +793,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 10,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1242),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Jenkins CI/CD",
                             IsActive = true,
                             SkillName = "Jenkins"
@@ -831,7 +802,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 11,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1243),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "React.js library",
                             IsActive = true,
                             SkillName = "React"
@@ -840,7 +811,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 12,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1245),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Angular framework",
                             IsActive = true,
                             SkillName = "Angular"
@@ -849,7 +820,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 13,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1246),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
                             Description = "Vue.js framework",
                             IsActive = true,
                             SkillName = "Vue.js"
@@ -858,7 +829,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 14,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1248),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "Node.js runtime",
                             IsActive = true,
                             SkillName = "Node.js"
@@ -867,7 +838,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 15,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1249),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "ASP.NET Core framework",
                             IsActive = true,
                             SkillName = "ASP.NET Core"
@@ -876,7 +847,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 16,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1251),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "Spring Boot framework",
                             IsActive = true,
                             SkillName = "Spring Boot"
@@ -885,7 +856,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 17,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1253),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "Microsoft SQL Server",
                             IsActive = true,
                             SkillName = "SQL Server"
@@ -894,7 +865,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 18,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1254),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "PostgreSQL database",
                             IsActive = true,
                             SkillName = "PostgreSQL"
@@ -903,7 +874,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 19,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1256),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
                             Description = "MongoDB NoSQL database",
                             IsActive = true,
                             SkillName = "MongoDB"
@@ -914,20 +885,18 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("AliasId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AliasId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("AliasName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SkillId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("AliasId");
 
@@ -943,63 +912,63 @@ namespace TalentMarketPlace.Migrations
                         {
                             AliasId = 1,
                             AliasName = "K8s",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1338),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(430),
                             SkillId = 9
                         },
                         new
                         {
                             AliasId = 2,
                             AliasName = "K8",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1443),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 9
                         },
                         new
                         {
                             AliasId = 3,
                             AliasName = "JS",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1447),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 4
                         },
                         new
                         {
                             AliasId = 4,
                             AliasName = "TS",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1448),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 5
                         },
                         new
                         {
                             AliasId = 5,
                             AliasName = "React.js",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1450),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 11
                         },
                         new
                         {
                             AliasId = 6,
                             AliasName = "ReactJS",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1451),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 11
                         },
                         new
                         {
                             AliasId = 7,
                             AliasName = "NodeJS",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1453),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 14
                         },
                         new
                         {
                             AliasId = 8,
                             AliasName = "MSSQL",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1455),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 17
                         },
                         new
                         {
                             AliasId = 9,
                             AliasName = "MS SQL",
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1456),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
                             SkillId = 17
                         });
                 });
@@ -1008,21 +977,19 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("CategoryId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("CategoryId");
 
@@ -1083,30 +1050,28 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("TeamId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TeamId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Department")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("ManagerId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("TeamName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("TeamId");
 
@@ -1145,30 +1110,28 @@ namespace TalentMarketPlace.Migrations
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("UserId");
 
@@ -1181,7 +1144,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 1,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1540),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450),
                             Email = "arun.kumar@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword1",
@@ -1190,7 +1153,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 2,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1545),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450),
                             Email = "beena.singh@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword2",
@@ -1199,7 +1162,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 3,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1547),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
                             Email = "rajesh.nair@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword3",
@@ -1208,7 +1171,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 4,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1550),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
                             Email = "priya.sharma@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword4",
@@ -1217,7 +1180,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 5,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1552),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
                             Email = "vikram.reddy@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword5",
@@ -1226,7 +1189,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 6,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1553),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
                             Email = "hr.manager@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword6",
@@ -1235,7 +1198,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 7,
-                            CreatedDate = new DateTime(2025, 12, 4, 15, 36, 19, 646, DateTimeKind.Utc).AddTicks(1555),
+                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
                             Email = "tech.manager@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword7",
