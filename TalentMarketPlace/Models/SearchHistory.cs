@@ -2,6 +2,7 @@
 
 public class SearchHistory
 {
+    [Key]
     public int SearchId { get; set; }
 
     public int SearchedById { get; set; }

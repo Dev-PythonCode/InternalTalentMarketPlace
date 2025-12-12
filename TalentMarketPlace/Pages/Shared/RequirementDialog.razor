@@ -1,0 +1,292 @@
+@inject ISnackbar Snackbar
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <!-- Title -->
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_model.Title" Label="Requirement Title" 
+                              Variant="Variant.Outlined" Required="true"
+                              Placeholder="e.g., Senior Python Developer" />
+            </MudItem>
+
+            <!-- Description -->
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_model.Description" Label="Description" Lines="4"
+                              Variant="Variant.Outlined"
+                              Placeholder="Describe the role, responsibilities, and ideal candidate..." />
+            </MudItem>
+
+            <!-- Team, Location, Duration -->
+            <MudItem xs="12" md="4">
+                <MudSelect T="int?" Label="Team" @bind-Value="_teamId" Variant="Variant.Outlined">
+                    <MudSelectItem T="int?" Value="null">- Select Team -</MudSelectItem>
+                    <MudSelectItem T="int?" Value="1">Engineering</MudSelectItem>
+                    <MudSelectItem T="int?" Value="2">Product</MudSelectItem>
+                    <MudSelectItem T="int?" Value="3">DevOps</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" Label="Location" @bind-Value="_model.Location" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@("Any")">Any</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Bangalore")">Bangalore</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Chennai")">Chennai</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Mumbai")">Mumbai</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Hyderabad")">Hyderabad</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" Label="Duration" @bind-Value="_model.Duration" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@("3 months")">3 months</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("6 months")">6 months</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("12 months")">12 months</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Permanent")">Permanent</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <!-- Start Date and Status -->
+            <MudItem xs="12" md="6">
+                <MudDatePicker Label="Start Date" @bind-Date="_startDate" Variant="Variant.Outlined" />
+            </MudItem>
+
+            @if (IsEditMode)
+            {
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Status" @bind-Value="_model.Status" Variant="Variant.Outlined">
+                        <MudSelectItem T="string" Value="@("Open")">Open</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Closed")">Closed</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Filled")">Filled</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("On Hold")">On Hold</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            }
+
+            <!-- Priority Selection with Visual Feedback -->
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Flag" Class="mr-1" />
+                    Priority Level
+                </MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="w-100">
+                    <MudButton Style="flex: 1; height: 56px;"
+                               Variant="@(_model.Priority == "High" ? Variant.Filled : Variant.Outlined)"
+                               Color="Color.Error" 
+                               OnClick="@(() => SelectPriority("High"))"
+                               Class="@(_model.Priority == "High" ? "mud-elevation-4" : "")">
+                        <div class="d-flex flex-column align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.PriorityHigh" Size="Size.Large" />
+                            <MudText Typo="Typo.body2"><strong>High</strong></MudText>
+                        </div>
+                    </MudButton>
+                    <MudButton Style="flex: 1; height: 56px;"
+                               Variant="@(_model.Priority == "Medium" ? Variant.Filled : Variant.Outlined)"
+                               Color="Color.Warning" 
+                               OnClick="@(() => SelectPriority("Medium"))"
+                               Class="@(_model.Priority == "Medium" ? "mud-elevation-4" : "")">
+                        <div class="d-flex flex-column align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Remove" Size="Size.Large" />
+                            <MudText Typo="Typo.body2"><strong>Medium</strong></MudText>
+                        </div>
+                    </MudButton>
+                    <MudButton Style="flex: 1; height: 56px;"
+                               Variant="@(_model.Priority == "Low" ? Variant.Filled : Variant.Outlined)"
+                               Color="Color.Success" 
+                               OnClick="@(() => SelectPriority("Low"))"
+                               Class="@(_model.Priority == "Low" ? "mud-elevation-4" : "")">
+                        <div class="d-flex flex-column align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
+                            <MudText Typo="Typo.body2"><strong>Low</strong></MudText>
+                        </div>
+                    </MudButton>
+                </MudButtonGroup>
+            </MudItem>
+
+            <!-- Required Skills Section -->
+            <MudItem xs="12">
+                <MudDivider Class="my-3" />
+                <MudText Typo="Typo.subtitle1" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Checklist" Class="mr-1" />
+                    Required Skills
+                </MudText>
+                
+                @foreach (var (skill, index) in _requiredSkills.Select((s, i) => (s, i)))
+                {
+                    <MudPaper Class="pa-3 mb-2" Elevation="0" Style="border: 1px solid #e0e0e0;">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="5">
+                                <MudSelect T="int" Label="Skill" @bind-Value="skill.SkillId" 
+                                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                                    <MudSelectItem T="int" Value="0">- Select Skill -</MudSelectItem>
+                                    @foreach (var s in AvailableSkills)
+                                    {
+                                        <MudSelectItem T="int" Value="@s.SkillId">@s.SkillName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="6" md="2">
+                                <MudNumericField T="decimal" Label="Min Years" @bind-Value="skill.MinYearsRequired"
+                                                 Variant="Variant.Outlined" Step="0.5M" Min="0" Max="20" 
+                                                 Dense="true" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="6" md="2">
+                                <MudNumericField T="int" Label="Weightage" @bind-Value="skill.Weightage"
+                                                 Variant="Variant.Outlined" Min="1" Max="5" 
+                                                 Dense="true" Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="8" md="2" Class="d-flex align-center">
+                                <MudCheckBox T="bool" @bind-Value="skill.IsMandatory" 
+                                             Label="Mandatory" Dense="true" Color="Color.Error" />
+                            </MudItem>
+                            <MudItem xs="4" md="1" Class="d-flex align-center justify-center">
+                                <MudTooltip Text="Remove this skill">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                   OnClick="@(() => RemoveSkill(index))" Size="Size.Small" />
+                                </MudTooltip>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+                
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="AddSkillRow"
+                           StartIcon="@Icons.Material.Filled.Add" Class="mt-2" Size="Size.Small">
+                    Add Another Skill
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            @(IsEditMode ? "Update Requirement" : "Post Requirement")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    MudBlazor.IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public List<Skill> AvailableSkills { get; set; } = new();
+
+    [Parameter]
+    public Requirement? Requirement { get; set; }
+
+    [Parameter]
+    public bool IsEditMode { get; set; }
+
+    private Requirement _model = new() { Priority = "Medium", Duration = "6 months", Status = "Open" };
+    private int? _teamId;
+    private DateTime? _startDate = DateTime.Now.AddDays(14);
+    private List<RequirementSkill> _requiredSkills = new();
+    private bool _isSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        if (IsEditMode && Requirement != null)
+        {
+            _model = new Requirement
+            {
+                RequirementId = Requirement.RequirementId,
+                Title = Requirement.Title,
+                Description = Requirement.Description,
+                Location = Requirement.Location,
+                Duration = Requirement.Duration,
+                Priority = Requirement.Priority,
+                Status = Requirement.Status,
+                PostedById = Requirement.PostedById,
+                TeamId = Requirement.TeamId,
+                StartDate = Requirement.StartDate
+            };
+            _teamId = Requirement.TeamId;
+            _startDate = Requirement.StartDate;
+            
+            // Load existing skills
+            if (Requirement.RequirementSkills?.Any() == true)
+            {
+                _requiredSkills = Requirement.RequirementSkills.Select(rs => new RequirementSkill
+                {
+                    RequirementSkillId = rs.RequirementSkillId,
+                    SkillId = rs.SkillId,
+                    MinYearsRequired = rs.MinYearsRequired,
+                    Weightage = rs.Weightage,
+                    IsMandatory = rs.IsMandatory,
+                    ProficiencyLevel = rs.ProficiencyLevel
+                }).ToList();
+            }
+        }
+        
+        // Add default skill rows if empty
+        if (!_requiredSkills.Any())
+        {
+            AddSkillRow();
+            AddSkillRow();
+            AddSkillRow();
+        }
+    }
+
+    private void SelectPriority(string priority)
+    {
+        _model.Priority = priority;
+        StateHasChanged();
+    }
+
+    private void AddSkillRow()
+    {
+        _requiredSkills.Add(new RequirementSkill
+        {
+            MinYearsRequired = 2,
+            Weightage = 1,
+            IsMandatory = true,
+            ProficiencyLevel = "Intermediate"
+        });
+    }
+
+    private void RemoveSkill(int index)
+    {
+        if (index >= 0 && index < _requiredSkills.Count)
+        {
+            _requiredSkills.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private void Submit()
+    {
+        // Validation
+        if (string.IsNullOrWhiteSpace(_model.Title))
+        {
+            Snackbar.Add("Please enter a requirement title", Severity.Warning);
+            return;
+        }
+
+        var validSkills = _requiredSkills.Where(s => s.SkillId > 0).ToList();
+        if (!validSkills.Any())
+        {
+            Snackbar.Add("Please add at least one required skill", Severity.Warning);
+            return;
+        }
+
+        _isSubmitting = true;
+
+        // Set values
+        _model.TeamId = _teamId;
+        _model.StartDate = _startDate;
+        _model.RequirementSkills = validSkills;
+
+        MudDialog.Close(DialogResult.Ok(_model));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

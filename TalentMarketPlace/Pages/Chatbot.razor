@@ -1,0 +1,203 @@
+﻿@page "/chatbot"
+@inject ISearchService SearchService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">AI Search Assistant</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Search for talent using natural language</MudText>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudCard>
+        <MudCardContent>
+            <!-- Chat Messages -->
+            <MudPaper Class="pa-4 mb-3" Elevation="0" Style="background: #f5f5f5; height: 400px; overflow-y: auto;">
+                @foreach (var message in _messages)
+                {
+                    <div class="d-flex gap-2 mb-3 @(message.IsUser ? "flex-row-reverse" : "")">
+                        <MudAvatar Size="Size.Small" Color="@(message.IsUser ? Color.Primary : Color.Default)">
+                            @if (message.IsUser)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Person" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.SmartToy" />
+                            }
+                        </MudAvatar>
+                        <MudPaper Class="pa-3" Elevation="1" 
+                                  Style="@($"max-width: 70%; {(message.IsUser ? "background: #6366f1; color: white;" : "")}")">
+                            @if (message.ParsedInfo != null)
+                            {
+                                <MudText Typo="Typo.body1" Class="mb-2">@message.Text</MudText>
+                                <MudText Typo="Typo.subtitle2">Parsed query:</MudText>
+                                <MudList T ="string" Dense="true">
+                                    @foreach (var item in message.ParsedInfo)
+                                    {
+                                        <MudListItem Dense="true" Style="font-size: 13px;">• @item</MudListItem>
+                                    }
+                                </MudList>
+                                @if (message.ResultCount > 0)
+                                {
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                               OnClick="@(() => ViewResults(message.Query))">
+                                        View @message.ResultCount Results →
+                                    </MudButton>
+                                }
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body1">@message.Text</MudText>
+                            }
+                        </MudPaper>
+                    </div>
+                }
+                
+                @if (_isProcessing)
+                {
+                    <div class="d-flex gap-2 mb-3">
+                        <MudAvatar Size="Size.Small" Color="Color.Default">
+                            <MudIcon Icon="@Icons.Material.Filled.SmartToy" />
+                        </MudAvatar>
+                        <MudPaper Class="pa-3" Elevation="1">
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        </MudPaper>
+                    </div>
+                }
+            </MudPaper>
+
+            <!-- Input Area -->
+            <div class="d-flex gap-2">
+                <MudTextField @bind-Value="_currentMessage" Placeholder="Type your search query..."
+                              Variant="Variant.Outlined" FullWidth="true"
+                              OnKeyDown="HandleKeyDown" Disabled="@_isProcessing" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendMessage"
+                           Disabled="@_isProcessing" Style="height: 56px;">
+                    <MudIcon Icon="@Icons.Material.Filled.Send" />
+                </MudButton>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="mt-3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Try asking:</MudText>
+                <MudChipSet T ="string">
+                    <MudChip T ="string"OnClick="@(() => UseQuickQuery("Find Python developers with 5 years experience"))" 
+                             Size="Size.Small" Variant="Variant.Outlined">
+                        Python developers 5+ yrs
+                    </MudChip>
+                    <MudChip OnClick="@(() => UseQuickQuery("Kubernetes experts in Chennai who are available"))"
+                             Size="Size.Small" Variant="Variant.Outlined">
+                        K8s experts Chennai
+                    </MudChip>
+                    <MudChip OnClick="@(() => UseQuickQuery("React and Node.js developers with at least 3 years"))"
+                             Size="Size.Small" Variant="Variant.Outlined">
+                        React + Node.js 3+ yrs
+                    </MudChip>
+                </MudChipSet>
+            </div>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private List<ChatMessage> _messages = new();
+    private string _currentMessage = "";
+    private bool _isProcessing = false;
+
+    protected override void OnInitialized()
+    {
+        // Add welcome message
+        _messages.Add(new ChatMessage
+        {
+            IsUser = false,
+            Text = "Hello! I'm your talent search assistant. Ask me to find employees by skills, experience, location, or availability. For example: \"Find Python developers with 5 years experience in Bangalore\""
+        });
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isProcessing)
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_currentMessage)) return;
+
+        var query = _currentMessage;
+        _currentMessage = "";
+
+        // Add user message
+        _messages.Add(new ChatMessage
+        {
+            IsUser = true,
+            Text = query,
+            Query = query
+        });
+
+        _isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            // Call search service
+            var result = await SearchService.NaturalLanguageSearchAsync(query);
+
+            // Build parsed info
+            var parsedInfo = new List<string>();
+            if (result.ExtractedSkills?.Any() == true)
+            {
+                parsedInfo.Add($"Skills: {string.Join(", ", result.ExtractedSkills)}");
+            }
+            if (result.AppliedFilters?.Any() == true)
+            {
+                parsedInfo.AddRange(result.AppliedFilters);
+            }
+
+            // Add bot response
+            _messages.Add(new ChatMessage
+            {
+                IsUser = false,
+                Text = $"I found {result.TotalCount} employees matching your criteria:",
+                ParsedInfo = parsedInfo,
+                ResultCount = result.TotalCount,
+                Query = query
+            });
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage
+            {
+                IsUser = false,
+                Text = $"Sorry, I encountered an error: {ex.Message}. Please try rephrasing your query."
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private void UseQuickQuery(string query)
+    {
+        _currentMessage = query;
+    }
+
+    private void ViewResults(string? query)
+    {
+        if (!string.IsNullOrEmpty(query))
+        {
+            Navigation.NavigateTo($"/search-results?q={Uri.EscapeDataString(query)}");
+        }
+    }
+
+    private class ChatMessage
+    {
+        public bool IsUser { get; set; }
+        public string Text { get; set; } = "";
+        public List<string>? ParsedInfo { get; set; }
+        public int ResultCount { get; set; }
+        public string? Query { get; set; }
+    }
+}

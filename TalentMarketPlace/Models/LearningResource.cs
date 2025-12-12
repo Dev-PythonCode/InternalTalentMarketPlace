@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 public class LearningResource
 {
+    [Key]
     public int ResourceId { get; set; }
 
     public int SkillId { get; set; }

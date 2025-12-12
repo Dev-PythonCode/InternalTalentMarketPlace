@@ -2,11 +2,14 @@
 // 2. EMPLOYEE & TEAM
 // ============================================
 
-using static System.Net.Mime.MediaTypeNames;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Employee
 {
+    [Key]
     public int EmployeeId { get; set; }
 
     public int UserId { get; set; }
@@ -21,7 +24,7 @@ public class Employee
     public string Email { get; set; }
 
     [MaxLength(20)]
-    public string Phone { get; set; }
+    public string PhoneNumber { get; set; }  // ⭐ CHANGED: Phone → PhoneNumber
 
     [MaxLength(100)]
     public string Location { get; set; }
@@ -34,15 +37,16 @@ public class Employee
     [MaxLength(20)]
     public string AvailabilityStatus { get; set; } = "Available"; // Available, Limited, Not Available
 
-    public int YearsOfExperience { get; set; }
+    [Column(TypeName = "decimal(4,2)")]
+    public decimal YearsOfExperience { get; set; }  // ⭐ CHANGED: int → decimal(4,2)
 
     public DateTime? JoiningDate { get; set; }
 
     [MaxLength(500)]
-    public string PhotoUrl { get; set; }
+    public string? PhotoUrl { get; set; }
 
     [MaxLength(500)]
-    public string ResumeUrl { get; set; }
+    public string? ResumeUrl { get; set; }
 
     public DateTime? LastResumeUpdate { get; set; }
 
@@ -63,3 +67,4 @@ public class Employee
     public ICollection<Requirement> PostedRequirements { get; set; }
     public ICollection<LearningRecommendation> LearningRecommendations { get; set; }
 }
+

@@ -1,0 +1,325 @@
+﻿@page "/job-board"
+@inject IRequirementService RequirementService
+@inject IApplicationService ApplicationService
+@inject IAuthService AuthService
+@inject IEmployeeService EmployeeService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">Job Board</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
+
+<!-- Filters -->
+<MudGrid Class="mb-4">
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Min Match %" @bind-Value="_minMatch" Variant="Variant.Outlined" Dense="true">
+            <MudSelectItem T="int?" Value="null">All Matches</MudSelectItem>
+            <MudSelectItem T="int?" Value="80">80%+ Match</MudSelectItem>
+            <MudSelectItem T="int?" Value="60">60%+ Match</MudSelectItem>
+            <MudSelectItem T="int?" Value="40">40%+ Match</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Location" @bind-Value="_locationFilter" Variant="Variant.Outlined" Dense="true">
+            <MudSelectItem T="string" Value="@("All")">All Locations</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Bangalore")">Bangalore</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Chennai")">Chennai</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Mumbai")">Mumbai</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Priority" @bind-Value="_priorityFilter" Variant="Variant.Outlined" Dense="true">
+            <MudSelectItem T="string" Value="@("All")">All Priorities</MudSelectItem>
+            <MudSelectItem T="string" Value="@("High")">High</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Medium")">Medium</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Low")">Low</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3" Class="d-flex align-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilters" FullWidth="true">
+            Apply Filters
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_requirements.Any())
+{
+    @foreach (var req in _requirements)
+    {
+        var matchScore = _matchScores.GetValueOrDefault(req.RequirementId, 0);
+        var hasApplied = _appliedRequirements.Contains(req.RequirementId);
+        
+        <MudCard Class="mb-3">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-start mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6">@req.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="mr-1" />
+                            @(req.Team?.TeamName ?? "Any Team") •
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mx-1" />
+                            @(req.Location ?? "Any") •
+                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mx-1" />
+                            @req.Duration •
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mx-1" />
+                            Posted @GetTimeAgo(req.PostedDate)
+                        </MudText>
+                    </div>
+                    <MudChip T ="string" Color="@GetPriorityColor(req.Priority)" Size="Size.Small">
+                        @req.Priority Priority
+                    </MudChip>
+                </div>
+
+                <!-- Match Score -->
+                <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
+                    <MudText Typo="Typo.h4" Color="@GetMatchColor(matchScore)" Class="mr-3">
+                        @matchScore%
+                    </MudText>
+                    <div>
+                        <MudText Typo="Typo.body1">
+                            <strong>@GetMatchText(matchScore)</strong>
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @GetMatchDescription(matchScore, req)
+                        </MudText>
+                    </div>
+                </MudPaper>
+
+                <!-- Required Skills -->
+                <div class="mb-3">
+                    <strong>Required Skills:</strong>
+                    @foreach (var skill in req.RequirementSkills)
+                    {
+                        var hasSkill = _mySkillIds.Contains(skill.SkillId);
+                        var mySkillYears = _mySkillYears.GetValueOrDefault(skill.SkillId, 0);
+                        
+                        <MudChip T ="string" Size="Size.Small" Class="mr-1 mb-1"
+                                 Color="@(hasSkill && mySkillYears >= skill.MinYearsRequired ? Color.Success : 
+                                         hasSkill ? Color.Warning : Color.Error)"
+                                 Variant="Variant.Filled">
+                            @skill.Skill.SkillName - @skill.MinYearsRequired yrs
+                            @if (hasSkill && mySkillYears >= skill.MinYearsRequired)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="ml-1" />
+                            }
+                            else if (hasSkill)
+                            {
+                                <span class="ml-1">(you: @mySkillYears)</span>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="ml-1" />
+                            }
+                        </MudChip>
+                    }
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    @if (hasApplied)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="true"
+                                   StartIcon="@Icons.Material.Filled.CheckCircle">
+                            Applied
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@(() => ApplyToJob(req.RequirementId))"
+                                   StartIcon="@Icons.Material.Filled.Send">
+                            Apply Now
+                        </MudButton>
+                    }
+                    
+                    @if (matchScore < 80)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                   OnClick="@(() => ViewLearningPath(req.RequirementId))"
+                                   StartIcon="@Icons.Material.Filled.School">
+                            View Learning Path
+                        </MudButton>
+                    }
+                    
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                               StartIcon="@Icons.Material.Filled.Bookmark">
+                        Save
+                    </MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+else
+{
+    <MudPaper Class="pa-8 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.WorkOff" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No open opportunities</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Check back later for new requirements that match your skills.
+        </MudText>
+    </MudPaper>
+}
+
+@code {
+    private List<Requirement> _requirements = new();
+    private Dictionary<int, decimal> _matchScores = new();
+    private HashSet<int> _appliedRequirements = new();
+    private HashSet<int> _mySkillIds = new();
+    private Dictionary<int, decimal> _mySkillYears = new();
+    private Employee? _currentEmployee;
+    
+    private int? _minMatch;
+    private string _locationFilter = "";
+    private string _priorityFilter = "";
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+
+        try
+        {
+            _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+            if (_currentEmployee == null) return;
+
+            // Get employee skills
+            var mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+            _mySkillIds = mySkills.Select(s => s.SkillId).ToHashSet();
+            _mySkillYears = mySkills.ToDictionary(s => s.SkillId, s => s.YearsOfExperience);
+
+            // Get all open requirements
+            _requirements = await RequirementService.GetAllAsync(true);
+
+            // Get applied requirements
+            var applications = await ApplicationService.GetByEmployeeAsync(_currentEmployee.EmployeeId);
+            _appliedRequirements = applications.Select(a => a.RequirementId).ToHashSet();
+
+            // Calculate match scores
+            foreach (var req in _requirements)
+            {
+                var matchResult = await EmployeeService.CalculateMatchScoreAsync(
+                    _currentEmployee.EmployeeId, req.RequirementId);
+                _matchScores[req.RequirementId] = matchResult.MatchPercentage;
+            }
+
+            // Sort by match percentage
+            _requirements = _requirements.OrderByDescending(r => _matchScores.GetValueOrDefault(r.RequirementId, 0)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading jobs: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadData();
+
+        if (_minMatch.HasValue)
+        {
+            _requirements = _requirements.Where(r => 
+                _matchScores.GetValueOrDefault(r.RequirementId, 0) >= _minMatch.Value).ToList();
+        }
+        if (!string.IsNullOrEmpty(_locationFilter))
+        {
+            _requirements = _requirements.Where(r => r.Location == _locationFilter).ToList();
+        }
+        if (!string.IsNullOrEmpty(_priorityFilter))
+        {
+            _requirements = _requirements.Where(r => r.Priority == _priorityFilter).ToList();
+        }
+    }
+
+    private async Task ApplyToJob(int requirementId)
+    {
+        if (_currentEmployee == null) return;
+
+        try
+        {
+            await ApplicationService.ApplyAsync(_currentEmployee.EmployeeId, requirementId, null);
+            _appliedRequirements.Add(requirementId);
+            Snackbar.Add("Application submitted successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error applying: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ViewLearningPath(int requirementId)
+    {
+        Navigation.NavigateTo($"/learning?req={requirementId}");
+    }
+
+    private Color GetPriorityColor(string priority)
+    {
+        return priority switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Low" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetMatchColor(decimal percentage)
+    {
+        return percentage switch
+        {
+            >= 80 => Color.Success,
+            >= 50 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private string GetMatchText(decimal percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "Excellent match!",
+            >= 80 => "Great match!",
+            >= 60 => "Good match with gaps",
+            >= 40 => "Partial match",
+            _ => "Significant gaps"
+        };
+    }
+
+    private string GetMatchDescription(decimal percentage, Requirement req)
+    {
+        if (percentage >= 80)
+            return "You meet all required skills";
+        
+        var missingSkills = req.RequirementSkills
+            .Where(rs => !_mySkillIds.Contains(rs.SkillId))
+            .Select(rs => rs.Skill.SkillName);
+        
+        if (missingSkills.Any())
+            return $"Missing: {string.Join(", ", missingSkills)}";
+        
+        return "Some skills need more experience";
+    }
+
+    private string GetTimeAgo(DateTime date)
+    {
+        var diff = DateTime.Now - date;
+        if (diff.TotalDays < 1) return "today";
+        if (diff.TotalDays < 2) return "yesterday";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
+        if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)} weeks ago";
+        return date.ToString("MMM dd");
+    }
+}

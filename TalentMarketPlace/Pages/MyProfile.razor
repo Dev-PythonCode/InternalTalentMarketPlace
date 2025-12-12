@@ -1,0 +1,368 @@
+﻿@page "/my-profile"
+@inject IEmployeeService EmployeeService
+@inject ISkillService SkillService
+@inject IAuthService AuthService
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">My Profile</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage your skills and resume</MudText>
+
+@if (_currentEmployee != null)
+{
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="1" Class="d-flex justify-center">
+                    <MudAvatar Size="Size.Large" Color="Color.Primary">
+                        @_currentEmployee.FullName[0]
+                    </MudAvatar>
+                </MudItem>
+                <MudItem xs="12" md="11">
+                    <MudText Typo="Typo.h5">@_currentEmployee.FullName</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary">@_currentEmployee.Email</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @_currentEmployee.Designation • @(_currentEmployee.Team?.TeamName ?? "No Team") • @_currentEmployee.Location
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+
+
+<MudGrid>
+    <!-- Resume Upload Section -->
+    <MudItem xs="12" md="6">
+        <MudCard Style="height: 100%;">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Class="mr-2" />
+                    Upload Resume
+                </MudText>
+                
+                <MudPaper Class="pa-6 text-center" Elevation="0" 
+                          Style="border: 2px dashed #ccc; cursor: pointer;"
+                          @onclick="TriggerFileUpload">
+                    <InputFile id="fileInput" OnChange="HandleFileUpload" style="display: none;" 
+                               accept=".docx,.pdf" />
+                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.body1" Class="mt-2"><strong>Drag & drop your resume here</strong></MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">or click to browse (.docx, .pdf)</MudText>
+                </MudPaper>
+
+                @if (_isUploading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-3" />
+                    <MudText Typo="Typo.caption" Class="mt-1">Parsing resume and extracting skills...</MudText>
+                }
+
+                @if (_extractedSkills.Any())
+                {
+                    <MudText Typo="Typo.h6" Class="mt-4 mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Class="mr-2" />
+                        Auto-Extracted Skills
+                    </MudText>
+                    
+                    @foreach (var skill in _extractedSkills)
+                    {
+                        <MudPaper Class="pa-3 mb-2 d-flex justify-space-between align-center" Elevation="1">
+                            <div>
+                                <MudText Typo="Typo.body1"><strong>@skill.SkillName</strong></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @(skill.YearsOfExperience?.ToString("0.#") ?? "?") years • @(skill.ProficiencyLevel ?? "Unknown")
+                                </MudText>
+                            </div>
+                            <div class="d-flex align-center">
+                                <MudChip T ="string" Size="Size.Small" Color="@GetConfidenceColor(skill.ConfidenceScore)">
+                                    @(skill.ConfidenceScore * 100)% confidence
+                                </MudChip>
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" 
+                                               OnClick="@(() => AcceptExtractedSkill(skill))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                               OnClick="@(() => EditExtractedSkill(skill))" />
+                            </div>
+                        </MudPaper>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Add Skill Manually Section -->
+    <MudItem xs="12" md="6">
+        <MudCard Style="height: 100%;">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
+                    Add Skill Manually
+                </MudText>
+                
+                <MudSelect T="int?" Label="Skill" @bind-Value="_newSkillId" Variant="Variant.Outlined" Class="mb-3">
+                    @foreach (var skill in _availableSkills)
+                    {
+                        <MudSelectItem T="int?" Value="@skill.SkillId">@skill.SkillName</MudSelectItem>
+                    }
+                </MudSelect>
+                
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_newSkillYears" 
+                                         Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudSelect T="string" Label="Proficiency Level" @bind-Value="_newSkillLevel" Variant="Variant.Outlined">
+                            <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
+                            <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                
+                <MudDatePicker Label="Last Used Date" @bind-Date="_newSkillLastUsed" Variant="Variant.Outlined" 
+                               Class="mt-3" />
+                
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill" 
+                           Class="mt-3" StartIcon="@Icons.Material.Filled.Add">
+                    Add Skill
+                </MudButton>
+
+                <MudDivider Class="my-4" />
+
+                <MudText Typo="Typo.h6" Class="mb-3">Availability Status</MudText>
+                <MudRadioGroup T="string" @bind-SelectedOption="_availabilityStatus">
+                    <MudRadio T ="string" Option="@("Available")" Color="Color.Success">Available</MudRadio>
+                    <MudRadio T ="string" Option="@("Limited")" Color="Color.Warning">Limited</MudRadio>
+                    <MudRadio T ="string" Option="@("Not Available")" Color="Color.Error">Not Available</MudRadio>
+                </MudRadioGroup>
+                
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="UpdateAvailability" Class="mt-2">
+                    Update Status
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<!-- Current Skills -->
+<MudCard Class="mt-4">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2" />
+            My Skills
+        </MudText>
+        
+        @if (_mySkills.Any())
+        {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                    <tr>
+                        <th>Skill</th>
+                        <th>Years</th>
+                        <th>Level</th>
+                        <th>Last Used</th>
+                        <th>Source</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var skill in _mySkills)
+                    {
+                        <tr>
+                            <td><strong>@skill.Skill.SkillName</strong></td>
+                            <td>@skill.YearsOfExperience</td>
+                            <td>
+                                <MudChip T ="string" Size="Size.Small" Color="@GetLevelColor(skill.ProficiencyLevel)">
+                                    @skill.ProficiencyLevel
+                                </MudChip>
+                            </td>
+                            <td>@(skill.LastUsedDate?.ToString("MMM yyyy") ?? "-")</td>
+                            <td>
+                                <MudChip T ="string" Size="Size.Small" Variant="Variant.Outlined" 
+                                         Color="@(skill.Source == "Auto" ? Color.Info : Color.Default)">
+                                    @skill.Source
+                                </MudChip>
+                            </td>
+                            <td>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" 
+                                               OnClick="@(() => EditSkill(skill))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => DeleteSkill(skill))" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                No skills added yet. Upload your resume or add skills manually.
+            </MudText>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private Employee? _currentEmployee;
+    private List<Skill> _availableSkills = new();
+    private List<EmployeeSkill> _mySkills = new();
+    private List<ExtractedSkill> _extractedSkills = new();
+    
+    private int? _newSkillId;
+    private decimal _newSkillYears = 1;
+    private string _newSkillLevel = "Intermediate";
+    private DateTime? _newSkillLastUsed = DateTime.Now;
+    private string _availabilityStatus = "Available";
+    private bool _isUploading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+        _availableSkills = await SkillService.GetAllAsync();
+        
+        if (_currentEmployee != null)
+        {
+            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+            _availabilityStatus = _currentEmployee.AvailabilityStatus;
+        }
+    }
+
+    private void TriggerFileUpload()
+    {
+        // JavaScript interop would be needed to trigger the file input
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        _isUploading = true;
+        
+        try
+        {
+            // This would call the Python API to parse the resume
+            // For now, simulate extracted skills
+            await Task.Delay(2000);
+            
+            _extractedSkills = new List<ExtractedSkill>
+            {
+                new ExtractedSkill { SkillName = "Python", YearsOfExperience = 5, ProficiencyLevel = "Expert", ConfidenceScore = 0.9m },
+                new ExtractedSkill { SkillName = "AWS", YearsOfExperience = 3, ProficiencyLevel = "Advanced", ConfidenceScore = 0.75m }
+            };
+            
+            Snackbar.Add("Resume parsed successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error parsing resume: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private async Task AddSkill()
+    {
+        if (_newSkillId == null || _currentEmployee == null)
+        {
+            Snackbar.Add("Please select a skill", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var newSkill = new EmployeeSkill
+            {
+                EmployeeId = _currentEmployee.EmployeeId,
+                SkillId = _newSkillId.Value,
+                YearsOfExperience = _newSkillYears,
+                ProficiencyLevel = _newSkillLevel,
+                LastUsedDate = _newSkillLastUsed,
+                Source = "Manual"
+            };
+
+            await EmployeeService.AddSkillAsync(newSkill);
+            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+            
+            // Reset form
+            _newSkillId = null;
+            _newSkillYears = 1;
+            _newSkillLevel = "Intermediate";
+            
+            Snackbar.Add("Skill added successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding skill: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UpdateAvailability()
+    {
+        if (_currentEmployee == null) return;
+
+        try
+        {
+            await EmployeeService.UpdateAvailabilityAsync(_currentEmployee.EmployeeId, _availabilityStatus);
+            Snackbar.Add("Availability updated!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating availability: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void AcceptExtractedSkill(ExtractedSkill skill)
+    {
+        // Add to skills
+        Snackbar.Add($"Added {skill.SkillName} to your skills", Severity.Success);
+        _extractedSkills.Remove(skill);
+    }
+
+    private void EditExtractedSkill(ExtractedSkill skill)
+    {
+        // Open edit dialog
+    }
+
+    private void EditSkill(EmployeeSkill skill)
+    {
+        // Open edit dialog
+    }
+
+    private async Task DeleteSkill(EmployeeSkill skill)
+    {
+        if (_currentEmployee == null) return;
+
+        try
+        {
+            await EmployeeService.DeleteSkillAsync(skill.EmployeeSkillId);
+            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+            Snackbar.Add("Skill removed", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error removing skill: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private Color GetConfidenceColor(decimal confidence)
+    {
+        return confidence switch
+        {
+            >= 0.8m => Color.Success,
+            >= 0.6m => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private Color GetLevelColor(string? level)
+    {
+        return level switch
+        {
+            "Expert" => Color.Success,
+            "Advanced" => Color.Primary,
+            "Intermediate" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+}
