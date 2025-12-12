@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TalentMarketPlace.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class FixAllRequiredFields : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -469,13 +469,13 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "UserId", "CreatedDate", "Email", "IsActive", "PasswordHash", "Role" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450), "arun.kumar@company.com", true, "hashedpassword1", "Employee" },
-                    { 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450), "beena.singh@company.com", true, "hashedpassword2", "Employee" },
-                    { 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "rajesh.nair@company.com", true, "hashedpassword3", "Employee" },
-                    { 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "priya.sharma@company.com", true, "hashedpassword4", "Employee" },
-                    { 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "vikram.reddy@company.com", true, "hashedpassword5", "Employee" },
-                    { 6, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "hr.manager@company.com", true, "hashedpassword6", "HR" },
-                    { 7, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "tech.manager@company.com", true, "hashedpassword7", "Manager" }
+                    { 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "arun.kumar@company.com", true, "hashedpassword1", "Employee" },
+                    { 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "beena.singh@company.com", true, "hashedpassword2", "Employee" },
+                    { 3, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "rajesh.nair@company.com", true, "hashedpassword3", "Employee" },
+                    { 4, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "priya.sharma@company.com", true, "hashedpassword4", "Employee" },
+                    { 5, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "vikram.reddy@company.com", true, "hashedpassword5", "Employee" },
+                    { 6, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "hr.manager@company.com", true, "hashedpassword6", "HR" },
+                    { 7, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610), "tech.manager@company.com", true, "hashedpassword7", "Manager" }
                 });
 
             migrationBuilder.InsertData(
@@ -483,13 +483,13 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "EmployeeId", "AvailabilityStatus", "CreatedDate", "Designation", "Email", "FullName", "IsVectorIndexed", "JoiningDate", "LastResumeUpdate", "Location", "PhoneNumber", "PhotoUrl", "ResumeUrl", "TeamId", "UpdatedDate", "UserId", "VectorIndexedDate", "YearsOfExperience" },
                 values: new object[,]
                 {
-                    { 1, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480), "Senior Software Engineer", "arun.kumar@company.com", "Arun Kumar", false, new DateTime(2019, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543210", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480), 1, null, 5m },
-                    { 2, "Limited", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "DevOps Engineer", "beena.singh@company.com", "Beena Singh", false, new DateTime(2020, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543211", null, null, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 2, null, 4m },
-                    { 3, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "Full Stack Developer", "rajesh.nair@company.com", "Rajesh Veerasamy", false, new DateTime(2021, 5, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543212", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 3, null, 3m },
-                    { 4, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "Backend Developer", "priya.sharma@company.com", "Priya Sharma", false, new DateTime(2022, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543213", null, null, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 4, null, 2m },
-                    { 5, "Not Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "Tech Lead", "vikram.reddy@company.com", "Vikram Raja", false, new DateTime(2016, 11, 5, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543214", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 5, null, 8m },
-                    { 6, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "HR Manager", "hr.manager@company.com", "HR Manager", false, new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543215", null, null, null, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 6, null, 10m },
-                    { 7, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "Engineering Manager", "tech.manager@company.com", "Tech Manager", false, new DateTime(2012, 6, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543216", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 7, null, 12m }
+                    { 1, "Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9640), "Senior Software Engineer", "arun.kumar@company.com", "Arun Kumar", false, new DateTime(2019, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543210", null, null, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9640), 1, null, 5m },
+                    { 2, "Limited", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), "DevOps Engineer", "beena.singh@company.com", "Beena Singh", false, new DateTime(2020, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543211", null, null, 3, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), 2, null, 4m },
+                    { 3, "Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), "Full Stack Developer", "rajesh.nair@company.com", "Rajesh Veerasamy", false, new DateTime(2021, 5, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543212", null, null, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), 3, null, 3m },
+                    { 4, "Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), "Backend Developer", "priya.sharma@company.com", "Priya Sharma", false, new DateTime(2022, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543213", null, null, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), 4, null, 2m },
+                    { 5, "Not Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), "Tech Lead", "vikram.reddy@company.com", "Vikram Raja", false, new DateTime(2016, 11, 5, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543214", null, null, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650), 5, null, 8m },
+                    { 6, "Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660), "HR Manager", "hr.manager@company.com", "HR Manager", false, new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543215", null, null, null, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660), 6, null, 10m },
+                    { 7, "Available", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660), "Engineering Manager", "tech.manager@company.com", "Tech Manager", false, new DateTime(2012, 6, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543216", null, null, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660), 7, null, 12m }
                 });
 
             migrationBuilder.InsertData(
@@ -497,25 +497,25 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "SkillId", "CategoryId", "CreatedDate", "Description", "IsActive", "SkillName" },
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Python programming language", true, "Python" },
-                    { 2, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Java programming language", true, "Java" },
-                    { 3, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "C# programming language", true, "C#" },
-                    { 4, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "JavaScript programming language", true, "JavaScript" },
-                    { 5, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "TypeScript programming language", true, "TypeScript" },
-                    { 6, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Amazon Web Services", true, "AWS" },
-                    { 7, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Microsoft Azure", true, "Azure" },
-                    { 8, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Docker containerization", true, "Docker" },
-                    { 9, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Kubernetes orchestration", true, "Kubernetes" },
-                    { 10, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Jenkins CI/CD", true, "Jenkins" },
-                    { 11, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "React.js library", true, "React" },
-                    { 12, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Angular framework", true, "Angular" },
-                    { 13, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Vue.js framework", true, "Vue.js" },
-                    { 14, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Node.js runtime", true, "Node.js" },
-                    { 15, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "ASP.NET Core framework", true, "ASP.NET Core" },
-                    { 16, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Spring Boot framework", true, "Spring Boot" },
-                    { 17, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Microsoft SQL Server", true, "SQL Server" },
-                    { 18, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "PostgreSQL database", true, "PostgreSQL" },
-                    { 19, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "MongoDB NoSQL database", true, "MongoDB" }
+                    { 1, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Python programming language", true, "Python" },
+                    { 2, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Java programming language", true, "Java" },
+                    { 3, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "C# programming language", true, "C#" },
+                    { 4, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "JavaScript programming language", true, "JavaScript" },
+                    { 5, 1, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "TypeScript programming language", true, "TypeScript" },
+                    { 6, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Amazon Web Services", true, "AWS" },
+                    { 7, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Microsoft Azure", true, "Azure" },
+                    { 8, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Docker containerization", true, "Docker" },
+                    { 9, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Kubernetes orchestration", true, "Kubernetes" },
+                    { 10, 2, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Jenkins CI/CD", true, "Jenkins" },
+                    { 11, 3, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "React.js library", true, "React" },
+                    { 12, 3, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550), "Angular framework", true, "Angular" },
+                    { 13, 3, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "Vue.js framework", true, "Vue.js" },
+                    { 14, 4, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "Node.js runtime", true, "Node.js" },
+                    { 15, 4, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "ASP.NET Core framework", true, "ASP.NET Core" },
+                    { 16, 4, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "Spring Boot framework", true, "Spring Boot" },
+                    { 17, 5, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "Microsoft SQL Server", true, "SQL Server" },
+                    { 18, 5, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "PostgreSQL database", true, "PostgreSQL" },
+                    { 19, 5, new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560), "MongoDB NoSQL database", true, "MongoDB" }
                 });
 
             migrationBuilder.InsertData(
@@ -523,15 +523,15 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "AliasId", "AliasName", "CreatedDate", "SkillId" },
                 values: new object[,]
                 {
-                    { 1, "K8s", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(430), 9 },
-                    { 2, "K8", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 9 },
-                    { 3, "JS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 4 },
-                    { 4, "TS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 5 },
-                    { 5, "React.js", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 11 },
-                    { 6, "ReactJS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 11 },
-                    { 7, "NodeJS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 14 },
-                    { 8, "MSSQL", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 17 },
-                    { 9, "MS SQL", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 17 }
+                    { 1, "K8s", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9580), 9 },
+                    { 2, "K8", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9580), 9 },
+                    { 3, "JS", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 4 },
+                    { 4, "TS", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 5 },
+                    { 5, "React.js", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 11 },
+                    { 6, "ReactJS", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 11 },
+                    { 7, "NodeJS", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 14 },
+                    { 8, "MSSQL", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 17 },
+                    { 9, "MS SQL", new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590), 17 }
                 });
 
             migrationBuilder.CreateIndex(

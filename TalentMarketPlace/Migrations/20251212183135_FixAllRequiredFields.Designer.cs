@@ -11,8 +11,8 @@ using TalentMarketPlace.Data;
 namespace TalentMarketPlace.Migrations
 {
     [DbContext(typeof(TalentMarketplaceDbContext))]
-    [Migration("20251212123010_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251212183135_FixAllRequiredFields")]
+    partial class FixAllRequiredFields
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -161,7 +161,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 1,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9640),
                             Designation = "Senior Software Engineer",
                             Email = "arun.kumar@company.com",
                             FullName = "Arun Kumar",
@@ -170,7 +170,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543210",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9640),
                             UserId = 1,
                             YearsOfExperience = 5m
                         },
@@ -178,7 +178,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 2,
                             AvailabilityStatus = "Limited",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             Designation = "DevOps Engineer",
                             Email = "beena.singh@company.com",
                             FullName = "Beena Singh",
@@ -187,7 +187,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543211",
                             TeamId = 3,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             UserId = 2,
                             YearsOfExperience = 4m
                         },
@@ -195,7 +195,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 3,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             Designation = "Full Stack Developer",
                             Email = "rajesh.nair@company.com",
                             FullName = "Rajesh Veerasamy",
@@ -204,7 +204,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Chennai",
                             PhoneNumber = "9876543212",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             UserId = 3,
                             YearsOfExperience = 3m
                         },
@@ -212,7 +212,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 4,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             Designation = "Backend Developer",
                             Email = "priya.sharma@company.com",
                             FullName = "Priya Sharma",
@@ -221,7 +221,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543213",
                             TeamId = 2,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             UserId = 4,
                             YearsOfExperience = 2m
                         },
@@ -229,7 +229,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 5,
                             AvailabilityStatus = "Not Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             Designation = "Tech Lead",
                             Email = "vikram.reddy@company.com",
                             FullName = "Vikram Raja",
@@ -238,7 +238,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Chennai",
                             PhoneNumber = "9876543214",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9650),
                             UserId = 5,
                             YearsOfExperience = 8m
                         },
@@ -246,7 +246,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 6,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660),
                             Designation = "HR Manager",
                             Email = "hr.manager@company.com",
                             FullName = "HR Manager",
@@ -254,7 +254,7 @@ namespace TalentMarketPlace.Migrations
                             JoiningDate = new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Location = "Bangalore",
                             PhoneNumber = "9876543215",
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660),
                             UserId = 6,
                             YearsOfExperience = 10m
                         },
@@ -262,7 +262,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             EmployeeId = 7,
                             AvailabilityStatus = "Available",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660),
                             Designation = "Engineering Manager",
                             Email = "tech.manager@company.com",
                             FullName = "Tech Manager",
@@ -271,7 +271,7 @@ namespace TalentMarketPlace.Migrations
                             Location = "Bangalore",
                             PhoneNumber = "9876543216",
                             TeamId = 1,
-                            UpdatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500),
+                            UpdatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9660),
                             UserId = 7,
                             YearsOfExperience = 12m
                         });
@@ -715,7 +715,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 1,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Python programming language",
                             IsActive = true,
                             SkillName = "Python"
@@ -724,7 +724,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 2,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Java programming language",
                             IsActive = true,
                             SkillName = "Java"
@@ -733,7 +733,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 3,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "C# programming language",
                             IsActive = true,
                             SkillName = "C#"
@@ -742,7 +742,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 4,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "JavaScript programming language",
                             IsActive = true,
                             SkillName = "JavaScript"
@@ -751,7 +751,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 5,
                             CategoryId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "TypeScript programming language",
                             IsActive = true,
                             SkillName = "TypeScript"
@@ -760,7 +760,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 6,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Amazon Web Services",
                             IsActive = true,
                             SkillName = "AWS"
@@ -769,7 +769,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 7,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Microsoft Azure",
                             IsActive = true,
                             SkillName = "Azure"
@@ -778,7 +778,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 8,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Docker containerization",
                             IsActive = true,
                             SkillName = "Docker"
@@ -787,7 +787,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 9,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Kubernetes orchestration",
                             IsActive = true,
                             SkillName = "Kubernetes"
@@ -796,7 +796,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 10,
                             CategoryId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Jenkins CI/CD",
                             IsActive = true,
                             SkillName = "Jenkins"
@@ -805,7 +805,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 11,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "React.js library",
                             IsActive = true,
                             SkillName = "React"
@@ -814,7 +814,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 12,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9550),
                             Description = "Angular framework",
                             IsActive = true,
                             SkillName = "Angular"
@@ -823,7 +823,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 13,
                             CategoryId = 3,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "Vue.js framework",
                             IsActive = true,
                             SkillName = "Vue.js"
@@ -832,7 +832,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 14,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "Node.js runtime",
                             IsActive = true,
                             SkillName = "Node.js"
@@ -841,7 +841,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 15,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "ASP.NET Core framework",
                             IsActive = true,
                             SkillName = "ASP.NET Core"
@@ -850,7 +850,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 16,
                             CategoryId = 4,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "Spring Boot framework",
                             IsActive = true,
                             SkillName = "Spring Boot"
@@ -859,7 +859,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 17,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "Microsoft SQL Server",
                             IsActive = true,
                             SkillName = "SQL Server"
@@ -868,7 +868,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 18,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "PostgreSQL database",
                             IsActive = true,
                             SkillName = "PostgreSQL"
@@ -877,7 +877,7 @@ namespace TalentMarketPlace.Migrations
                         {
                             SkillId = 19,
                             CategoryId = 5,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9560),
                             Description = "MongoDB NoSQL database",
                             IsActive = true,
                             SkillName = "MongoDB"
@@ -915,63 +915,63 @@ namespace TalentMarketPlace.Migrations
                         {
                             AliasId = 1,
                             AliasName = "K8s",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(430),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9580),
                             SkillId = 9
                         },
                         new
                         {
                             AliasId = 2,
                             AliasName = "K8",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9580),
                             SkillId = 9
                         },
                         new
                         {
                             AliasId = 3,
                             AliasName = "JS",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 4
                         },
                         new
                         {
                             AliasId = 4,
                             AliasName = "TS",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 5
                         },
                         new
                         {
                             AliasId = 5,
                             AliasName = "React.js",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 11
                         },
                         new
                         {
                             AliasId = 6,
                             AliasName = "ReactJS",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 11
                         },
                         new
                         {
                             AliasId = 7,
                             AliasName = "NodeJS",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 14
                         },
                         new
                         {
                             AliasId = 8,
                             AliasName = "MSSQL",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 17
                         },
                         new
                         {
                             AliasId = 9,
                             AliasName = "MS SQL",
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9590),
                             SkillId = 17
                         });
                 });
@@ -1147,7 +1147,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 1,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "arun.kumar@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword1",
@@ -1156,7 +1156,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 2,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "beena.singh@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword2",
@@ -1165,7 +1165,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 3,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "rajesh.nair@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword3",
@@ -1174,7 +1174,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 4,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "priya.sharma@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword4",
@@ -1183,7 +1183,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 5,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "vikram.reddy@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword5",
@@ -1192,7 +1192,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 6,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "hr.manager@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword6",
@@ -1201,7 +1201,7 @@ namespace TalentMarketPlace.Migrations
                         new
                         {
                             UserId = 7,
-                            CreatedDate = new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460),
+                            CreatedDate = new DateTime(2025, 12, 12, 18, 31, 34, 908, DateTimeKind.Utc).AddTicks(9610),
                             Email = "tech.manager@company.com",
                             IsActive = true,
                             PasswordHash = "hashedpassword7",

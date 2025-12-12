@@ -33,15 +33,20 @@ public class ApplicationService : IApplicationService
     }
 
     public async Task<List<Application>> GetByRequirementAsync(int requirementId)
-    {
-        return await _context.Applications
-            .Include(a => a.Employee)
-                .ThenInclude(e => e.EmployeeSkills)
-            .Where(a => a.RequirementId == requirementId)
-            .OrderByDescending(a => a.MatchPercentage)
-            .ThenByDescending(a => a.AppliedDate)
-            .ToListAsync();
-    }
+{
+    var applications = await _context.Applications
+        .Include(a => a.Employee)
+            .ThenInclude(e => e.Team)
+        .Include(a => a.Employee.EmployeeSkills)
+            .ThenInclude(es => es.Skill)
+        .Where(a => a.RequirementId == requirementId)
+        .ToListAsync();  // ← Get data first
+    
+    // Order in memory after retrieval
+    return applications
+        .OrderByDescending(a => a.AIScore ?? 0)
+        .ToList();
+}
 
     public async Task<List<Application>> GetByEmployeeAsync(int employeeId)
     {
