@@ -14,7 +14,7 @@
             <!-- Description -->
             <MudItem xs="12">
                 <MudTextField @bind-Value="_model.Description" Label="Description" Lines="4"
-                              Variant="Variant.Outlined"
+                              Variant="Variant.Outlined" Required="true"
                               Placeholder="Describe the role, responsibilities, and ideal candidate..." />
             </MudItem>
 
@@ -116,6 +116,7 @@
                 {
                     <MudPaper Class="pa-3 mb-2" Elevation="0" Style="border: 1px solid #e0e0e0;">
                         <MudGrid Spacing="2">
+                            <!-- Skill Selection -->
                             <MudItem xs="12" md="5">
                                 <MudSelect T="int" Label="Skill" @bind-Value="skill.SkillId" 
                                            Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
@@ -126,24 +127,45 @@
                                     }
                                 </MudSelect>
                             </MudItem>
+
+                            <!-- Min Years -->
                             <MudItem xs="6" md="2">
                                 <MudNumericField T="decimal" Label="Min Years" @bind-Value="skill.MinYearsRequired"
                                                  Variant="Variant.Outlined" Step="0.5M" Min="0" Max="20" 
                                                  Dense="true" Margin="Margin.Dense" />
                             </MudItem>
-                            <MudItem xs="6" md="2">
-                                <MudNumericField T="int" Label="Weightage" @bind-Value="skill.Weightage"
-                                                 Variant="Variant.Outlined" Min="1" Max="5" 
-                                                 Dense="true" Margin="Margin.Dense" />
+
+                            <!-- Priority Radio Buttons (Replaces Mandatory checkbox + Weightage) -->
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.caption" Class="mb-1">Skill Priority</MudText>
+                                <MudRadioGroup T="string" @bind-Value="skill.Priority" Dense="true">
+                                    <MudRadio T="string" Value="@("Mandatory")" Color="Color.Error" Dense="true">
+                                        <MudText Typo="Typo.body2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Color="Color.Error" />
+                                            Mandatory
+                                        </MudText>
+                                    </MudRadio>
+                                    <MudRadio T="string" Value="@("NiceToHave")" Color="Color.Info" Dense="true">
+                                        <MudText Typo="Typo.body2">
+                                            <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Color="Color.Info" />
+                                            Nice to Have
+                                        </MudText>
+                                    </MudRadio>
+                                    <MudRadio T="string" Value="@("Optional")" Color="Color.Default" Dense="true">
+                                        <MudText Typo="Typo.body2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" />
+                                            Optional
+                                        </MudText>
+                                    </MudRadio>
+                                </MudRadioGroup>
                             </MudItem>
-                            <MudItem xs="8" md="2" Class="d-flex align-center">
-                                <MudCheckBox T="bool" @bind-Value="skill.IsMandatory" 
-                                             Label="Mandatory" Dense="true" Color="Color.Error" />
-                            </MudItem>
-                            <MudItem xs="4" md="1" Class="d-flex align-center justify-center">
+
+                            <!-- Remove Button -->
+                            <MudItem xs="12" md="1" Class="d-flex align-center justify-center">
                                 <MudTooltip Text="Remove this skill">
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                                   OnClick="@(() => RemoveSkill(index))" Size="Size.Small" />
+                                                   OnClick="@(() => RemoveSkill(index))" Size="Size.Small"
+                                                   Disabled="@(_requiredSkills.Count == 1)" />
                                 </MudTooltip>
                             </MudItem>
                         </MudGrid>
@@ -183,11 +205,28 @@
     [Parameter]
     public bool IsEditMode { get; set; }
 
-    private Requirement _model = new() { Priority = "Medium", Duration = "6 months", Status = "Open" };
+    private Requirement _model = new() 
+    { 
+        Priority = "Medium", 
+        Duration = "6 months", 
+        Status = "Open",
+        Location = "Bangalore",
+        Description = ""
+    };
+    
     private int? _teamId;
     private DateTime? _startDate = DateTime.Now.AddDays(14);
-    private List<RequirementSkill> _requiredSkills = new();
+    private List<SkillRequirementItem> _requiredSkills = new();
     private bool _isSubmitting = false;
+
+    // Helper class for skill items with Priority instead of IsMandatory + Weightage
+    private class SkillRequirementItem
+    {
+        public int SkillId { get; set; }
+        public decimal MinYearsRequired { get; set; } = 2;
+        public string Priority { get; set; } = "Mandatory";  // Mandatory, NiceToHave, Optional
+        public string ProficiencyLevel { get; set; } = "Intermediate";
+    }
 
     protected override void OnInitialized()
     {
@@ -209,26 +248,22 @@
             _teamId = Requirement.TeamId;
             _startDate = Requirement.StartDate;
             
-            // Load existing skills
+            // Load existing skills and convert weightage to priority
             if (Requirement.RequirementSkills?.Any() == true)
             {
-                _requiredSkills = Requirement.RequirementSkills.Select(rs => new RequirementSkill
+                _requiredSkills = Requirement.RequirementSkills.Select(rs => new SkillRequirementItem
                 {
-                    RequirementSkillId = rs.RequirementSkillId,
                     SkillId = rs.SkillId,
                     MinYearsRequired = rs.MinYearsRequired,
-                    Weightage = rs.Weightage,
-                    IsMandatory = rs.IsMandatory,
+                    Priority = ConvertWeightageToPriority(rs.Weightage, rs.IsMandatory),
                     ProficiencyLevel = rs.ProficiencyLevel
                 }).ToList();
             }
         }
         
-        // Add default skill rows if empty
+        // Start with ONE skill row (not three)
         if (!_requiredSkills.Any())
         {
-            AddSkillRow();
-            AddSkillRow();
             AddSkillRow();
         }
     }
@@ -241,18 +276,17 @@
 
     private void AddSkillRow()
     {
-        _requiredSkills.Add(new RequirementSkill
+        _requiredSkills.Add(new SkillRequirementItem
         {
             MinYearsRequired = 2,
-            Weightage = 1,
-            IsMandatory = true,
+            Priority = "Mandatory",
             ProficiencyLevel = "Intermediate"
         });
     }
 
     private void RemoveSkill(int index)
     {
-        if (index >= 0 && index < _requiredSkills.Count)
+        if (index >= 0 && index < _requiredSkills.Count && _requiredSkills.Count > 1)
         {
             _requiredSkills.RemoveAt(index);
             StateHasChanged();
@@ -268,6 +302,12 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_model.Description))
+        {
+            Snackbar.Add("Please enter a job description", Severity.Warning);
+            return;
+        }
+
         var validSkills = _requiredSkills.Where(s => s.SkillId > 0).ToList();
         if (!validSkills.Any())
         {
@@ -280,7 +320,16 @@
         // Set values
         _model.TeamId = _teamId;
         _model.StartDate = _startDate;
-        _model.RequirementSkills = validSkills;
+        
+        // Convert SkillRequirementItem to RequirementSkill with calculated weightage
+        _model.RequirementSkills = validSkills.Select(s => new RequirementSkill
+        {
+            SkillId = s.SkillId,
+            MinYearsRequired = s.MinYearsRequired,
+            ProficiencyLevel = s.ProficiencyLevel,
+            IsMandatory = ConvertPriorityToMandatory(s.Priority),
+            Weightage = ConvertPriorityToWeightage(s.Priority)
+        }).ToList();
 
         MudDialog.Close(DialogResult.Ok(_model));
     }
@@ -288,5 +337,31 @@
     private void Cancel()
     {
         MudDialog.Cancel();
+    }
+
+    // Helper: Convert Priority to Weightage
+    private int ConvertPriorityToWeightage(string priority)
+    {
+        return priority switch
+        {
+            "Mandatory" => 5,      // Highest weight
+            "NiceToHave" => 3,     // Medium weight
+            "Optional" => 1,        // Lowest weight
+            _ => 3
+        };
+    }
+
+    // Helper: Convert Priority to IsMandatory flag
+    private bool ConvertPriorityToMandatory(string priority)
+    {
+        return priority == "Mandatory";
+    }
+
+    // Helper: Convert Weightage back to Priority (for edit mode)
+    private string ConvertWeightageToPriority(int weightage, bool isMandatory)
+    {
+        if (isMandatory || weightage >= 5) return "Mandatory";
+        if (weightage >= 3) return "NiceToHave";
+        return "Optional";
     }
 }

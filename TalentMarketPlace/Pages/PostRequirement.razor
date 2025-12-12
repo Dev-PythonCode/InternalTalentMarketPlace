@@ -297,6 +297,15 @@ else
     {
         try
         {
+            Console.WriteLine($"=== SAVING REQUIREMENT ===");
+            Console.WriteLine($"Title: {requirement.Title}");
+            Console.WriteLine($"Description: {requirement.Description}");
+            Console.WriteLine($"Location: {requirement.Location}");
+            Console.WriteLine($"Duration: {requirement.Duration}");
+            Console.WriteLine($"Priority: {requirement.Priority}");
+            Console.WriteLine($"Status: {requirement.Status}");
+            Console.WriteLine($"========================");
+
             var employee = await AuthService.GetCurrentEmployeeAsync();
             if (employee == null)
             {

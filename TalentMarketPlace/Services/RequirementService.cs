@@ -70,12 +70,29 @@ public class RequirementService : IRequirementService
 
     public async Task<Requirement> CreateAsync(Requirement requirement)
     {
-        requirement.PostedDate = DateTime.UtcNow;
-        requirement.IsActive = true;
-        requirement.Status = "Open";
-        _context.Requirements.Add(requirement);
+        // Create a new entity with explicit property mapping to ensure all values are set
+        var newRequirement = new Requirement
+        {
+            Title = requirement.Title,
+            Description = requirement.Description,  // ← FIXED: Explicitly set Description
+            Location = requirement.Location,
+            Duration = requirement.Duration,
+            Priority = requirement.Priority,
+            Status = requirement.Status ?? "Open",
+            StartDate = requirement.StartDate,
+            ExpiryDate = requirement.ExpiryDate,
+            PostedById = requirement.PostedById,
+            TeamId = requirement.TeamId,
+            PostedDate = DateTime.UtcNow,
+            IsActive = true,
+            ViewCount = 0,
+            ApplicationCount = 0
+        };
+        
+        _context.Requirements.Add(newRequirement);
         await _context.SaveChangesAsync();
-        return requirement;
+        
+        return newRequirement;
     }
 
     public async Task<Requirement> UpdateAsync(Requirement requirement)
