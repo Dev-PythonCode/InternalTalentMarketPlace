@@ -1,0 +1,372 @@
+﻿@page "/admin"
+@inject ISkillService SkillService
+@inject IEmployeeService EmployeeService
+@inject IRequirementService RequirementService
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">Admin Panel</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage skills, categories, and system settings</MudText>
+
+<!-- Stats Cards -->
+<MudGrid Class="mb-4">
+    <MudItem xs="6" sm="3">
+        <MudCard>
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.h4" Color="Color.Primary">@_totalEmployees</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Employees</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <MudCard>
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Large" Color="Color.Info" />
+                <MudText Typo="Typo.h4" Color="Color.Info">@_skills.Count</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Skills</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <MudCard>
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Folder" Size="Size.Large" Color="Color.Warning" />
+                <MudText Typo="Typo.h4" Color="Color.Warning">@_categories.Count</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Categories</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <MudCard>
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Large" Color="Color.Success" />
+                <MudText Typo="Typo.h4" Color="Color.Success">@_openRequirements</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Open Requirements</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudGrid>
+    <!-- Skills Management -->
+    <MudItem xs="12" md="7">
+        <MudCard>
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Code" Class="mr-2" />
+                        Manage Skills
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                               OnClick="OpenAddSkillDialog" StartIcon="@Icons.Material.Filled.Add">
+                        Add Skill
+                    </MudButton>
+                </div>
+
+                <MudTextField @bind-Value="_skillSearchTerm" Placeholder="Search skills..." 
+                              Variant="Variant.Outlined" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" Margin="Margin.Dense" />
+
+                <MudList T="string" Dense="true">
+                    @foreach (var skill in FilteredSkills)
+                    {
+                        <MudListItem T="string">
+                            <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                                <div>
+                                    <MudText Typo="Typo.body1"><strong>@skill.SkillName</strong></MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @skill.Category?.CategoryName
+                                    </MudText>
+                                    @if (skill.SkillAliases?.Any() == true)
+                                    {
+                                        <div class="mt-1">
+                                            @foreach (var alias in skill.SkillAliases)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mr-1">
+                                                    @alias.AliasName
+                                                </MudChip>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small"
+                                                   OnClick="@(() => OpenAddAliasDialog(skill))"
+                                                   Title="Add Alias" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="@(() => DeleteSkill(skill))" />
+                                </div>
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Categories Management -->
+    <MudItem xs="12" md="5">
+        <MudCard>
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <MudText Typo="Typo.h6">
+                        <MudIcon Icon="@Icons.Material.Filled.Folder" Class="mr-2" />
+                        Categories
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                               OnClick="OpenAddCategoryDialog" StartIcon="@Icons.Material.Filled.Add">
+                        Add
+                    </MudButton>
+                </div>
+
+                <MudList T="string" Dense="true">
+                    @foreach (var category in _categories)
+                    {
+                        var skillCount = _skills.Count(s => s.CategoryId == category.CategoryId);
+                        
+                        <MudListItem T="string">
+                            <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                                <MudText Typo="Typo.body1"><strong>@category.CategoryName</strong></MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@skillCount skills</MudChip>
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<!-- Add Skill Dialog -->
+<MudDialog @bind-Visible="_showAddSkillDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New Skill</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_newSkillName" Label="Skill Name" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect T="int" @bind-Value="_newSkillCategoryId" Label="Category" Variant="Variant.Outlined" Class="mb-3">
+            @foreach (var cat in _categories)
+            {
+                <MudSelectItem T="int" Value="@cat.CategoryId">@cat.CategoryName</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="_newSkillDescription" Label="Description" Lines="2" Variant="Variant.Outlined" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddSkillDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill">Add Skill</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Add Alias Dialog -->
+<MudDialog @bind-Visible="_showAddAliasDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add Alias for @_selectedSkill?.SkillName</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_newAliasName" Label="Alias Name" Variant="Variant.Outlined" 
+                      Placeholder="e.g., K8s for Kubernetes" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddAliasDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAlias">Add Alias</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Add Category Dialog -->
+<MudDialog @bind-Visible="_showAddCategoryDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New Category</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_newCategoryName" Label="Category Name" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_newCategoryDescription" Label="Description" Lines="2" Variant="Variant.Outlined" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddCategoryDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddCategory">Add Category</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Skill> _skills = new();
+    private List<SkillCategory> _categories = new();
+    private string _skillSearchTerm = "";
+    private int _totalEmployees = 0;
+    private int _openRequirements = 0;
+    
+    // Add Skill Dialog
+    private bool _showAddSkillDialog = false;
+    private string _newSkillName = "";
+    private int _newSkillCategoryId;
+    private string _newSkillDescription = "";
+    
+    // Add Alias Dialog
+    private bool _showAddAliasDialog = false;
+    private Skill? _selectedSkill;
+    private string _newAliasName = "";
+    
+    // Add Category Dialog
+    private bool _showAddCategoryDialog = false;
+    private string _newCategoryName = "";
+    private string _newCategoryDescription = "";
+
+    private IEnumerable<Skill> FilteredSkills => string.IsNullOrWhiteSpace(_skillSearchTerm)
+        ? _skills
+        : _skills.Where(s => s.SkillName.Contains(_skillSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                            s.Category?.CategoryName.Contains(_skillSearchTerm, StringComparison.OrdinalIgnoreCase) == true);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            _skills = await SkillService.GetAllAsync();
+            _categories = await SkillService.GetCategoriesAsync();
+            
+            var employees = await EmployeeService.GetAllAsync();
+            _totalEmployees = employees.Count;
+            
+            var requirements = await RequirementService.GetAllAsync(true);
+            _openRequirements = requirements.Count;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OpenAddSkillDialog()
+    {
+        _newSkillName = "";
+        _newSkillDescription = "";
+        _newSkillCategoryId = _categories.FirstOrDefault()?.CategoryId ?? 0;
+        _showAddSkillDialog = true;
+    }
+
+    private void CloseAddSkillDialog()
+    {
+        _showAddSkillDialog = false;
+    }
+
+    private void OpenAddAliasDialog(Skill skill)
+    {
+        _selectedSkill = skill;
+        _newAliasName = "";
+        _showAddAliasDialog = true;
+    }
+
+    private void CloseAddAliasDialog()
+    {
+        _showAddAliasDialog = false;
+    }
+
+    private void OpenAddCategoryDialog()
+    {
+        _newCategoryName = "";
+        _newCategoryDescription = "";
+        _showAddCategoryDialog = true;
+    }
+
+    private void CloseAddCategoryDialog()
+    {
+        _showAddCategoryDialog = false;
+    }
+
+    private async Task AddSkill()
+    {
+        if (string.IsNullOrWhiteSpace(_newSkillName))
+        {
+            Snackbar.Add("Please enter a skill name", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var skill = new Skill
+            {
+                SkillName = _newSkillName,
+                CategoryId = _newSkillCategoryId,
+                Description = _newSkillDescription
+            };
+
+            await SkillService.CreateAsync(skill);
+            await LoadData();
+            _showAddSkillDialog = false;
+            Snackbar.Add("Skill added successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding skill: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddAlias()
+    {
+        if (_selectedSkill == null || string.IsNullOrWhiteSpace(_newAliasName))
+        {
+            Snackbar.Add("Please enter an alias name", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await SkillService.AddAliasAsync(_selectedSkill.SkillId, _newAliasName);
+            await LoadData();
+            _showAddAliasDialog = false;
+            Snackbar.Add("Alias added successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding alias: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddCategory()
+    {
+        if (string.IsNullOrWhiteSpace(_newCategoryName))
+        {
+            Snackbar.Add("Please enter a category name", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var category = new SkillCategory
+            {
+                CategoryName = _newCategoryName,
+                Description = _newCategoryDescription,
+                DisplayOrder = _categories.Count + 1
+            };
+
+            await SkillService.CreateCategoryAsync(category);
+            await LoadData();
+            _showAddCategoryDialog = false;
+            Snackbar.Add("Category added successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding category: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteSkill(Skill skill)
+    {
+        try
+        {
+            await SkillService.DeleteAsync(skill.SkillId);
+            await LoadData();
+            Snackbar.Add("Skill deleted", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting skill: {ex.Message}", Severity.Error);
+        }
+    }
+}

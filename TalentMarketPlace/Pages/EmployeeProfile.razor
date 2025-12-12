@@ -1,0 +1,241 @@
+﻿@page "/employee/{EmployeeId:int}"
+@inject IEmployeeService EmployeeService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+@if (_employee != null)
+{
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" 
+               OnClick="@(() => Navigation.NavigateTo("/search-results"))" Class="mb-3">
+        Back to Results
+    </MudButton>
+
+    <MudText Typo="Typo.h4" Class="mb-4">Employee Profile</MudText>
+
+    <!-- Profile Header -->
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="2" Class="d-flex justify-center">
+                    <MudAvatar Size="Size.Large" Style="width: 120px; height: 120px; font-size: 3rem;" Color="Color.Primary">
+                        @_employee.FullName[0]
+                    </MudAvatar>
+                </MudItem>
+                
+                <MudItem xs="12" md="7">
+                    <MudText Typo="Typo.h4">@_employee.FullName</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" Class="mr-1" />
+                        @_employee.Designation
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="mr-1" />
+                        @(_employee.Team?.TeamName ?? "No Team") • @(_employee.Team?.Department ?? "")
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-1">
+                        <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mr-1" />
+                        @(_employee.Location ?? "Unknown")
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.DateRange" Size="Size.Small" Class="mr-1" />
+                        @_employee.YearsOfExperience years experience
+                    </MudText>
+                    
+                    @{
+                        var (badgeColor, badgeText) = GetAvailabilityBadge(_employee.AvailabilityStatus);
+                    }
+                    <MudChip T ="string" Color="@badgeColor" Size="Size.Small">@badgeText</MudChip>
+                </MudItem>
+                
+                <MudItem xs="12" md="3" Class="d-flex flex-column justify-center align-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                               StartIcon="@Icons.Material.Filled.Email" Class="mb-2">
+                        Contact
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PersonAdd">
+                        Request for Project
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudGrid>
+        <!-- Skills Section -->
+        <MudItem xs="12" md="6">
+            <MudCard Style="height: 100%;">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Code" Class="mr-2" />
+                        Skills
+                    </MudText>
+                    
+                    <MudSimpleTable Dense="true" Hover="true">
+                        <thead>
+                            <tr>
+                                <th>Skill</th>
+                                <th>Years</th>
+                                <th>Level</th>
+                                <th>Proficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var skill in _employee.EmployeeSkills.OrderByDescending(s => s.YearsOfExperience))
+                            {
+                                <tr>
+                                    <td><strong>@skill.Skill.SkillName</strong></td>
+                                    <td>@skill.YearsOfExperience</td>
+                                    <td>
+                                        @{
+                                            var levelColor = skill.ProficiencyLevel switch
+                                            {
+                                                "Expert" => Color.Success,
+                                                "Advanced" => Color.Primary,
+                                                "Intermediate" => Color.Warning,
+                                                _ => Color.Default
+                                            };
+                                        }
+                                        <MudChip T ="string" Size="Size.Small" Color="@levelColor" Variant="Variant.Filled">
+                                            @skill.ProficiencyLevel
+                                        </MudChip>
+                                    </td>
+                                    <td>
+                                        <MudProgressLinear Value="@GetProficiencyPercentage(skill.ProficiencyLevel)" 
+                                                           Color="Color.Primary" Size="Size.Small" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Projects Section -->
+        <MudItem xs="12" md="6">
+            <MudCard Style="height: 100%;">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Folder" Class="mr-2" />
+                        Recent Projects
+                    </MudText>
+                    
+                    @if (_employee.EmployeeProjects?.Any() == true)
+                    {
+                        @foreach (var project in _employee.EmployeeProjects.OrderByDescending(p => p.StartDate).Take(3))
+                        {
+                            <MudPaper Class="pa-3 mb-3" Elevation="0" Style="background: #f5f5f5;">
+                                <MudText Typo="Typo.subtitle1"><strong>@project.ProjectName</strong></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @project.Role • @project.StartDate.ToString("MMM yyyy") - 
+                                    @(project.EndDate?.ToString("MMM yyyy") ?? "Present")
+                                </MudText>
+                                <MudText Typo="Typo.body2" Class="mt-2">
+                                    @project.Description
+                                </MudText>
+                                @if (project.ProjectSkills?.Any() == true)
+                                {
+                                    <div class="mt-2">
+                                        @foreach (var skill in project.ProjectSkills)
+                                        {
+                                            <MudChip T ="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-1">
+                                                @skill.Skill.SkillName
+                                            </MudChip>
+                                        }
+                                    </div>
+                                }
+                            </MudPaper>
+                        }
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            No projects recorded yet.
+                        </MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Contact Information -->
+    <MudCard Class="mt-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.ContactPhone" Class="mr-2" />
+                Contact Information
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Email</MudText>
+                    <MudText Typo="Typo.body1">@_employee.Email</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Phone</MudText>
+                    <MudText Typo="Typo.body1">@(_employee.PhoneNumber ?? "Not provided")</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Joined</MudText>
+                    <MudText Typo="Typo.body1">@(_employee.JoiningDate?.ToString("MMM dd, yyyy") ?? "Unknown")</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+else if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudAlert Severity="Severity.Error">Employee not found</MudAlert>
+}
+
+@code {
+    [Parameter]
+    public int EmployeeId { get; set; }
+
+    private Employee? _employee;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _employee = await EmployeeService.GetByIdAsync(EmployeeId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading employee: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private (Color, string) GetAvailabilityBadge(string status)
+    {
+        return status switch
+        {
+            "Available" => (Color.Success, "Available"),
+            "Limited" => (Color.Warning, "Limited"),
+            "Not Available" => (Color.Error, "Not Available"),
+            _ => (Color.Default, status)
+        };
+    }
+
+    private int GetProficiencyPercentage(string? level)
+    {
+        return level switch
+        {
+            "Expert" => 95,
+            "Advanced" => 75,
+            "Intermediate" => 50,
+            "Beginner" => 25,
+            _ => 0
+        };
+    }
+}

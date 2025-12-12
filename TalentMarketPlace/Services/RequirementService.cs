@@ -1,0 +1,162 @@
+﻿using Microsoft.EntityFrameworkCore;
+using TalentMarketPlace.Data;
+using TalentMarketPlace.Services.Interfaces;
+
+namespace TalentMarketPlace.Services;
+
+public class RequirementService : IRequirementService
+{
+    private readonly TalentMarketplaceDbContext _context;
+    private readonly ISearchService _searchService;
+
+    public RequirementService(TalentMarketplaceDbContext context, ISearchService searchService)
+    {
+        _context = context;
+        _searchService = searchService;
+    }
+
+    public async Task<Requirement?> GetByIdAsync(int requirementId)
+    {
+        return await _context.Requirements
+            .Include(r => r.PostedBy)
+            .Include(r => r.Team)
+            .Include(r => r.RequirementSkills)
+                .ThenInclude(rs => rs.Skill)
+            .Include(r => r.Applications)
+            .FirstOrDefaultAsync(r => r.RequirementId == requirementId);
+    }
+
+    public async Task<List<Requirement>> GetAllAsync(bool activeOnly = true)
+    {
+        var query = _context.Requirements
+            .Include(r => r.PostedBy)
+            .Include(r => r.Team)
+            .Include(r => r.RequirementSkills)
+                .ThenInclude(rs => rs.Skill)
+            .AsQueryable();
+
+        if (activeOnly)
+        {
+            query = query.Where(r => r.IsActive && r.Status == "Open");
+        }
+
+        return await query
+            .OrderByDescending(r => r.PostedDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<Requirement>> GetByManagerAsync(int managerId)
+    {
+        return await _context.Requirements
+            .Include(r => r.Team)
+            .Include(r => r.RequirementSkills)
+                .ThenInclude(rs => rs.Skill)
+            .Include(r => r.Applications)
+            .Where(r => r.PostedById == managerId)
+            .OrderByDescending(r => r.PostedDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<Requirement>> GetByTeamAsync(int teamId)
+    {
+        return await _context.Requirements
+            .Include(r => r.PostedBy)
+            .Include(r => r.RequirementSkills)
+                .ThenInclude(rs => rs.Skill)
+            .Where(r => r.TeamId == teamId && r.IsActive)
+            .OrderByDescending(r => r.PostedDate)
+            .ToListAsync();
+    }
+
+    public async Task<Requirement> CreateAsync(Requirement requirement)
+    {
+        requirement.PostedDate = DateTime.UtcNow;
+        requirement.IsActive = true;
+        requirement.Status = "Open";
+        _context.Requirements.Add(requirement);
+        await _context.SaveChangesAsync();
+        return requirement;
+    }
+
+    public async Task<Requirement> UpdateAsync(Requirement requirement)
+    {
+        _context.Requirements.Update(requirement);
+        await _context.SaveChangesAsync();
+        return requirement;
+    }
+
+    public async Task<bool> CloseAsync(int requirementId)
+    {
+        var requirement = await _context.Requirements.FindAsync(requirementId);
+        if (requirement == null) return false;
+
+        requirement.Status = "Closed";
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int requirementId)
+    {
+        var requirement = await _context.Requirements.FindAsync(requirementId);
+        if (requirement == null) return false;
+
+        requirement.IsActive = false;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<RequirementSkill>> GetRequirementSkillsAsync(int requirementId)
+    {
+        return await _context.RequirementSkills
+            .Include(rs => rs.Skill)
+            .Where(rs => rs.RequirementId == requirementId)
+            .OrderByDescending(rs => rs.IsMandatory)
+            .ThenBy(rs => rs.Skill.SkillName)
+            .ToListAsync();
+    }
+
+    public async Task<RequirementSkill> AddSkillAsync(RequirementSkill requirementSkill)
+    {
+        _context.RequirementSkills.Add(requirementSkill);
+        await _context.SaveChangesAsync();
+        return requirementSkill;
+    }
+
+    public async Task<bool> RemoveSkillAsync(int requirementSkillId)
+    {
+        var skill = await _context.RequirementSkills.FindAsync(requirementSkillId);
+        if (skill == null) return false;
+
+        _context.RequirementSkills.Remove(skill);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<EmployeeSearchResult>> FindMatchingEmployeesAsync(int requirementId)
+    {
+        var requirement = await GetByIdAsync(requirementId);
+        if (requirement == null) return new List<EmployeeSearchResult>();
+
+        var skillIds = requirement.RequirementSkills.Select(rs => rs.SkillId).ToList();
+
+        var searchQuery = new SearchQuery
+        {
+            SkillIds = skillIds,
+            Location = requirement.Location,
+            RequirementId = requirementId
+        };
+
+        var result = await _searchService.SearchEmployeesAsync(searchQuery);
+        return result.Employees;
+    }
+
+    public async Task<bool> IncrementViewCountAsync(int requirementId)
+    {
+        var requirement = await _context.Requirements.FindAsync(requirementId);
+        if (requirement == null) return false;
+
+        requirement.ViewCount++;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+}

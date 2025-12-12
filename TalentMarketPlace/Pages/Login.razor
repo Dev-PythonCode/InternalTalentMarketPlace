@@ -1,0 +1,169 @@
+﻿@page "/login"
+@page "/"
+@layout EmptyLayout
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider/>
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="login-container">
+    <MudPaper Elevation="3" Class="pa-8" Style="max-width: 400px; margin: 100px auto;">
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Primary" />
+            <MudText Typo="Typo.h4" Class="mt-2">Talent Marketplace</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Find Internal Talent First</MudText>
+        </div>
+
+        <MudText Typo="Typo.h6" Class="mb-4">Sign In</MudText>
+
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4" Style="width: 100%;">
+            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "HR" ? Variant.Filled : Variant.Outlined)" 
+                       OnClick="@(() => SelectRole("HR"))">
+                <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Class="mr-1" Size="Size.Small" />
+                HR
+            </MudButton>
+            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "Manager" ? Variant.Filled : Variant.Outlined)"
+                       OnClick="@(() => SelectRole("Manager"))">
+                <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-1" Size="Size.Small" />
+                Manager
+            </MudButton>
+            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "Employee" ? Variant.Filled : Variant.Outlined)"
+                       OnClick="@(() => SelectRole("Employee"))">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-1" Size="Size.Small" />
+                Employee
+            </MudButton>
+        </MudButtonGroup>
+
+        <MudTextField @bind-Value="_email" Label="Email Address" Variant="Variant.Outlined" 
+                      InputType="InputType.Email" Class="mb-3" FullWidth="true"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
+
+        <MudTextField @bind-Value="_password" Label="Password" Variant="Variant.Outlined" 
+                      InputType="InputType.Password" Class="mb-4" FullWidth="true"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" 
+                   OnClick="HandleLogin" Disabled="@_isLoading">
+            @if (_isLoading)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+            }
+            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+            Sign In
+        </MudButton>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+            Demo Accounts:
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+            HR: hr.manager@company.com
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+            Manager: tech.manager@company.com
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+            Employee: arun.kumar@company.com
+        </MudText>
+    </MudPaper>
+</div>
+
+@code {
+    private string _email = "tech.manager@company.com"; // Default to Manager
+    private string _password = "";
+    private string _selectedRole = "Manager"; // Default to Manager
+    private string _errorMessage = "";
+    private bool _isLoading = false;
+
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#6366f1",
+            Secondary = "#8b5cf6"
+        }
+    };
+
+    private void SelectRole(string role)
+    {
+        _selectedRole = role;
+        UpdateDefaultEmail();
+        StateHasChanged();
+    }
+
+    private void UpdateDefaultEmail()
+    {
+        _email = _selectedRole switch
+        {
+            "HR" => "hr.manager@company.com",
+            "Manager" => "tech.manager@company.com",
+            "Employee" => "arun.kumar@company.com",
+            _ => ""
+        };
+    }
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(_email))
+        {
+            _errorMessage = "Please enter your email address";
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = "";
+
+        try
+        {
+            var result = await AuthService.LoginAsync(_email, _password);
+
+            if (result.Success)
+            {
+                Snackbar.Add($"Welcome back, {result.Employee?.FullName ?? "User"}!", Severity.Success);
+                
+                var redirectUrl = result.User?.Role switch
+                {
+                    "HR" => "/dashboard",
+                    "Manager" => "/dashboard",
+                    "Employee" => "/job-board",
+                    _ => "/dashboard"
+                };
+
+                Navigation.NavigateTo(redirectUrl, true);
+            }
+            else
+            {
+                _errorMessage = result.Error ?? "Invalid credentials";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "An error occurred during login";
+            Console.WriteLine($"Login error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}
+
+<style>
+    .login-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

@@ -1,0 +1,438 @@
+@page "/post-requirement"
+@inject IRequirementService RequirementService
+@inject ISkillService SkillService
+@inject IAuthService AuthService
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-2">Manage Requirements</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    View and manage all job/project requirements
+</MudText>
+
+<!-- Filter Bar and Create Button -->
+<MudPaper Class="pa-3 mb-3" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Status Filter" Value="_statusFilter" ValueChanged="OnStatusFilterChanged"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@("All")">All Status</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Open")">Open</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Closed")">Closed</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Filled")">Filled</MudSelectItem>
+                <MudSelectItem T="string" Value="@("On Hold")">On Hold</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Priority Filter" Value="_priorityFilter" ValueChanged="OnPriorityFilterChanged"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@("All")">All Priorities</MudSelectItem>
+                <MudSelectItem T="string" Value="@("High")">High</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Medium")">Medium</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Low")">Low</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_searchText" Label="Search" 
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudItem>
+        <MudItem xs="12" md="3" Class="d-flex align-center justify-end">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                       OnClick="OpenCreateDialog"
+                       StartIcon="@Icons.Material.Filled.Add" Size="Size.Medium">
+                Post New Requirement
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<!-- Requirements Grid -->
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (FilteredRequirements.Any())
+{
+    <MudTable Items="@FilteredRequirements" Dense="false" Hover="true" Striped="true" Elevation="2">
+        <HeaderContent>
+            <MudTh>Title</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Team / Location</MudTh>
+            <MudTh>Required Skills</MudTh>
+            <MudTh>Applications</MudTh>
+            <MudTh>Posted Date</MudTh>
+            <MudTh Style="text-align: center;">Search Matching Employee</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Title">
+                <MudLink OnClick="@(() => OpenEditDialog(context))" Color="Color.Primary" Underline="Underline.Hover">
+                    <strong>@context.Title</strong>
+                </MudLink>
+                <br />
+                <MudChip T="string" Size="Size.Small" Color="@GetPriorityColor(context.Priority)" Class="mt-1">
+                    @context.Priority Priority
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Team / Location">
+                <div>@(context.Team?.TeamName ?? "-")</div>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                    @(context.Location ?? "Any")
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Required Skills">
+                @if (context.RequirementSkills?.Any() == true)
+                {
+                    <div>
+                        @foreach (var reqSkill in context.RequirementSkills.Take(2))
+                        {
+                            <MudChip T="string" Size="Size.Small" 
+                                     Color="@(reqSkill.IsMandatory ? Color.Error : Color.Default)" 
+                                     Variant="Variant.Text" Class="pa-1">
+                                @reqSkill.Skill.SkillName (@reqSkill.MinYearsRequired yr)
+                                @if (reqSkill.IsMandatory)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" />
+                                }
+                            </MudChip>
+                            <br />
+                        }
+                        @if (context.RequirementSkills.Count > 2)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info">
+                                +@(context.RequirementSkills.Count - 2) more
+                            </MudChip>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">No skills</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Applications">
+                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                    @context.ApplicationCount
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Posted">
+                <div>@context.PostedDate.ToString("MMM dd, yyyy")</div>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @GetTimeAgo(context.PostedDate)
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Search" Style="text-align: center;">
+                <MudTooltip Text="Search Matching Employees">
+                    <MudIconButton Icon="@Icons.Material.Filled.Search" 
+                                   Color="Color.Primary" Size="Size.Medium"
+                                   OnClick="@(() => SearchMatchingEmployees(context))"
+                                   Disabled="@(context.RequirementSkills?.Any() != true)" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+else
+{
+    <MudPaper Class="pa-8 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.WorkOff" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No Requirements Found</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+            @if (!string.IsNullOrEmpty(_searchText) || _statusFilter != "All" || _priorityFilter != "All")
+            {
+                <span>No requirements match your filters. Try adjusting your search criteria.</span>
+            }
+            else
+            {
+                <span>You haven't posted any requirements yet. Click the button below to get started.</span>
+            }
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                   OnClick="OpenCreateDialog"
+                   StartIcon="@Icons.Material.Filled.Add">
+            Post New Requirement
+        </MudButton>
+    </MudPaper>
+}
+
+@code {
+    private List<Requirement> _myRequirements = new();
+    private List<Skill> _availableSkills = new();
+    private bool _isLoading = true;
+    
+    private string _statusFilter = "All";
+    private string _priorityFilter = "All";
+    private string _searchText = "";
+
+    private IEnumerable<Requirement> FilteredRequirements
+    {
+        get
+        {
+            var filtered = _myRequirements.AsEnumerable();
+            
+            if (_statusFilter != "All")
+                filtered = filtered.Where(r => r.Status == _statusFilter);
+            
+            if (_priorityFilter != "All")
+                filtered = filtered.Where(r => r.Priority == _priorityFilter);
+            
+            if (!string.IsNullOrWhiteSpace(_searchText))
+                filtered = filtered.Where(r => 
+                    r.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                    r.Description?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) == true);
+            
+            return filtered.OrderByDescending(r => r.PostedDate);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
+        try
+        {
+            Console.WriteLine("Loading skills...");
+            _availableSkills = await SkillService.GetAllAsync();
+            Console.WriteLine($"Loaded {_availableSkills.Count} skills");
+            
+            var employee = await AuthService.GetCurrentEmployeeAsync();
+            if (employee != null)
+            {
+                Console.WriteLine($"Loading requirements for employee {employee.EmployeeId}...");
+                _myRequirements = await RequirementService.GetByManagerAsync(employee.EmployeeId);
+                Console.WriteLine($"Loaded {_myRequirements.Count} requirements");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in LoadData: {ex.Message}");
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnStatusFilterChanged(string value)
+    {
+        _statusFilter = value;
+        StateHasChanged();
+    }
+
+    private void OnPriorityFilterChanged(string value)
+    {
+        _priorityFilter = value;
+        StateHasChanged();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_availableSkills.Any())
+        {
+            Snackbar.Add("Skills are still loading, please wait...", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters 
+        { 
+            ["AvailableSkills"] = _availableSkills,
+            ["IsEditMode"] = false
+        };
+        
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<RequirementDialog>("Post New Requirement", parameters, options);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data is Requirement newRequirement)
+        {
+            await SaveRequirement(newRequirement);
+        }
+    }
+
+    private async Task OpenEditDialog(Requirement requirement)
+    {
+        var parameters = new DialogParameters 
+        { 
+            ["AvailableSkills"] = _availableSkills,
+            ["Requirement"] = requirement,
+            ["IsEditMode"] = true
+        };
+        
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<RequirementDialog>("Edit Requirement", parameters, options);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data is Requirement updatedRequirement)
+        {
+            await UpdateRequirement(updatedRequirement);
+        }
+    }
+
+    private async Task SaveRequirement(Requirement requirement)
+    {
+        try
+        {
+            var employee = await AuthService.GetCurrentEmployeeAsync();
+            if (employee == null)
+            {
+                Snackbar.Add("Not authenticated", Severity.Error);
+                return;
+            }
+
+            requirement.PostedById = employee.EmployeeId;
+            requirement.PostedDate = DateTime.UtcNow;
+            requirement.IsActive = true;
+            requirement.ViewCount = 0;
+            requirement.ApplicationCount = 0;
+
+            var created = await RequirementService.CreateAsync(requirement);
+
+            if (requirement.RequirementSkills?.Any() == true)
+            {
+                foreach (var skill in requirement.RequirementSkills)
+                {
+                    skill.RequirementId = created.RequirementId;
+                    skill.ProficiencyLevel = skill.ProficiencyLevel ?? "Intermediate";
+                    skill.Weightage = skill.Weightage > 0 ? skill.Weightage : 1;
+                    
+                    try
+                    {
+                        await RequirementService.AddSkillAsync(skill);
+                    }
+                    catch (Exception skillEx)
+                    {
+                        Console.WriteLine($"Error adding skill: {skillEx.Message}");
+                    }
+                }
+            }
+
+            try
+            {
+                await NotificationService.NotifyMatchingEmployeesAsync(created.RequirementId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error notifying employees: {ex.Message}");
+            }
+            
+            Snackbar.Add("Requirement posted successfully!", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error posting requirement: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Full error: {ex}");
+        }
+    }
+
+    private async Task UpdateRequirement(Requirement updatedRequirement)
+    {
+        try
+        {
+            var existingRequirement = await RequirementService.GetByIdAsync(updatedRequirement.RequirementId);
+            
+            if (existingRequirement == null)
+            {
+                Snackbar.Add("Requirement not found", Severity.Error);
+                return;
+            }
+
+            existingRequirement.Title = updatedRequirement.Title;
+            existingRequirement.Description = updatedRequirement.Description;
+            existingRequirement.TeamId = updatedRequirement.TeamId;
+            existingRequirement.Location = updatedRequirement.Location;
+            existingRequirement.Duration = updatedRequirement.Duration;
+            existingRequirement.StartDate = updatedRequirement.StartDate;
+            existingRequirement.Priority = updatedRequirement.Priority;
+            existingRequirement.Status = updatedRequirement.Status;
+
+            await RequirementService.UpdateAsync(existingRequirement);
+            
+            Snackbar.Add("Requirement updated successfully!", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating requirement: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Update error: {ex}");
+        }
+    }
+
+    private void SearchMatchingEmployees(Requirement requirement)
+    {
+        var skillIds = string.Join(",", requirement.RequirementSkills?.Select(rs => rs.SkillId) ?? new List<int>());
+        var minExp = requirement.RequirementSkills?.Min(rs => rs.MinYearsRequired) ?? 0;
+        var location = requirement.Location ?? "";
+        
+        var queryString = $"?Skills={skillIds}";
+        if (minExp > 0)
+        {
+            queryString += $"&Exp={minExp}";
+        }
+        if (!string.IsNullOrEmpty(location) && location != "Any")
+        {
+            queryString += $"&Loc={Uri.EscapeDataString(location)}";
+        }
+        queryString += "&Avail=Available";
+        
+        Navigation.NavigateTo($"/search-results{queryString}");
+    }
+
+    private Color GetPriorityColor(string priority)
+    {
+        return priority switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Low" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Open" => Color.Success,
+            "Closed" => Color.Default,
+            "Filled" => Color.Info,
+            "On Hold" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private string GetTimeAgo(DateTime date)
+    {
+        var diff = DateTime.Now - date;
+        if (diff.TotalDays < 1) return "today";
+        if (diff.TotalDays < 2) return "yesterday";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
+        if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)} weeks ago";
+        return $"{(int)(diff.TotalDays / 30)} months ago";
+    }
+}

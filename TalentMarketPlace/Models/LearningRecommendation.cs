@@ -2,6 +2,7 @@
 
 public class LearningRecommendation
 {
+    [Key]
     public int RecommendationId { get; set; }
 
     public int EmployeeId { get; set; }

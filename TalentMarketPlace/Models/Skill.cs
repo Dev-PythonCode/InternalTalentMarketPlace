@@ -2,6 +2,7 @@
 
 public class Skill
 {
+    [Key]
     public int SkillId { get; set; }
 
     [Required]

@@ -1,0 +1,513 @@
+﻿@* SearchResults.razor *@
+@* Enhanced to show experience context and new entity types *@
+
+@page "/search-results"
+@inject ISearchService SearchService
+@inject ISkillService SkillService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">Search Talent</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Use natural language or filters to find employees with AI-powered search
+</MudText>
+
+<!-- ⭐ ENHANCED: AI Chatbot Section with better prompts -->
+<MudPaper Class="pa-3 mb-3" Style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+    <MudGrid>
+        <MudItem xs="10">
+            <MudTextField @bind-Value="_chatQuery" 
+                          Placeholder="Try: Python developer with 5 years of Python | Senior cloud engineer in Bangalore | 8 years total experience" 
+                          Variant="Variant.Filled" Style="background: white; border-radius: 8px;"
+                          Immediate="true" OnKeyDown="HandleChatKeyDown" Disabled="@_isLoading" />
+        </MudItem>
+        <MudItem xs="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="PerformChatSearch" 
+                       FullWidth="true" Style="height: 56px;" Disabled="@_isLoading">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Send" />
+                }
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+    
+    <!-- ⭐ NEW: Quick example queries -->
+    <MudText Typo="Typo.caption" Class="mt-2" Style="opacity: 0.9">
+        Examples: 
+        <MudLink Color="Color.Inherit" Style="text-decoration: underline; cursor: pointer" @onclick='() => SetQuery("Python developer with 5 years of Python")'>
+            Python with 5 years
+        </MudLink> | 
+        <MudLink Color="Color.Inherit" Style="text-decoration: underline; cursor: pointer" @onclick='() => SetQuery("Cloud platform expert with 8 years total experience")'>
+            Cloud expert, 8 years total
+        </MudLink>
+    </MudText>
+</MudPaper>
+
+<!-- Compact Search Filters (unchanged) -->
+<MudPaper Class="pa-3 mb-3" Elevation="1">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="3">
+            <MudSelect T="int" Label="Skills" MultiSelection="true" 
+                       @bind-SelectedValues="_selectedSkillIds" Variant="Variant.Outlined"
+                       AnchorOrigin="Origin.BottomCenter" Dense="true" Margin="Margin.Dense">
+                @foreach (var skill in _skills)
+                {
+                    <MudSelectItem T="int" Value="@skill.SkillId">@skill.SkillName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        
+        <MudItem xs="6" md="2">
+            <MudSelect T="decimal?" Label="Min Exp" @bind-Value="_minExperience" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="decimal?" Value="@((decimal?)null)">Any</MudSelectItem>
+                <MudSelectItem T="decimal?" Value="@((decimal?)1)">1+ yrs</MudSelectItem>
+                <MudSelectItem T="decimal?" Value="@((decimal?)2)">2+ yrs</MudSelectItem>
+                <MudSelectItem T="decimal?" Value="@((decimal?)3)">3+ yrs</MudSelectItem>
+                <MudSelectItem T="decimal?" Value="@((decimal?)5)">5+ yrs</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        
+        <MudItem xs="6" md="2">
+            <MudSelect T="string" Label="Location" @bind-Value="_location" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@string.Empty">All</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Bangalore")">Bangalore</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Chennai")">Chennai</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Mumbai")">Mumbai</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Hyderabad")">Hyderabad</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        
+        <MudItem xs="6" md="2">
+            <MudSelect T="string" Label="Availability" @bind-Value="_availability" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="string" Value="@("Any")">Any</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Available")">Available</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Limited")">Limited</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        
+        <MudItem xs="6" md="3" Class="d-flex align-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="PerformFilterSearch" 
+                       FullWidth="true" StartIcon="@Icons.Material.Filled.Search" Size="Size.Medium"
+                       Disabled="@_isLoading">
+                Search
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<!-- Results Section -->
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="d-block mx-auto my-8" />
+    <MudText Typo="Typo.body1" Align="Align.Center">
+        Analyzing query with AI... 🤖
+    </MudText>
+}
+else if (_searchResult != null && _searchResult.Employees.Any())
+{
+    <div class="d-flex justify-space-between align-center mb-3">
+        <div>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                <strong>Found @_searchResult.TotalCount employees</strong>
+            </MudText>
+            
+            <!-- ⭐ ENHANCED: Show applied filters with better formatting -->
+            @if (_searchResult.AppliedFilters?.Any() == true)
+            {
+                <div class="mt-2">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                        Applied Filters:
+                    </MudText>
+                    @foreach (var filter in _searchResult.AppliedFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="mr-1 mb-1">
+                            @filter
+                        </MudChip>
+                    }
+                </div>
+            }
+        </div>
+        <MudSelect T="string" Label="Sort by" Value="_sortBy" ValueChanged="OnSortChanged" 
+                   Variant="Variant.Outlined" Style="width: 150px;" Dense="true" Margin="Margin.Dense">
+            <MudSelectItem T="string" Value="@("MatchPercentage")">Match %</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Experience")">Experience</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Name")">Name</MudSelectItem>
+        </MudSelect>
+    </div>
+
+    @foreach (var employee in _searchResult.Employees)
+    {
+        <MudCard Class="mb-2" Elevation="1">
+            <MudCardContent Class="py-2">
+                <MudGrid>
+                    <MudItem xs="12" md="1" Class="d-flex align-center justify-center">
+                        <MudAvatar Color="Color.Primary" Size="Size.Large">
+                            @employee.FullName[0]
+                        </MudAvatar>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="7">
+                        <div class="d-flex align-center">
+                            <MudText Typo="Typo.subtitle1"><strong>@employee.FullName</strong></MudText>
+                            
+                            <!-- ⭐ NEW: Show experience context badge -->
+                            @if (!string.IsNullOrEmpty(employee.ExperienceContext))
+                            {
+                                var (contextColor, contextIcon, contextText) = GetExperienceContextBadge(employee.ExperienceContext);
+                                <MudTooltip Text="@contextText">
+                                    <MudChip T="string" Size="Size.Small" Color="@contextColor" Icon="@contextIcon" Class="ml-2">
+                                        @(employee.ExperienceContext == "skill_specific" ? "Skill Match" : "Overall Match")
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                        </div>
+                        
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @employee.Designation • @(employee.TeamName ?? "No Team") • @(employee.Location ?? "Unknown")
+                        </MudText>
+                        
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @employee.YearsOfExperience years total experience
+                        </MudText>
+                        
+                        <!-- Skills display -->
+                        <div class="mt-2">
+                            @foreach (var skill in employee.Skills.Take(6))
+                            {
+                                var chipColor = skill.MatchStatus switch
+                                {
+                                    "Match" => Color.Success,
+                                    "Partial" => Color.Warning,
+                                    _ => Color.Default
+                                };
+                                
+                                var chipIcon = skill.MatchStatus switch
+                                {
+                                    "Match" => Icons.Material.Filled.CheckCircle,
+                                    "Partial" => Icons.Material.Filled.Warning,
+                                    _ => ""
+                                };
+                                
+                                <MudTooltip Text="@($"{skill.ProficiencyLevel} • Last used: {skill.LastUsedDate?.ToString("MMM yyyy") ?? "N/A"}")">
+                                    <MudChip T="string" Size="Size.Small" Color="@chipColor" Variant="Variant.Filled" 
+                                             Icon="@chipIcon" Class="mr-1 mb-1">
+                                        @skill.SkillName (@skill.YearsOfExperience.ToString("0.#") yr)
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                            @if (employee.Skills.Count > 6)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                    +@(employee.Skills.Count - 6) more
+                                </MudChip>
+                            }
+                        </div>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="4" Class="d-flex flex-column align-end justify-center">
+                        <!-- Match percentage -->
+                        <div class="text-center mb-2">
+                            <MudText Typo="Typo.h4" Color="@GetMatchColor(employee.MatchPercentage)">
+                                @employee.MatchPercentage.ToString("0.#")%
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Match Score
+                            </MudText>
+                        </div>
+                        
+                        <!-- Availability badge -->
+                        @{
+                            var (badgeColor, badgeText) = GetAvailabilityBadge(employee.AvailabilityStatus);
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="@badgeColor" Class="mb-2">
+                            @badgeText
+                        </MudChip>
+                        
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                   OnClick="@(() => ViewProfile(employee.EmployeeId))">
+                            View Full Profile
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+else if (_hasSearched)
+{
+    <MudPaper Class="pa-6 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No employees found</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Try adjusting your filters or using different keywords
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Tip: Try "Python developer with 5 years" or "Cloud expert in Bangalore"
+        </MudText>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="pa-6 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.Psychology" Size="Size.Large" Color="Color.Primary" />
+        <MudText Typo="Typo.h6" Class="mt-3">AI-Powered Talent Search</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Enter a natural language query or use filters to find the perfect candidates
+        </MudText>
+        <div class="mt-4">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                <strong>Try these examples:</strong>
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                • "Python developer with 5 years of Python experience"
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                • "Senior cloud engineer with 8 years total experience"
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                • "Frontend developer in Bangalore, available immediately"
+            </MudText>
+        </div>
+    </MudPaper>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Skills { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Exp { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Loc { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Avail { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Q { get; set; }
+
+    private SearchResult? _searchResult;
+    private bool _isLoading = false;
+    private bool _hasSearched = false;
+    private string _sortBy = "MatchPercentage";
+    
+    private List<Skill> _skills = new();
+    private IEnumerable<int> _selectedSkillIds = new HashSet<int>();
+    private decimal? _minExperience = null;
+    private string _location = "";
+    private string _availability = "Any";
+    private string _chatQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _skills = await SkillService.GetAllAsync();
+        
+        // If URL has query parameters, perform search
+        if (!string.IsNullOrEmpty(Q))
+        {
+            _chatQuery = Q;
+            await PerformChatSearch();
+        }
+        else if (!string.IsNullOrEmpty(Skills) || !string.IsNullOrEmpty(Exp) || 
+                 !string.IsNullOrEmpty(Loc) || !string.IsNullOrEmpty(Avail))
+        {
+            await PerformUrlSearch();
+        }
+    }
+
+    private async Task PerformUrlSearch()
+    {
+        _isLoading = true;
+        _hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = new SearchQuery
+            {
+                SortBy = _sortBy,
+                SortDescending = true
+            };
+
+            if (!string.IsNullOrEmpty(Skills))
+            {
+                query.SkillIds = Skills.Split(',').Select(int.Parse).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(Exp) && decimal.TryParse(Exp, out var exp))
+            {
+                query.MinYearsExperience = exp;
+            }
+
+            if (!string.IsNullOrEmpty(Loc))
+            {
+                query.Location = Loc;
+            }
+
+            if (!string.IsNullOrEmpty(Avail) && Avail != "Any")
+            {
+                query.AvailabilityStatus = Avail;
+            }
+
+            _searchResult = await SearchService.SearchEmployeesAsync(query);
+            ApplySorting();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PerformFilterSearch()
+    {
+        _isLoading = true;
+        _hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = new SearchQuery
+            {
+                SkillIds = _selectedSkillIds.ToList(),
+                MinYearsExperience = _minExperience,
+                Location = string.IsNullOrEmpty(_location) ? null : _location,
+                AvailabilityStatus = _availability == "Any" ? null : _availability,
+                SortBy = _sortBy,
+                SortDescending = true
+            };
+
+            _searchResult = await SearchService.SearchEmployeesAsync(query);
+            ApplySorting();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PerformChatSearch()
+    {
+        if (string.IsNullOrWhiteSpace(_chatQuery))
+        {
+            Snackbar.Add("Please enter a search query", Severity.Warning);
+            return;
+        }
+
+        _isLoading = true;
+        _hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            _searchResult = await SearchService.NaturalLanguageSearchAsync(_chatQuery);
+            ApplySorting();
+            
+            Snackbar.Add($"Found {_searchResult.TotalCount} matching employees", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // ⭐ NEW: Set query from example link
+    private async Task SetQuery(string query)
+    {
+        _chatQuery = query;
+        await PerformChatSearch();
+    }
+
+    private async Task HandleChatKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_isLoading)
+        {
+            await PerformChatSearch();
+        }
+    }
+
+    private void ApplySorting()
+    {
+        if (_searchResult?.Employees != null)
+        {
+            _searchResult.Employees = _sortBy switch
+            {
+                "Name" => _searchResult.Employees.OrderBy(e => e.FullName).ToList(),
+                "Experience" => _searchResult.Employees.OrderByDescending(e => e.YearsOfExperience).ToList(),
+                _ => _searchResult.Employees.OrderByDescending(e => e.MatchPercentage).ToList()
+            };
+        }
+    }
+
+    private async Task OnSortChanged(string newSort)
+    {
+        _sortBy = newSort;
+        ApplySorting();
+        StateHasChanged();
+    }
+
+    private void ViewProfile(int employeeId)
+    {
+        Navigation.NavigateTo($"/employee/{employeeId}");
+    }
+
+    private Color GetMatchColor(decimal percentage)
+    {
+        return percentage switch
+        {
+            >= 80 => Color.Success,
+            >= 50 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private (Color, string) GetAvailabilityBadge(string status)
+    {
+        return status switch
+        {
+            "Available" => (Color.Success, "Available"),
+            "Limited" => (Color.Warning, "Limited"),
+            "Not Available" => (Color.Error, "Not Available"),
+            _ => (Color.Default, status)
+        };
+    }
+
+    // ⭐ NEW: Get experience context badge details
+    private (Color Color, string Icon, string Tooltip) GetExperienceContextBadge(string context)
+    {
+        return context switch
+        {
+            "skill_specific" => (
+                Color.Info, 
+                Icons.Material.Filled.Code,
+                "Matched based on specific skill experience"
+            ),
+            "total" => (
+                Color.Primary,
+                Icons.Material.Filled.Work,
+                "Matched based on total career experience"
+            ),
+            _ => (Color.Default, "", "")
+        };
+    }
+}

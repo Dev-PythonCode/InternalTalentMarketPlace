@@ -1,0 +1,406 @@
+﻿@page "/application-review"
+@page "/application-review/{RequirementId:int}"
+@inject IRequirementService RequirementService
+@inject IApplicationService ApplicationService
+@inject IAuthService AuthService
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">Application Review</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="d-block mx-auto my-8" />
+    <MudText Typo="Typo.body1" Align="Align.Center">Loading applications...</MudText>
+}
+else if (!_myRequirements.Any())
+{
+    <MudPaper Class="pa-8 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.PostAdd" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No Requirements Posted</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            You haven't posted any requirements yet.
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3"
+                   Href="/post-requirement" StartIcon="@Icons.Material.Filled.Add">
+            Post Requirement
+        </MudButton>
+    </MudPaper>
+}
+else
+{
+    <!-- Requirement Selector -->
+    <MudSelect T="int?" Value="_selectedRequirementId"
+               ValueChanged="OnRequirementChanged">
+        @foreach (var req in _myRequirements)
+        {
+            <MudSelectItem T="int?" Value="@req.RequirementId">
+                @req.Title (@req.ApplicationCount applications)
+            </MudSelectItem>
+        }
+    </MudSelect>
+
+    @if (_selectedRequirement != null)
+    {
+        <!-- Stats Summary -->
+        @if (_applications.Any())
+        {
+            <div class="d-flex gap-2 mb-4">
+                <MudChip T="string" Color="Color.Primary">@_applications.Count Total Applications</MudChip>
+                <MudChip T="string" Color="Color.Success">@_applications.Count(a => a.AIScore >= 80) Good Fit</MudChip>
+                <MudChip T="string" Color="Color.Warning">@_applications.Count(a => a.AIScore >= 60 && a.AIScore < 80) Needs Training</MudChip>
+                <MudChip T="string" Color="Color.Error">@_applications.Count(a => a.AIScore < 60) Not Recommended</MudChip>
+            </div>
+        }
+
+        @if (_applications.Any())
+        {
+            @foreach (var app in _applications.OrderByDescending(a => a.AIScore))
+            {
+                <MudCard Class="mb-3">
+                    <MudCardContent>
+                        <MudGrid>
+                            <!-- Employee Info -->
+                            <MudItem xs="12" md="8">
+                                <div class="d-flex gap-3 mb-3">
+                                    <MudAvatar Size="Size.Large" Color="Color.Primary">
+                                        @app.Employee.FullName[0]
+                                    </MudAvatar>
+                                    <div>
+                                        <MudText Typo="Typo.h6">@app.Employee.FullName</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            @app.Employee.Designation • @(app.Employee.Team?.TeamName ?? "No Team") • @app.Employee.Location
+                                        </MudText>
+                                        @{
+                                            var (badgeColor, badgeText) = GetAvailabilityBadge(app.Employee.AvailabilityStatus);
+                                        }
+                                        <MudChip T="string" Size="Size.Small" Color="@badgeColor">@badgeText</MudChip>
+                                    </div>
+                                </div>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="4" Class="text-right">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Applied @GetTimeAgo(app.AppliedDate)
+                                </MudText>
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- AI Score Section -->
+                        <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
+                            <div class="mr-4">
+                                <MudText Typo="Typo.h3" Color="@GetScoreColor(app.AIScore ?? 0)">
+                                    @(app.AIScore?.ToString("0") ?? "?")%
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">AI Score</MudText>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.body1">
+                                    <MudIcon Icon="@GetRecommendationIcon(app.AIRecommendation)" 
+                                             Color="@GetRecommendationColor(app.AIRecommendation)" Class="mr-1" />
+                                    <strong style="color: @GetRecommendationColorHex(app.AIRecommendation)">
+                                        @(app.AIRecommendation ?? "Pending Analysis")
+                                    </strong>
+                                </MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    @GetRecommendationDescription(app.AIRecommendation)
+                                </MudText>
+                            </div>
+                        </MudPaper>
+
+                        <!-- Skill Comparison -->
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Skill Comparison</MudText>
+                        <MudGrid>
+                            @foreach (var reqSkill in _selectedRequirement.RequirementSkills)
+                            {
+                                var empSkill = app.Employee.EmployeeSkills.FirstOrDefault(es => es.SkillId == reqSkill.SkillId);
+                                var hasSkill = empSkill != null;
+                                var meetsRequirement = hasSkill && empSkill!.YearsOfExperience >= reqSkill.MinYearsRequired;
+                                
+                                <MudItem xs="6" md="3">
+                                    <MudPaper Class="pa-2" Elevation="0" Style="background: #f9f9f9;">
+                                        <div class="d-flex justify-space-between">
+                                            <span>@reqSkill.Skill.SkillName</span>
+                                            @if (meetsRequirement)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                                            }
+                                            else if (hasSkill)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
+                                            }
+                                            else
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Small" />
+                                            }
+                                        </div>
+                                        <MudText Typo="Typo.caption" Color="@(meetsRequirement ? Color.Success : hasSkill ? Color.Warning : Color.Error)">
+                                            @(hasSkill ? $"{empSkill!.YearsOfExperience} yrs" : "0 yrs") / @reqSkill.MinYearsRequired yrs required
+                                        </MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        </MudGrid>
+
+                        <!-- Learning Suggestions (if needed) -->
+                        @if (app.AIScore < 80)
+                        {
+                            <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background: #fef3c7;">
+                                <MudText Typo="Typo.subtitle2" Style="color: #92400e;">
+                                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
+                                    Suggested Learning Path:
+                                </MudText>
+                                <MudList T="string" Dense="true">
+                                    <MudListItem Dense="true" Style="color: #92400e; font-size: 13px;">
+                                        Complete Python Bootcamp (30 hrs)
+                                    </MudListItem>
+                                    <MudListItem Dense="true" Style="color: #92400e; font-size: 13px;">
+                                        AWS Fundamentals (20 hrs)
+                                    </MudListItem>
+                                </MudList>
+                            </MudPaper>
+                        }
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2 mt-3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Accepted"))"
+                                       StartIcon="@Icons.Material.Filled.Check"
+                                       Disabled="@(app.Status == "Accepted")">
+                                Accept
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Shortlisted"))"
+                                       StartIcon="@Icons.Material.Filled.List"
+                                       Disabled="@(app.Status == "Shortlisted")">
+                                Shortlist
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Rejected"))"
+                                       StartIcon="@Icons.Material.Filled.Close"
+                                       Disabled="@(app.Status == "Rejected")">
+                                Reject
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Comment">
+                                Add Feedback
+                            </MudButton>
+                        </div>
+
+                        @if (app.Status != "Pending")
+                        {
+                            <MudAlert Severity="@GetStatusSeverity(app.Status)" Dense="true" Class="mt-2">
+                                Status: @app.Status
+                                @if (app.ReviewedDate.HasValue)
+                                {
+                                    <span> • Reviewed @app.ReviewedDate.Value.ToString("MMM dd, yyyy")</span>
+                                }
+                            </MudAlert>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            }
+        }
+        else
+        {
+            <MudPaper Class="pa-8 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.h6" Class="mt-3">No applications yet</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Applications will appear here once employees apply to your requirements.
+                </MudText>
+            </MudPaper>
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public int? RequirementId { get; set; }
+
+    private List<Requirement> _myRequirements = new();
+    private List<Application> _applications = new();
+    private Requirement? _selectedRequirement;
+    private int? _selectedRequirementId;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequirements();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (RequirementId.HasValue && RequirementId != _selectedRequirementId)
+        {
+            _selectedRequirementId = RequirementId;
+            await LoadApplications();
+        }
+    }
+
+    private async Task LoadRequirements()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var employee = await AuthService.GetCurrentEmployeeAsync();
+            if (employee == null)
+            {
+                Snackbar.Add("Not authenticated", Severity.Error);
+                return;
+            }
+
+            _myRequirements = await RequirementService.GetByManagerAsync(employee.EmployeeId);
+
+            if (RequirementId.HasValue)
+            {
+                _selectedRequirementId = RequirementId;
+            }
+            else if (_myRequirements.Any())
+            {
+                _selectedRequirementId = _myRequirements.First().RequirementId;
+            }
+
+            if (_selectedRequirementId.HasValue)
+            {
+                await LoadApplications();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading requirements: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OnRequirementChanged(int? newRequirementId)
+    {
+        _selectedRequirementId = newRequirementId;
+        await LoadApplications();
+    }
+
+    private async Task LoadApplications()
+    {
+        if (!_selectedRequirementId.HasValue) return;
+
+        _isLoading = true;
+
+        try
+        {
+            _selectedRequirement = await RequirementService.GetByIdAsync(_selectedRequirementId.Value);
+            _applications = await ApplicationService.GetByRequirementAsync(_selectedRequirementId.Value);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading applications: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task UpdateStatus(int applicationId, string status)
+    {
+        try
+        {
+            await ApplicationService.UpdateStatusAsync(applicationId, status, null);
+            await NotificationService.NotifyApplicationStatusAsync(applicationId);
+            
+            // Refresh
+            await LoadApplications();
+            
+            Snackbar.Add($"Application {status.ToLower()}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating status: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private (Color, string) GetAvailabilityBadge(string status)
+    {
+        return status switch
+        {
+            "Available" => (Color.Success, "Available"),
+            "Limited" => (Color.Warning, "Limited"),
+            _ => (Color.Error, "Not Available")
+        };
+    }
+
+    private Color GetScoreColor(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => Color.Success,
+            >= 60 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private string GetRecommendationIcon(string? recommendation)
+    {
+        return recommendation switch
+        {
+            "Good fit" => Icons.Material.Filled.CheckCircle,
+            "Needs training" => Icons.Material.Filled.Warning,
+            _ => Icons.Material.Filled.Cancel
+        };
+    }
+
+    private Color GetRecommendationColor(string? recommendation)
+    {
+        return recommendation switch
+        {
+            "Good fit" => Color.Success,
+            "Needs training" => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private string GetRecommendationColorHex(string? recommendation)
+    {
+        return recommendation switch
+        {
+            "Good fit" => "#10b981",
+            "Needs training" => "#f59e0b",
+            _ => "#ef4444"
+        };
+    }
+
+    private string GetRecommendationDescription(string? recommendation)
+    {
+        return recommendation switch
+        {
+            "Good fit" => "Candidate meets or exceeds all mandatory skill requirements with strong experience levels.",
+            "Needs training" => "Candidate has foundational skills but would benefit from upskilling.",
+            "Not recommended" => "Significant skill gaps exist for this role.",
+            _ => "Analysis pending"
+        };
+    }
+
+    private Severity GetStatusSeverity(string status)
+    {
+        return status switch
+        {
+            "Accepted" => Severity.Success,
+            "Shortlisted" => Severity.Info,
+            "Rejected" => Severity.Error,
+            _ => Severity.Normal
+        };
+    }
+
+    private string GetTimeAgo(DateTime date)
+    {
+        var diff = DateTime.Now - date;
+        if (diff.TotalHours < 1) return "just now";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} hours ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
+        return date.ToString("MMM dd");
+    }
+}

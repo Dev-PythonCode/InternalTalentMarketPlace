@@ -2,6 +2,7 @@
 
 public class SkillAlias
 {
+    [Key]
     public int AliasId { get; set; }
 
     public int SkillId { get; set; }

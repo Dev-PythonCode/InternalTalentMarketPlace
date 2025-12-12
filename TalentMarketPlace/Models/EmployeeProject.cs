@@ -2,6 +2,7 @@
 
 public class EmployeeProject
 {
+    [Key]
     public int ProjectId { get; set; }
 
     public int EmployeeId { get; set; }
