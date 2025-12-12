@@ -17,11 +17,11 @@ namespace TalentMarketPlace.Migrations
                 name: "SkillCategories",
                 columns: table => new
                 {
-                    CategoryId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CategoryName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    DisplayOrder = table.Column<int>(type: "int", nullable: false)
+                    CategoryId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CategoryName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    DisplayOrder = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -32,13 +32,13 @@ namespace TalentMarketPlace.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Role = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -49,13 +49,13 @@ namespace TalentMarketPlace.Migrations
                 name: "Skills",
                 columns: table => new
                 {
-                    SkillId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SkillName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SkillName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    CategoryId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -72,17 +72,17 @@ namespace TalentMarketPlace.Migrations
                 name: "LearningResources",
                 columns: table => new
                 {
-                    ResourceId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
-                    ResourceTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Provider = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ResourceUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    ResourceType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    DurationHours = table.Column<int>(type: "int", nullable: false),
-                    Level = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ResourceId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ResourceTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Provider = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ResourceUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    ResourceType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    DurationHours = table.Column<int>(type: "INTEGER", nullable: false),
+                    Level = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Rating = table.Column<decimal>(type: "decimal(3,2)", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -99,11 +99,11 @@ namespace TalentMarketPlace.Migrations
                 name: "SkillAliases",
                 columns: table => new
                 {
-                    AliasId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
-                    AliasName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    AliasId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AliasName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,18 +120,18 @@ namespace TalentMarketPlace.Migrations
                 name: "Applications",
                 columns: table => new
                 {
-                    ApplicationId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RequirementId = table.Column<int>(type: "int", nullable: false),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    CoverLetter = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    ApplicationId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RequirementId = table.Column<int>(type: "INTEGER", nullable: false),
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    CoverLetter = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
                     MatchPercentage = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     AIScore = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    AIRecommendation = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ManagerFeedback = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    AppliedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReviewedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    AIRecommendation = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ManagerFeedback = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    AppliedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReviewedDate = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -142,16 +142,16 @@ namespace TalentMarketPlace.Migrations
                 name: "EmployeeProjects",
                 columns: table => new
                 {
-                    ProjectId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    ProjectName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Client = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ProjectName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Role = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Client = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -162,10 +162,10 @@ namespace TalentMarketPlace.Migrations
                 name: "ProjectSkills",
                 columns: table => new
                 {
-                    ProjectSkillId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ProjectId = table.Column<int>(type: "int", nullable: false),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
+                    ProjectSkillId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false),
                     YearsUsed = table.Column<decimal>(type: "decimal(4,2)", nullable: false)
                 },
                 constraints: table =>
@@ -189,25 +189,25 @@ namespace TalentMarketPlace.Migrations
                 name: "Employees",
                 columns: table => new
                 {
-                    EmployeeId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    TeamId = table.Column<int>(type: "int", nullable: true),
-                    Designation = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    AvailabilityStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    YearsOfExperience = table.Column<int>(type: "int", nullable: false),
-                    JoiningDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    PhotoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ResumeUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    LastResumeUpdate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsVectorIndexed = table.Column<bool>(type: "bit", nullable: false),
-                    VectorIndexedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    FullName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Designation = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    AvailabilityStatus = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    YearsOfExperience = table.Column<decimal>(type: "decimal(4,2)", nullable: false),
+                    JoiningDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    PhotoUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    ResumeUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    LastResumeUpdate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsVectorIndexed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    VectorIndexedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -224,17 +224,17 @@ namespace TalentMarketPlace.Migrations
                 name: "EmployeeSkills",
                 columns: table => new
                 {
-                    EmployeeSkillId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
+                    EmployeeSkillId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false),
                     YearsOfExperience = table.Column<decimal>(type: "decimal(4,2)", nullable: false),
-                    ProficiencyLevel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    LastUsedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Source = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    IsVerified = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ProficiencyLevel = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    LastUsedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Source = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    IsVerified = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -257,15 +257,15 @@ namespace TalentMarketPlace.Migrations
                 name: "SearchHistories",
                 columns: table => new
                 {
-                    SearchId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SearchedById = table.Column<int>(type: "int", nullable: false),
-                    SearchQuery = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Filters = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    ResultCount = table.Column<int>(type: "int", nullable: false),
-                    SearchDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsSaved = table.Column<bool>(type: "bit", nullable: false),
-                    SavedSearchName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    SearchId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SearchedById = table.Column<int>(type: "INTEGER", nullable: false),
+                    SearchQuery = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Filters = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    ResultCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    SearchDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsSaved = table.Column<bool>(type: "INTEGER", nullable: false),
+                    SavedSearchName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -282,13 +282,13 @@ namespace TalentMarketPlace.Migrations
                 name: "Teams",
                 columns: table => new
                 {
-                    TeamId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TeamName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Department = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ManagerId = table.Column<int>(type: "int", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TeamName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Department = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ManagerId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -305,22 +305,22 @@ namespace TalentMarketPlace.Migrations
                 name: "Requirements",
                 columns: table => new
                 {
-                    RequirementId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    PostedById = table.Column<int>(type: "int", nullable: false),
-                    TeamId = table.Column<int>(type: "int", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Duration = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Priority = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ViewCount = table.Column<int>(type: "int", nullable: false),
-                    ApplicationCount = table.Column<int>(type: "int", nullable: false),
-                    PostedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    RequirementId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    PostedById = table.Column<int>(type: "INTEGER", nullable: false),
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Duration = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Priority = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ViewCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    ApplicationCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    PostedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -343,16 +343,16 @@ namespace TalentMarketPlace.Migrations
                 name: "LearningRecommendations",
                 columns: table => new
                 {
-                    RecommendationId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    ResourceId = table.Column<int>(type: "int", nullable: false),
-                    RequirementId = table.Column<int>(type: "int", nullable: true),
-                    Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Priority = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    IsCompleted = table.Column<bool>(type: "bit", nullable: false),
-                    RecommendedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CompletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    RecommendationId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ResourceId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RequirementId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Reason = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Priority = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    IsCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    RecommendedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CompletedDate = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -381,16 +381,16 @@ namespace TalentMarketPlace.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    NotificationId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false),
-                    RequirementId = table.Column<int>(type: "int", nullable: true),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReadDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    NotificationId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    EmployeeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RequirementId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Type = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReadDate = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -413,14 +413,14 @@ namespace TalentMarketPlace.Migrations
                 name: "RequirementSkills",
                 columns: table => new
                 {
-                    RequirementSkillId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RequirementId = table.Column<int>(type: "int", nullable: false),
-                    SkillId = table.Column<int>(type: "int", nullable: false),
+                    RequirementSkillId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RequirementId = table.Column<int>(type: "INTEGER", nullable: false),
+                    SkillId = table.Column<int>(type: "INTEGER", nullable: false),
                     MinYearsRequired = table.Column<decimal>(type: "decimal(4,2)", nullable: false),
-                    ProficiencyLevel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    IsMandatory = table.Column<bool>(type: "bit", nullable: false),
-                    Weightage = table.Column<int>(type: "int", nullable: false)
+                    ProficiencyLevel = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    IsMandatory = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Weightage = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -469,27 +469,27 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "UserId", "CreatedDate", "Email", "IsActive", "PasswordHash", "Role" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5619), "arun.kumar@company.com", true, "hashedpassword1", "Employee" },
-                    { 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5624), "beena.singh@company.com", true, "hashedpassword2", "Employee" },
-                    { 3, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5625), "rajesh.nair@company.com", true, "hashedpassword3", "Employee" },
-                    { 4, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5626), "priya.sharma@company.com", true, "hashedpassword4", "Employee" },
-                    { 5, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5627), "vikram.reddy@company.com", true, "hashedpassword5", "Employee" },
-                    { 6, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5627), "hr.manager@company.com", true, "hashedpassword6", "HR" },
-                    { 7, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5628), "tech.manager@company.com", true, "hashedpassword7", "Manager" }
+                    { 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450), "arun.kumar@company.com", true, "hashedpassword1", "Employee" },
+                    { 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(450), "beena.singh@company.com", true, "hashedpassword2", "Employee" },
+                    { 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "rajesh.nair@company.com", true, "hashedpassword3", "Employee" },
+                    { 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "priya.sharma@company.com", true, "hashedpassword4", "Employee" },
+                    { 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "vikram.reddy@company.com", true, "hashedpassword5", "Employee" },
+                    { 6, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "hr.manager@company.com", true, "hashedpassword6", "HR" },
+                    { 7, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(460), "tech.manager@company.com", true, "hashedpassword7", "Manager" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Employees",
-                columns: new[] { "EmployeeId", "AvailabilityStatus", "CreatedDate", "Designation", "Email", "FullName", "IsVectorIndexed", "JoiningDate", "LastResumeUpdate", "Location", "Phone", "PhotoUrl", "ResumeUrl", "TeamId", "UpdatedDate", "UserId", "VectorIndexedDate", "YearsOfExperience" },
+                columns: new[] { "EmployeeId", "AvailabilityStatus", "CreatedDate", "Designation", "Email", "FullName", "IsVectorIndexed", "JoiningDate", "LastResumeUpdate", "Location", "PhoneNumber", "PhotoUrl", "ResumeUrl", "TeamId", "UpdatedDate", "UserId", "VectorIndexedDate", "YearsOfExperience" },
                 values: new object[,]
                 {
-                    { 1, "Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5672), "Senior Software Engineer", "arun.kumar@company.com", "Arun Kumar", false, new DateTime(2019, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543210", null, null, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5672), 1, null, 5 },
-                    { 2, "Limited", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5683), "DevOps Engineer", "beena.singh@company.com", "Beena Singh", false, new DateTime(2020, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543211", null, null, 3, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5683), 2, null, 4 },
-                    { 3, "Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5687), "Full Stack Developer", "rajesh.nair@company.com", "Rajesh Nair", false, new DateTime(2021, 5, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543212", null, null, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5688), 3, null, 3 },
-                    { 4, "Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5690), "Backend Developer", "priya.sharma@company.com", "Priya Sharma", false, new DateTime(2022, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543213", null, null, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5690), 4, null, 2 },
-                    { 5, "Not Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5692), "Tech Lead", "vikram.reddy@company.com", "Vikram Reddy", false, new DateTime(2016, 11, 5, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543214", null, null, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5692), 5, null, 8 },
-                    { 6, "Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5694), "HR Manager", "hr.manager@company.com", "HR Manager", false, new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543215", null, null, null, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5694), 6, null, 10 },
-                    { 7, "Available", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5696), "Engineering Manager", "tech.manager@company.com", "Tech Manager", false, new DateTime(2012, 6, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543216", null, null, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5696), 7, null, 12 }
+                    { 1, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480), "Senior Software Engineer", "arun.kumar@company.com", "Arun Kumar", false, new DateTime(2019, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543210", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(480), 1, null, 5m },
+                    { 2, "Limited", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "DevOps Engineer", "beena.singh@company.com", "Beena Singh", false, new DateTime(2020, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543211", null, null, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 2, null, 4m },
+                    { 3, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "Full Stack Developer", "rajesh.nair@company.com", "Rajesh Veerasamy", false, new DateTime(2021, 5, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543212", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 3, null, 3m },
+                    { 4, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), "Backend Developer", "priya.sharma@company.com", "Priya Sharma", false, new DateTime(2022, 8, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543213", null, null, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(490), 4, null, 2m },
+                    { 5, "Not Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "Tech Lead", "vikram.reddy@company.com", "Vikram Raja", false, new DateTime(2016, 11, 5, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Chennai", "9876543214", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 5, null, 8m },
+                    { 6, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "HR Manager", "hr.manager@company.com", "HR Manager", false, new DateTime(2014, 1, 10, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543215", null, null, null, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 6, null, 10m },
+                    { 7, "Available", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), "Engineering Manager", "tech.manager@company.com", "Tech Manager", false, new DateTime(2012, 6, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "Bangalore", "9876543216", null, null, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(500), 7, null, 12m }
                 });
 
             migrationBuilder.InsertData(
@@ -497,25 +497,25 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "SkillId", "CategoryId", "CreatedDate", "Description", "IsActive", "SkillName" },
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5535), "Python programming language", true, "Python" },
-                    { 2, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5539), "Java programming language", true, "Java" },
-                    { 3, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5540), "C# programming language", true, "C#" },
-                    { 4, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5541), "JavaScript programming language", true, "JavaScript" },
-                    { 5, 1, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5542), "TypeScript programming language", true, "TypeScript" },
-                    { 6, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5543), "Amazon Web Services", true, "AWS" },
-                    { 7, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5544), "Microsoft Azure", true, "Azure" },
-                    { 8, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5545), "Docker containerization", true, "Docker" },
-                    { 9, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5546), "Kubernetes orchestration", true, "Kubernetes" },
-                    { 10, 2, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5546), "Jenkins CI/CD", true, "Jenkins" },
-                    { 11, 3, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5547), "React.js library", true, "React" },
-                    { 12, 3, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5548), "Angular framework", true, "Angular" },
-                    { 13, 3, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5549), "Vue.js framework", true, "Vue.js" },
-                    { 14, 4, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5550), "Node.js runtime", true, "Node.js" },
-                    { 15, 4, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5550), "ASP.NET Core framework", true, "ASP.NET Core" },
-                    { 16, 4, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5551), "Spring Boot framework", true, "Spring Boot" },
-                    { 17, 5, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5552), "Microsoft SQL Server", true, "SQL Server" },
-                    { 18, 5, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5555), "PostgreSQL database", true, "PostgreSQL" },
-                    { 19, 5, new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5556), "MongoDB NoSQL database", true, "MongoDB" }
+                    { 1, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Python programming language", true, "Python" },
+                    { 2, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Java programming language", true, "Java" },
+                    { 3, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "C# programming language", true, "C#" },
+                    { 4, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "JavaScript programming language", true, "JavaScript" },
+                    { 5, 1, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "TypeScript programming language", true, "TypeScript" },
+                    { 6, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Amazon Web Services", true, "AWS" },
+                    { 7, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Microsoft Azure", true, "Azure" },
+                    { 8, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Docker containerization", true, "Docker" },
+                    { 9, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Kubernetes orchestration", true, "Kubernetes" },
+                    { 10, 2, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Jenkins CI/CD", true, "Jenkins" },
+                    { 11, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "React.js library", true, "React" },
+                    { 12, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Angular framework", true, "Angular" },
+                    { 13, 3, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(410), "Vue.js framework", true, "Vue.js" },
+                    { 14, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Node.js runtime", true, "Node.js" },
+                    { 15, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "ASP.NET Core framework", true, "ASP.NET Core" },
+                    { 16, 4, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Spring Boot framework", true, "Spring Boot" },
+                    { 17, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "Microsoft SQL Server", true, "SQL Server" },
+                    { 18, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "PostgreSQL database", true, "PostgreSQL" },
+                    { 19, 5, new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(420), "MongoDB NoSQL database", true, "MongoDB" }
                 });
 
             migrationBuilder.InsertData(
@@ -523,15 +523,15 @@ namespace TalentMarketPlace.Migrations
                 columns: new[] { "AliasId", "AliasName", "CreatedDate", "SkillId" },
                 values: new object[,]
                 {
-                    { 1, "K8s", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5585), 9 },
-                    { 2, "K8", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5586), 9 },
-                    { 3, "JS", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5588), 4 },
-                    { 4, "TS", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5588), 5 },
-                    { 5, "React.js", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5589), 11 },
-                    { 6, "ReactJS", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5590), 11 },
-                    { 7, "NodeJS", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5591), 14 },
-                    { 8, "MSSQL", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5591), 17 },
-                    { 9, "MS SQL", new DateTime(2025, 11, 19, 16, 22, 45, 875, DateTimeKind.Utc).AddTicks(5592), 17 }
+                    { 1, "K8s", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(430), 9 },
+                    { 2, "K8", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 9 },
+                    { 3, "JS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 4 },
+                    { 4, "TS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 5 },
+                    { 5, "React.js", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 11 },
+                    { 6, "ReactJS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 11 },
+                    { 7, "NodeJS", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 14 },
+                    { 8, "MSSQL", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 17 },
+                    { 9, "MS SQL", new DateTime(2025, 12, 12, 12, 30, 10, 92, DateTimeKind.Utc).AddTicks(440), 17 }
                 });
 
             migrationBuilder.CreateIndex(
