@@ -1,10 +1,11 @@
-﻿// SearchService.cs - UPDATED
+﻿// SearchService.cs - WITH COMPREHENSIVE DEBUG LOGGING
 // Enhanced to handle SpaCy NER experience context (tech-specific vs total)
 
 using Microsoft.EntityFrameworkCore;
 using TalentMarketPlace.Data;
 using TalentMarketPlace.Services.Interfaces;
 using System.Text.Json;
+using TalentMarketPlace.Models;
 
 namespace TalentMarketPlace.Services
 {
@@ -30,7 +31,7 @@ namespace TalentMarketPlace.Services
                 .Include(e => e.Team)
                 .Include(e => e.User)
                 .Include(e => e.EmployeeSkills)
-                    .ThenInclude(es => es.Skill)
+                .ThenInclude(es => es.Skill)
                 .Where(e => e.User.IsActive)
                 .AsQueryable();
 
@@ -62,11 +63,9 @@ namespace TalentMarketPlace.Services
 
             // Calculate match percentage for each employee
             var results = new List<EmployeeSearchResult>();
-
             foreach (var employee in employees)
             {
                 var matchPercentage = CalculateMatchPercentage(employee, query);
-
                 bool shouldInclude = false;
 
                 if (query.SkillIds != null && query.SkillIds.Any())
@@ -136,21 +135,47 @@ namespace TalentMarketPlace.Services
             };
         }
 
-        // ⭐ UPDATED: Enhanced natural language search with experience context
+       // ⭐ COMPLETE FIXED: NaturalLanguageSearchAsync method
+        // Fixes: Location filtering, No-experience searches, Better user guidance
+
         public async Task<SearchResult> NaturalLanguageSearchAsync(string chatQuery)
         {
+            Console.WriteLine("");
+            Console.WriteLine("╔════════════════════════════════════════╗");
+            Console.WriteLine("║  NATURAL LANGUAGE SEARCH STARTED       ║");
+            Console.WriteLine("╚════════════════════════════════════════╝");
+            Console.WriteLine($"Query: {chatQuery}");
+            Console.WriteLine("");
+
             try
             {
                 _logger.LogInformation("Processing natural language query: {Query}", chatQuery);
 
+                Console.WriteLine("🔍 Step 1: Checking Python API health...");
                 var isHealthy = await _pythonApiService.IsHealthyAsync();
+                Console.WriteLine($"   Result: {(isHealthy ? "✅ HEALTHY" : "❌ UNHEALTHY")}");
+
                 if (!isHealthy)
                 {
+                    Console.WriteLine("⚠️ Using fallback search (Python API unavailable)");
                     _logger.LogWarning("Python API is not available, using fallback search");
                     return await FallbackSearchAsync(chatQuery);
                 }
 
+                Console.WriteLine("🔍 Step 2: Calling Python API to parse query...");
                 var parseResult = await _pythonApiService.ParseQueryAsync(chatQuery);
+
+                Console.WriteLine("🔍 Step 3: Python API response received");
+                Console.WriteLine($"   Error: {parseResult.Error ?? "none"}");
+                Console.WriteLine($"   Parsed is null: {parseResult.Parsed == null}");
+
+                if (parseResult.Parsed != null)
+                {
+                    Console.WriteLine($"   Skills: {string.Join(", ", parseResult.Parsed.Skills ?? new List<string>())}");
+                    Console.WriteLine($"   Location: {parseResult.Parsed.Location ?? "none"}");
+                    Console.WriteLine($"   MinYearsExperience: {parseResult.Parsed.MinYearsExperience?.ToString() ?? "none"}");
+                    Console.WriteLine($"   ExperienceContext: {parseResult.Parsed.ExperienceContext?.Type ?? "none"}");
+                }
 
                 if (!string.IsNullOrEmpty(parseResult.Error))
                 {
@@ -158,121 +183,99 @@ namespace TalentMarketPlace.Services
                     return await FallbackSearchAsync(chatQuery);
                 }
 
-                // ⭐ CRITICAL: Get required skills FIRST
+                Console.WriteLine("🔍 Step 4: Extracting values from parse result...");
+
+                // ⭐ Extract all criteria
                 var requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
                 var categorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
                 var minYears = parseResult.Parsed.MinYearsExperience;
                 var expOperator = parseResult.Parsed.ExperienceOperator ?? "gte";
                 var experienceContext = parseResult.Parsed.ExperienceContext;
+                var location = parseResult.Parsed.Location;
 
-                // ⭐ CRITICAL: If NO skills specified, return empty
-                if (!requiredSkills.Any() && !categorySkills.Any())
+                Console.WriteLine($"   requiredSkills: {string.Join(", ", requiredSkills)}");
+                Console.WriteLine($"   location: {location ?? "none"}");
+                Console.WriteLine($"   minYears: {minYears?.ToString() ?? "none"}");
+                Console.WriteLine($"   expOperator: {expOperator}");
+                Console.WriteLine($"   experienceContext: {experienceContext?.Type ?? "none"}");
+                Console.WriteLine("");
+
+                // ⭐ FIX 3: Check what criteria we have
+                var hasSkills = requiredSkills.Any() || categorySkills.Any();
+                var hasLocation = !string.IsNullOrEmpty(location);
+                var hasExperience = minYears.HasValue && minYears.Value > 0;
+
+                Console.WriteLine($"🔍 Search criteria:");
+                Console.WriteLine($"   Has skills: {hasSkills}");
+                Console.WriteLine($"   Has location: {hasLocation}");
+                Console.WriteLine($"   Has experience: {hasExperience}");
+                Console.WriteLine("");
+
+                // ⭐ FIX 3: Better empty query handling
+                if (!hasSkills && !hasLocation)
                 {
-                    _logger.LogWarning("No skills found in query, returning empty result");
+                    _logger.LogWarning("No skills or location found in query");
                     return new SearchResult
                     {
                         Employees = new List<EmployeeSearchResult>(),
                         TotalCount = 0,
                         PageNumber = 1,
                         PageSize = 50,
-                        AppliedFilters = new List<string> { "No skills detected in query" },
-                        ParsedQuery = chatQuery
+                        AppliedFilters = new List<string> { "No search criteria detected" },
+                        ParsedQuery = chatQuery,
+                        Message = "💡 Please specify skills (e.g., 'Python developers'), location (e.g., 'in Chennai'), or experience (e.g., '5 years')"
                     };
                 }
 
-                // Combine all target skills
-                var allTargetSkills = requiredSkills.Concat(categorySkills).Distinct().ToList();
-
-                _logger.LogInformation("Searching for skills: {Skills}", string.Join(", ", allTargetSkills));
-
-                // ⭐ STEP 1: Query only employees who have AT LEAST ONE of the required skills
+                // ⭐ Build query based on available criteria
                 var employeesQuery = _context.Employees
                     .Include(e => e.Team)
                     .Include(e => e.User)
                     .Include(e => e.EmployeeSkills)
                         .ThenInclude(es => es.Skill)
                     .Where(e => e.User.IsActive)
-                    .Where(e => e.EmployeeSkills.Any(es =>
-                        allTargetSkills.Contains(es.Skill.SkillName)
-                    )); // ⭐ THIS IS THE CRITICAL FILTER!
+                    .AsQueryable();
 
-                // Apply location filter
-                if (!string.IsNullOrEmpty(parseResult.Parsed.Location))
+                // ⭐ Apply skill filter (if skills specified)
+                if (hasSkills)
                 {
-                    employeesQuery = employeesQuery.Where(e => e.Location == parseResult.Parsed.Location);
+                    var allTargetSkills = requiredSkills.Concat(categorySkills).Distinct().ToList();
+                    employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
+                        allTargetSkills.Contains(es.Skill.SkillName)
+                    ));
+                    Console.WriteLine($"🔍 Skill filter applied: {string.Join(", ", allTargetSkills)}");
                 }
 
-                // Apply availability filter
+                // ⭐ FIX 1: Apply location filter with case-insensitive comparison
+                if (hasLocation)
+                {
+                    var searchLocation = location!.Trim();
+                    employeesQuery = employeesQuery.Where(e =>
+                        e.Location != null &&
+                        e.Location.ToLower() == searchLocation.ToLower()
+                    );
+                    Console.WriteLine($"🔍 Location filter applied: {searchLocation}");
+                }
+
+                // ⭐ Apply availability filter
                 if (!string.IsNullOrEmpty(parseResult.Parsed.AvailabilityStatus))
                 {
                     employeesQuery = employeesQuery.Where(e => e.AvailabilityStatus == parseResult.Parsed.AvailabilityStatus);
+                    Console.WriteLine($"🔍 Availability filter applied: {parseResult.Parsed.AvailabilityStatus}");
                 }
 
                 var employees = await employeesQuery.ToListAsync();
+                _logger.LogInformation("Found {Count} employees matching filters", employees.Count);
+                Console.WriteLine($"🔍 Found {employees.Count} employees after applying filters");
+                Console.WriteLine("");
 
-                _logger.LogInformation("Found {Count} employees with matching skills (before experience filter)", employees.Count);
-
-                // Build results
+                // ⭐ FIX 2: Don't pre-filter by experience - let scoring handle it
+                // Build results with scoring
                 var results = new List<EmployeeSearchResult>();
-
+                
                 foreach (var employee in employees)
                 {
-                    // ⭐ STEP 2: Check experience requirement
-                    bool meetsExperienceRequirement = true;
-
-                    if (minYears.HasValue && minYears.Value > 0)
-                    {
-                        meetsExperienceRequirement = false;
-
-                        if (experienceContext?.Type == "skill_specific")
-                        {
-                            // TECH-SPECIFIC: Must have X years OF the specific skill
-                            var targetSkill = experienceContext.Skill ?? requiredSkills.FirstOrDefault();
-
-                            if (!string.IsNullOrEmpty(targetSkill))
-                            {
-                                var employeeSkill = employee.EmployeeSkills
-                                    .FirstOrDefault(es => es.Skill.SkillName.Equals(targetSkill, StringComparison.OrdinalIgnoreCase));
-
-                                if (employeeSkill != null)
-                                {
-                                    meetsExperienceRequirement = CheckExperienceOperator(
-                                        employeeSkill.YearsOfExperience,
-                                        minYears.Value,
-                                        expOperator
-                                    );
-
-                                    _logger.LogDebug("Employee {Id}: {Skill} - {Years} years (Required: {MinYears}, Meets: {Meets})",
-                                        employee.EmployeeId, targetSkill, employeeSkill.YearsOfExperience, minYears.Value, meetsExperienceRequirement);
-                                }
-                                else
-                                {
-                                    _logger.LogDebug("Employee {Id}: Does not have skill {Skill}", employee.EmployeeId, targetSkill);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // TOTAL EXPERIENCE: Must have X years total + have the skill
-                            meetsExperienceRequirement = CheckExperienceOperator(
-                                employee.YearsOfExperience,
-                                minYears.Value,
-                                expOperator
-                            );
-
-                            _logger.LogDebug("Employee {Id}: Total experience {Years} years (Required: {MinYears}, Meets: {Meets})",
-                                employee.EmployeeId, employee.YearsOfExperience, minYears.Value, meetsExperienceRequirement);
-                        }
-
-                        // ⭐ SKIP if doesn't meet experience requirement
-                        if (!meetsExperienceRequirement)
-                        {
-                            _logger.LogDebug("Employee {Id} excluded: Does not meet experience requirement", employee.EmployeeId);
-                            continue;
-                        }
-                    }
-
-                    // ⭐ STEP 3: Calculate match with experience context
+                    // Calculate match score (handles experience requirements internally)
                     var matchResult = CalculateAdvancedMatchWithContext(
                         employee,
                         requiredSkills,
@@ -282,15 +285,21 @@ namespace TalentMarketPlace.Services
                         experienceContext
                     );
 
-                    // ⭐ ONLY include if match percentage > 0
-                    if (matchResult.MatchPercentage > 0)
+                    // ⭐ Include employee if:
+                    // 1. They have a match > 0 when skills are required, OR
+                    // 2. No skills required (location-only search)
+                    bool shouldInclude = hasSkills ? (matchResult.MatchPercentage > 0) : true;
+
+                    if (shouldInclude)
                     {
                         var skillTags = employee.EmployeeSkills.Select(es => new SkillTag
                         {
                             SkillName = es.Skill.SkillName,
                             YearsOfExperience = es.YearsOfExperience,
                             ProficiencyLevel = es.ProficiencyLevel ?? "Unknown",
-                            MatchStatus = GetAdvancedSkillMatchStatus(es, requiredSkills, categorySkills, minYears, experienceContext),
+                            MatchStatus = hasSkills 
+                                ? GetAdvancedSkillMatchStatus(es, requiredSkills, categorySkills, minYears, experienceContext)
+                                : "Available",
                             LastUsedDate = es.LastUsedDate
                         }).ToList();
 
@@ -311,17 +320,15 @@ namespace TalentMarketPlace.Services
                             ExperienceContext = experienceContext?.Type
                         });
 
-                        _logger.LogInformation("Employee {Id} included with {Match}% match",
-                            employee.EmployeeId, matchResult.MatchPercentage);
-                    }
-                    else
-                    {
-                        _logger.LogDebug("Employee {Id} excluded: 0% match", employee.EmployeeId);
+                        _logger.LogInformation("Employee {Id} ({Name}) included with {Match}% match",
+                            employee.EmployeeId, employee.FullName, matchResult.MatchPercentage);
                     }
                 }
 
-                // Sort by match percentage
-                results = results.OrderByDescending(r => r.MatchPercentage).ToList();
+                // Sort by match percentage (or name if no skills)
+                results = hasSkills 
+                    ? results.OrderByDescending(r => r.MatchPercentage).ToList()
+                    : results.OrderBy(r => r.FullName).ToList();
 
                 _logger.LogInformation("Returning {Count} matching employees", results.Count);
 
@@ -336,7 +343,8 @@ namespace TalentMarketPlace.Services
                     PageSize = 50,
                     AppliedFilters = appliedFilters,
                     ExtractedSkills = parseResult.Parsed.Skills,
-                    ParsedQuery = chatQuery
+                    ParsedQuery = chatQuery,
+                    Message = results.Any() ? null : "No employees found matching your criteria. Try adjusting your search."
                 };
             }
             catch (Exception ex)
@@ -345,8 +353,6 @@ namespace TalentMarketPlace.Services
                 return await FallbackSearchAsync(chatQuery);
             }
         }
-
-
         // ⭐ NEW: Helper method to check experience operator
         private bool CheckExperienceOperator(decimal actualYears, decimal requiredYears, string operatorStr)
         {
@@ -382,7 +388,6 @@ namespace TalentMarketPlace.Services
                 var expType = expContext?.Type == "skill_specific"
                     ? $"in {expContext.Skill}"
                     : "total experience";
-
                 filters.Add($"Experience: {years}+ years {expType}");
             }
 
@@ -404,7 +409,7 @@ namespace TalentMarketPlace.Services
             return filters;
         }
 
-        // ⭐ UPDATED: Calculate match with experience context
+        // ⭐ COMPLETE UPDATED METHOD with Debug Logging
         private (decimal MatchPercentage, bool MeetsRequirements) CalculateAdvancedMatchWithContext(
             Employee employee,
             List<string> requiredSkills,
@@ -413,8 +418,17 @@ namespace TalentMarketPlace.Services
             string experienceOperator,
             ExperienceContext? experienceContext)
         {
+            // Debug logging
+            Console.WriteLine($"");
+            Console.WriteLine($"🔍 === CALCULATING MATCH FOR {employee.FullName} ===");
+            Console.WriteLine($"   Required Skills: {string.Join(", ", requiredSkills)}");
+            Console.WriteLine($"   Min Years: {minYears?.ToString() ?? ""}");
+            Console.WriteLine($"   Experience Context: {experienceContext?.Type ?? "none"}");
+            Console.WriteLine($"   Operator: {experienceOperator}");
+
             if (!requiredSkills.Any() && !categorySkills.Any())
             {
+                Console.WriteLine($"   ⚠️ No skills required, returning 0%");
                 return (0, true);
             }
 
@@ -426,12 +440,15 @@ namespace TalentMarketPlace.Services
             foreach (var skillName in requiredSkills)
             {
                 maxScore += 100;
+                Console.WriteLine($"   📊 Checking skill: {skillName}");
 
                 var employeeSkill = employee.EmployeeSkills
                     .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
 
                 if (employeeSkill != null)
                 {
+                    Console.WriteLine($"      ✅ Employee has {skillName}: {employeeSkill.YearsOfExperience} years");
+
                     // Check experience requirement based on context
                     if (minYears.HasValue && minYears.Value > 0)
                     {
@@ -442,11 +459,13 @@ namespace TalentMarketPlace.Services
                         {
                             // Check skill-specific experience
                             yearsToCheck = employeeSkill.YearsOfExperience;
+                            Console.WriteLine($"      📌 Using SKILL-SPECIFIC experience: {yearsToCheck} years");
                         }
                         else
                         {
                             // Check total experience
                             yearsToCheck = employee.YearsOfExperience;
+                            Console.WriteLine($"      📌 Using TOTAL experience: {yearsToCheck} years");
                         }
 
                         bool meetsExperience = CheckExperienceOperator(
@@ -457,23 +476,87 @@ namespace TalentMarketPlace.Services
 
                         if (meetsExperience)
                         {
+                            // Perfect match - meets or exceeds requirement
                             totalScore += 100;
+                            Console.WriteLine($"      ✅ MEETS requirement ({yearsToCheck} >= {minYears}) → +100 points");
                         }
                         else
                         {
-                            // Partial score based on ratio
+                            // ⭐ STRICTER partial scoring based on experience gap
                             var ratio = yearsToCheck / minYears.Value;
-                            totalScore += Math.Min(ratio * 100, 70);
+                            decimal points = 0;
+
+                            Console.WriteLine($"      ⚠️ Does NOT meet requirement ({yearsToCheck} < {minYears})");
+                            Console.WriteLine($"      📊 Ratio: {ratio:P1} ({yearsToCheck}/{minYears})");
+
+                            if (experienceContext?.Type == "skill_specific")
+                            {
+                                Console.WriteLine($"      🎯 Applying STRICT skill-specific penalties:");
+
+                                // For skill-specific: MUCH stricter penalties
+                                if (ratio >= 0.8m) // 80-99% (e.g., 4 out of 5 years)
+                                {
+                                    points = 70;
+                                    Console.WriteLine($"         80-99% of required → 70 points");
+                                }
+                                else if (ratio >= 0.6m) // 60-79% (e.g., 3 out of 5 years)
+                                {
+                                    points = 50;
+                                    Console.WriteLine($"         60-79% of required → 50 points");
+                                }
+                                else if (ratio >= 0.4m) // 40-59% (e.g., 2 out of 5 years)
+                                {
+                                    points = 30;
+                                    Console.WriteLine($"         40-59% of required → 30 points");
+                                }
+                                else // < 40% (e.g., 1 out of 5 years)
+                                {
+                                    points = 10;
+                                    Console.WriteLine($"         <40% of required → 10 points");
+                                }
+
+                                totalScore += points;
+                                Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"      🎯 Applying LENIENT total experience scoring:");
+
+                                // For total experience: slightly more lenient
+                                if (ratio >= 0.7m)
+                                {
+                                    points = 60;
+                                    Console.WriteLine($"         70%+ of required → 60 points");
+                                }
+                                else if (ratio >= 0.5m)
+                                {
+                                    points = 40;
+                                    Console.WriteLine($"         50-69% of required → 40 points");
+                                }
+                                else
+                                {
+                                    points = 20;
+                                    Console.WriteLine($"         <50% of required → 20 points");
+                                }
+
+                                totalScore += points;
+                                Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
+                            }
+
                             meetsAllRequirements = false;
                         }
                     }
                     else
                     {
+                        // No experience requirement - just having the skill is 100%
                         totalScore += 100;
+                        Console.WriteLine($"      ✅ No experience requirement → +100 points");
                     }
                 }
                 else
                 {
+                    // Doesn't have the skill at all - 0 points
+                    Console.WriteLine($"      ❌ Employee does NOT have {skillName} → +0 points");
                     meetsAllRequirements = false;
                 }
             }
@@ -482,6 +565,7 @@ namespace TalentMarketPlace.Services
             if (categorySkills.Any())
             {
                 maxScore += 100;
+                Console.WriteLine($"   📊 Checking category skills: {string.Join(", ", categorySkills)}");
 
                 var matchedCategorySkills = employee.EmployeeSkills
                     .Where(es => categorySkills.Contains(es.Skill.SkillName, StringComparer.OrdinalIgnoreCase))
@@ -490,14 +574,22 @@ namespace TalentMarketPlace.Services
                 if (matchedCategorySkills.Any())
                 {
                     totalScore += 100;
+                    Console.WriteLine($"      ✅ Has category skills: {string.Join(", ", matchedCategorySkills.Select(s => s.Skill.SkillName))} → +100 points");
                 }
                 else
                 {
+                    Console.WriteLine($"      ❌ No category skills → +0 points");
                     meetsAllRequirements = false;
                 }
             }
 
             var matchPercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+            Console.WriteLine($"   ");
+            Console.WriteLine($"   📊 FINAL SCORE: {totalScore}/{maxScore} = {matchPercentage:F1}%");
+            Console.WriteLine($"   ✅ Meets all requirements: {meetsAllRequirements}");
+            Console.WriteLine($"===========================================");
+
             return (matchPercentage, meetsAllRequirements);
         }
 
@@ -543,7 +635,6 @@ namespace TalentMarketPlace.Services
             return "Match";
         }
 
-        // Keep existing helper methods...
         private async Task<SearchResult> FallbackSearchAsync(string query)
         {
             var queryLower = query.ToLower();
@@ -584,6 +675,7 @@ namespace TalentMarketPlace.Services
             var result = await SearchEmployeesAsync(searchQuery);
             result.AppliedFilters = new List<string> { "Fallback search used (Python API unavailable)" };
             result.ParsedQuery = query;
+
             return result;
         }
 
@@ -661,6 +753,7 @@ namespace TalentMarketPlace.Services
 
             _context.SearchHistories.Add(searchHistory);
             await _context.SaveChangesAsync();
+
             return searchHistory;
         }
 
@@ -684,4 +777,3 @@ namespace TalentMarketPlace.Services
         }
     }
 }
-
