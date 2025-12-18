@@ -12,6 +12,12 @@
         <MudNavLink Href="/chatbot" Icon="@Icons.Material.Filled.Chat" Match="NavLinkMatch.Prefix">
             AI Search Assistant
         </MudNavLink>
+        <MudNavLink Href="/post-requirement" Icon="@Icons.Material.Filled.PostAdd" Match="NavLinkMatch.Prefix">
+            Post Requirement
+        </MudNavLink>
+        <MudNavLink Href="/application-review" Icon="@Icons.Material.Filled.Assignment" Match="NavLinkMatch.Prefix">
+            Review Applications
+        </MudNavLink>
     }
 
     @if (CurrentRole == "Manager")
@@ -28,6 +34,9 @@
     {
         <MudNavLink Href="/job-board" Icon="@Icons.Material.Filled.Work" Match="NavLinkMatch.Prefix">
             Current Job Openings
+        </MudNavLink>
+        <MudNavLink Href="/my-applications" Icon="@Icons.Material.Filled.Assignment">
+            My Applications
         </MudNavLink>
         <MudNavLink Href="/my-profile" Icon="@Icons.Material.Filled.Person" Match="NavLinkMatch.Prefix">
             My Profile

@@ -50,13 +50,17 @@ public class ApplicationService : IApplicationService
 
     public async Task<List<Application>> GetByEmployeeAsync(int employeeId)
     {
-        return await _context.Applications
+        var applications = await _context.Applications
+            .Include(a => a.Requirement)
+                .ThenInclude(r => r.Team)
             .Include(a => a.Requirement)
                 .ThenInclude(r => r.RequirementSkills)
                     .ThenInclude(rs => rs.Skill)
             .Where(a => a.EmployeeId == employeeId)
             .OrderByDescending(a => a.AppliedDate)
             .ToListAsync();
+        
+        return applications;
     }
 
    public async Task<Application> ApplyAsync(int employeeId, int requirementId, string? coverLetter)
