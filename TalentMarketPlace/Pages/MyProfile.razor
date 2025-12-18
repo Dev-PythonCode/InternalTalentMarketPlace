@@ -3,6 +3,7 @@
 @inject ISkillService SkillService
 @inject IAuthService AuthService
 @inject ISnackbar Snackbar
+@inject IDialogService _dialogService
 
 <MudText Typo="Typo.h4" Class="mb-2">My Profile</MudText>
 <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage your skills and resume</MudText>
@@ -164,6 +165,31 @@
     </MudCardContent>
 </MudCard>
 
+<!-- Edit Skill Dialog -->
+<MudDialog @bind-IsVisible="_editDialogOpen">
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Edit Skill: @(_editingSkill?.Skill.SkillName)</MudText>
+        
+        <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_editSkillYears" 
+                         Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" Class="mb-3" />
+        
+        <MudSelect T="string" Label="Proficiency Level" @bind-Value="_editSkillLevel" 
+                   Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
+            <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
+        </MudSelect>
+        
+        <MudDatePicker Label="Last Used Date" @bind-Date="_editSkillLastUsed" 
+                       Variant="Variant.Outlined" Class="mb-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CancelEdit">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveEditedSkill">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     private Employee? _currentEmployee;
     private List<Skill> _availableSkills = new();
@@ -176,6 +202,12 @@
     private DateTime? _newSkillLastUsed = DateTime.Now;
     private string _availabilityStatus = "Available";
     private bool _isUploading = false;
+    private bool _editDialogOpen = false;
+    private EmployeeSkill? _editingSkill = null;
+    private int? _editSkillId;
+    private decimal _editSkillYears;
+    private string _editSkillLevel = "Intermediate";
+    private DateTime? _editSkillLastUsed;
 
     protected override async Task OnInitializedAsync()
     {
@@ -284,15 +316,24 @@
 
         try
         {
-            await EmployeeService.UpdateAvailabilityAsync(_currentEmployee.EmployeeId, _availabilityStatus);
-            Snackbar.Add("Availability updated!", Severity.Success);
+            var success = await EmployeeService.UpdateAvailabilityAsync(
+                _currentEmployee.EmployeeId, 
+                _availabilityStatus);
+            
+            if (success)
+            {
+                Snackbar.Add("Availability updated!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to update availability", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error updating availability: {ex.Message}", Severity.Error);
         }
-    }
-
+    }    
     private void AcceptExtractedSkill(ExtractedSkill skill)
     {
         // Add to skills
@@ -305,23 +346,36 @@
         // Open edit dialog
     }
 
-    private void EditSkill(EmployeeSkill skill)
-    {
-        // Open edit dialog
-    }
 
     private async Task DeleteSkill(EmployeeSkill skill)
     {
         if (_currentEmployee == null) return;
 
+        bool? confirm = await _dialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Are you sure you want to remove '{skill.Skill.SkillName}' from your profile?",
+            yesText: "Delete", 
+            cancelText: "Cancel");
+
+        if (confirm != true) return;
+
         try
         {
-            await EmployeeService.DeleteSkillAsync(skill.EmployeeSkillId);
-            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
-            Snackbar.Add("Skill removed", Severity.Info);
+            var success = await EmployeeService.DeleteSkillAsync(skill.EmployeeSkillId);
+            
+            if (success)
+            {
+                _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+                Snackbar.Add($"'{skill.Skill.SkillName}' removed", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Skill not found", Severity.Warning);
+            }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Delete error: {ex}");
             Snackbar.Add($"Error removing skill: {ex.Message}", Severity.Error);
         }
     }
@@ -345,5 +399,42 @@
             "Intermediate" => Color.Warning,
             _ => Color.Default
         };
+    }
+    private void EditSkill(EmployeeSkill skill)
+    {
+        _editingSkill = skill;
+        _editSkillId = skill.SkillId;
+        _editSkillYears = skill.YearsOfExperience;
+        _editSkillLevel = skill.ProficiencyLevel ?? "Intermediate";
+        _editSkillLastUsed = skill.LastUsedDate;
+        _editDialogOpen = true;
+    }
+
+    private async Task SaveEditedSkill()
+    {
+        if (_editingSkill == null) return;
+
+        try
+        {
+            _editingSkill.YearsOfExperience = _editSkillYears;
+            _editingSkill.ProficiencyLevel = _editSkillLevel;
+            _editingSkill.LastUsedDate = _editSkillLastUsed;
+
+            await EmployeeService.UpdateSkillAsync(_editingSkill);
+            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee!.EmployeeId);
+            
+            _editDialogOpen = false;
+            Snackbar.Add("Skill updated successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating skill: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editDialogOpen = false;
+        _editingSkill = null;
     }
 }

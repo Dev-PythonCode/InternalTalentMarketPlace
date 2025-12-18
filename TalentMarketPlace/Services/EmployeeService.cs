@@ -124,15 +124,24 @@ public class EmployeeService : IEmployeeService
         return employee;
     }
 
-    public async Task<bool> UpdateAvailabilityAsync(int employeeId, string status)
+    public async Task<bool> UpdateAvailabilityAsync(int employeeId, string availabilityStatus)
     {
         var employee = await _context.Employees.FindAsync(employeeId);
-        if (employee == null) return false;
-
-        employee.AvailabilityStatus = status;
-        employee.UpdatedDate = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        return true;
+        if (employee == null)
+            return false;
+        
+        employee.AvailabilityStatus = availabilityStatus;
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating availability: {ex}");
+            return false;
+        }
     }
 
     public async Task<bool> UpdateResumeAsync(int employeeId, string resumeUrl)
@@ -174,7 +183,6 @@ public class EmployeeService : IEmployeeService
 
     public async Task<EmployeeSkill> UpdateSkillAsync(EmployeeSkill employeeSkill)
     {
-        employeeSkill.UpdatedDate = DateTime.UtcNow;
         _context.EmployeeSkills.Update(employeeSkill);
         await _context.SaveChangesAsync();
         return employeeSkill;
@@ -183,8 +191,9 @@ public class EmployeeService : IEmployeeService
     public async Task<bool> DeleteSkillAsync(int employeeSkillId)
     {
         var skill = await _context.EmployeeSkills.FindAsync(employeeSkillId);
-        if (skill == null) return false;
-
+        if (skill == null)
+            return false;
+        
         _context.EmployeeSkills.Remove(skill);
         await _context.SaveChangesAsync();
         return true;
