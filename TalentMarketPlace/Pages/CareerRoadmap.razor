@@ -1,0 +1,861 @@
+@page "/career-roadmap"
+@inject IEmployeeService EmployeeService
+@inject IRequirementService RequirementService
+@inject IAuthService AuthService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+@using System.Text.Json.Serialization
+
+<MudGrid Class="mb-4">
+    <MudItem xs="12" md="8">
+        <MudText Typo="Typo.h4">Career Roadmap</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            Get personalized career guidance based on your skills and goals
+        </MudText>
+    </MudItem>
+    <MudItem xs="12" md="4" Class="d-flex align-end justify-end">
+        <MudSwitch T="bool" @bind-Checked="_useExternalAI" Color="Color.Primary" Label="Use External AI" 
+               Class="ml-auto" ThumbIcon="@(_useExternalAI ? Icons.Material.Filled.Cloud : Icons.Material.Filled.Computer)" />
+        @if (_useExternalAI)
+        {
+            <MudTooltip Text="Powered by Claude AI">
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">
+                    <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" />
+                </MudChip>
+            </MudTooltip>
+        }
+    </MudItem>
+</MudGrid>
+
+@if (_currentEmployee != null)
+{
+    <!-- Current Profile Summary -->
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                Your Current Profile
+            </MudText>
+            <MudGrid>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total Experience</MudText>
+                    <MudText Typo="Typo.h6">@_currentEmployee.YearsOfExperience years</MudText>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Skills</MudText>
+                    <MudText Typo="Typo.h6">@_mySkills.Count skills</MudText>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Current Role</MudText>
+                    <MudText Typo="Typo.h6">@_currentEmployee.Designation</MudText>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Location</MudText>
+                    <MudText Typo="Typo.h6">@_currentEmployee.Location</MudText>
+                </MudItem>
+            </MudGrid>
+            
+            @if (_mySkills.Any())
+            {
+                <MudText Typo="Typo.subtitle2" Class="mt-3 mb-2">Your Skills:</MudText>
+                <div>
+                    @foreach (var skill in _mySkills.Take(10))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">
+                            @skill.Skill.SkillName (@skill.YearsOfExperience yr)
+                        </MudChip>
+                    }
+                    @if (_mySkills.Count > 10)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                            +@(_mySkills.Count - 10) more
+                        </MudChip>
+                    }
+                </div>
+            }
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Career Goal Input -->
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Class="mr-2" />
+                What's Your Career Goal?
+            </MudText>
+            
+            <MudTextField @bind-Value="_careerGoalPrompt" 
+                          Label="Describe your career aspirations" 
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          Placeholder="Example: I want to become a Cloud Architect specializing in AWS and DevOps"
+                          Class="mb-3" />
+            
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       OnClick="GenerateRoadmap" 
+                       Disabled="_isGenerating"
+                       StartIcon="@Icons.Material.Filled.AutoAwesome">
+                @if (_isGenerating)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>@(_useExternalAI ? "Consulting AI..." : "Analyzing...")</span>
+                }
+                else
+                {
+                    <span>Generate My Roadmap</span>
+                }
+            </MudButton>
+            
+            @if (_useExternalAI)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" Class="mr-2" />
+                    Using external AI for comprehensive career guidance
+                </MudAlert>
+            }
+        </MudCardContent>
+    </MudCard>
+
+    @if (_roadmapGenerated)
+    {
+        <!-- AI Generated Insights (only for external AI) -->
+        @if (_useExternalAI && !string.IsNullOrEmpty(_aiInsights))
+        {
+            <MudCard Class="mb-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Psychology" Class="mr-2" />
+                        AI Career Insights
+                    </MudText>
+                    <MudPaper Class="pa-3" Elevation="0" Style="background: #f0f7ff;">
+                        <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@_aiInsights</MudText>
+                    </MudPaper>
+                </MudCardContent>
+            </MudCard>
+        }
+
+        <!-- Skills Gap Analysis -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="mr-2" />
+                    Skills Gap Analysis
+                </MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Elevation="0" Style="background: #e8f5e9;">
+                            <MudText Typo="Typo.subtitle2" Style="color: #2e7d32;">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" />
+                                Skills You Have (@_skillsYouHave.Count)
+                            </MudText>
+                            @if (_skillsYouHave.Any())
+                            {
+                                <MudList T="string" Dense="true">
+                                    @foreach (var skill in _skillsYouHave)
+                                    {
+                                        <MudListItem T="string" Dense="true">
+                                            <MudText Typo="Typo.body2">✓ @skill</MudText>
+                                        </MudListItem>
+                                    }
+                                </MudList>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                                    Add skills to your profile first
+                                </MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-3" Elevation="0" Style="background: #fff3e0;">
+                            <MudText Typo="Typo.subtitle2" Style="color: #e65100;">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+                                Skills to Learn (@_skillsToLearn.Count)
+                            </MudText>
+                            @if (_skillsToLearn.Any())
+                            {
+                                <MudList T="string" Dense="true">
+                                    @foreach (var skill in _skillsToLearn)
+                                    {
+                                        <MudListItem T="string" Dense="true">
+                                            <MudText Typo="Typo.body2">→ @skill</MudText>
+                                        </MudListItem>
+                                    }
+                                </MudList>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                                    You're all set for your current goal!
+                                </MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Recommended Courses -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="mr-2" />
+                    Recommended Learning Path (@_recommendedCourses.Count courses)
+                </MudText>
+                
+                @if (_recommendedCourses.Any())
+                {
+                    @foreach (var course in _recommendedCourses)
+                    {
+                        <MudPaper Class="pa-3 mb-3" Elevation="1">
+                            <MudGrid>
+                                <MudItem xs="12" md="8">
+                                    <MudText Typo="Typo.h6">@course.Title</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                                        @course.Provider •
+                                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                                        @course.Duration •
+                                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Small" />
+                                        @course.Level
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">@course.Description</MudText>
+                                    <div class="mt-2">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                                            @course.TargetSkill
+                                        </MudChip>
+                                    </div>
+                                </MudItem>
+                                <MudItem xs="12" md="4" Class="d-flex align-center justify-end">
+                                    <div>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                                   Href="@course.Url" Target="_blank"
+                                                   StartIcon="@Icons.Material.Filled.OpenInNew">
+                                            Start Learning
+                                        </MudButton>
+                                    </div>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info">
+                        No specific courses found. Try refining your career goal.
+                    </MudAlert>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Matching Job Opportunities -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Work" Class="mr-2" />
+                    Opportunities Aligned with Your Goal
+                </MudText>
+                
+                @if (_matchingJobs.Any())
+                {
+                    @foreach (var job in _matchingJobs)
+                    {
+                        <MudPaper Class="pa-3 mb-3" Elevation="1">
+                            <MudGrid>
+                                <MudItem xs="12" md="9">
+                                    <MudText Typo="Typo.h6">@job.Title</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                                        @(job.Team?.TeamName ?? "Any Team") •
+                                        <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                                        @(job.Location ?? "Any Location") •
+                                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                                        @job.Duration
+                                    </MudText>
+                                    <div class="mt-2">
+                                        @foreach (var skill in job.RequirementSkills.Take(5))
+                                        {
+                                            var hasSkill = _skillsToLearn.Contains(skill.Skill.SkillName) || 
+                                                          _skillsYouHave.Contains(skill.Skill.SkillName);
+                                            <MudChip T="string" Size="Size.Small" 
+                                                     Color="@(hasSkill ? Color.Success : Color.Default)">
+                                                @skill.Skill.SkillName - @skill.MinYearsRequired yr
+                                                @if (hasSkill)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                                }
+                                            </MudChip>
+                                        }
+                                    </div>
+                                </MudItem>
+                                <MudItem xs="12" md="3" Class="d-flex align-center justify-end">
+                                    <div>
+                                        <MudText Typo="Typo.h4" Color="@GetMatchColor(job.MatchPercentage)">
+                                            @job.MatchPercentage%
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Match</MudText>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" 
+                                                   Size="Size.Small" Class="mt-2"
+                                                   OnClick="@(() => ViewJob(job.RequirementId))">
+                                            View Details
+                                        </MudButton>
+                                    </div>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                }
+                else
+                {
+                    <MudPaper Class="pa-4 text-center" Elevation="0" Style="background: #fef3c7;">
+                        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Warning" />
+                        <MudText Typo="Typo.h6" Class="mt-2">No jobs available for your expected skills</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            @if (_skillsToLearn.Any())
+                            {
+                                <span>Focus on learning: @string.Join(", ", _skillsToLearn.Take(3))</span>
+                            }
+                            else
+                            {
+                                <span>Try a different career goal or check back later for new opportunities</span>
+                            }
+                        </MudText>
+                    </MudPaper>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Timeline Roadmap -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Timeline" Class="mr-2" />
+                    Your Career Timeline
+                </MudText>
+                
+                <MudTimeline TimelinePosition="TimelinePosition.Start">
+                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2"><strong>Now</strong></MudText>
+                            <MudText Typo="Typo.body2">
+                                @if (_skillsYouHave.Any())
+                                {
+                                    <span>Current skills: @string.Join(", ", _skillsYouHave.Take(3))</span>
+                                }
+                                else
+                                {
+                                    <span>Starting your career journey</span>
+                                }
+                            </MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    
+                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2"><strong>3-6 Months</strong></MudText>
+                            <MudText Typo="Typo.body2">
+                                Complete foundational courses
+                                @if (_recommendedCourses.Any())
+                                {
+                                    <span>: @_recommendedCourses.First().Title</span>
+                                }
+                            </MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    
+                    <MudTimelineItem Color="Color.Warning" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2"><strong>6-12 Months</strong></MudText>
+                            <MudText Typo="Typo.body2">Build projects & gain certifications</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                    
+                    <MudTimelineItem Color="Color.Info" Size="Size.Small">
+                        <ItemContent>
+                            <MudText Typo="Typo.subtitle2"><strong>12+ Months</strong></MudText>
+                            <MudText Typo="Typo.body2">Apply for target roles: @_careerGoalPrompt</MudText>
+                        </ItemContent>
+                    </MudTimelineItem>
+                </MudTimeline>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+@code {
+    private Employee? _currentEmployee;
+    private List<EmployeeSkill> _mySkills = new();
+    private string _careerGoalPrompt = "";
+    private bool _isGenerating = false;
+    private bool _roadmapGenerated = false;
+    private bool _useExternalAI = false;
+
+    // Analysis Results
+    private List<string> _skillsYouHave = new();
+    private List<string> _skillsToLearn = new();
+    private List<CourseRecommendation> _recommendedCourses = new();
+    private List<JobOpportunity> _matchingJobs = new();
+    private string _aiInsights = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+            
+            if (_currentEmployee != null)
+            {
+                _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading profile: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task GenerateRoadmap()
+    {
+        if (string.IsNullOrWhiteSpace(_careerGoalPrompt))
+        {
+            Snackbar.Add("Please describe your career goal", Severity.Warning);
+            return;
+        }
+
+        _isGenerating = true;
+        
+        try
+        {
+            if (_useExternalAI)
+            {
+                // Use External AI (Claude)
+                await GenerateRoadmapWithExternalAI();
+            }
+            else
+            {
+                // Use Internal Database
+                await GenerateRoadmapWithInternalData();
+            }
+            
+            _roadmapGenerated = true;
+            Snackbar.Add("Career roadmap generated!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error generating roadmap: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error: {ex}");
+        }
+        finally
+        {
+            _isGenerating = false;
+        }
+    }
+
+    private async Task GenerateRoadmapWithInternalData()
+    {
+        try
+        {
+            await Task.Delay(500); // Brief UI feedback
+            
+            // ⭐ STEP 1: Use Python API to parse career goal and extract skills
+            var pythonApiUrl = "http://localhost:5000/parse"; // Your Python API
+            var parseResponse = await HttpClient.PostAsJsonAsync(pythonApiUrl, new { query = _careerGoalPrompt });
+            
+            if (parseResponse.IsSuccessStatusCode)
+            {
+                var parsedResult = await parseResponse.Content.ReadFromJsonAsync<PythonParseResponse>();
+                
+                // Extract skills mentioned in goal
+                var mentionedSkills = parsedResult?.Parsed?.Skills ?? new List<string>();
+                var mentionedCategories = parsedResult?.Parsed?.Categories ?? new List<string>();
+                var categorySkills = parsedResult?.Parsed?.CategorySkills ?? new List<string>();
+                
+                // Combine explicit skills and category-expanded skills
+                var allMentionedSkills = mentionedSkills.Concat(categorySkills).Distinct().ToList();
+                
+                Console.WriteLine($"✅ Python API found {allMentionedSkills.Count} skills in goal");
+                
+                // ⭐ STEP 2: Analyze current skills
+                _skillsYouHave = _mySkills.Select(s => s.Skill.SkillName).ToList();
+                
+                // ⭐ STEP 3: Find skills gap (skills mentioned in goal that you don't have)
+                _skillsToLearn = allMentionedSkills
+                    .Where(skill => !_skillsYouHave.Any(s => s.Equals(skill, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+                
+                Console.WriteLine($"📊 Skills you have: {_skillsYouHave.Count}");
+                Console.WriteLine($"📚 Skills to learn: {_skillsToLearn.Count}");
+                
+                // ⭐ STEP 4: Generate course recommendations
+                _recommendedCourses = GenerateCourseRecommendations(_skillsToLearn);
+                
+                // ⭐ STEP 5: Find matching jobs with these skills
+                await LoadMatchingJobsForSkills(allMentionedSkills);
+            }
+            else
+            {
+                // Fallback to basic keyword extraction if Python API fails
+                Console.WriteLine("⚠️ Python API unavailable, using fallback");
+                _skillsYouHave = _mySkills.Select(s => s.Skill.SkillName).ToList();
+                _skillsToLearn = AnalyzeSkillsGap(_careerGoalPrompt);
+                _recommendedCourses = GenerateCourseRecommendations(_skillsToLearn);
+                await LoadMatchingJobsForGoal();
+            }
+            
+            _aiInsights = ""; // No AI insights for internal mode
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error in internal data generation: {ex}");
+            Snackbar.Add("Error analyzing career goal. Please try again.", Severity.Error);
+        }
+    }
+
+    private async Task GenerateRoadmapWithExternalAI()
+    {
+        try
+        {
+            // ⭐ OPTION A: If you have Claude API key, use it
+            // You would need to add it to appsettings.json and inject IConfiguration
+            
+            // For now, show a message and fallback to internal
+            Snackbar.Add("External AI requires API key configuration. Using internal analysis.", Severity.Info);
+            await GenerateRoadmapWithInternalData();
+            
+            // ⭐ OPTION B: Add AI insights using your Python API + prompt engineering
+            // You could enhance your Python API with a /suggest-career endpoint
+            // that uses the parsed skills to generate structured career advice
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ External AI error: {ex}");
+            await GenerateRoadmapWithInternalData();
+        }
+    }
+
+    private async Task LoadMatchingJobsForSkills(List<string> targetSkills)
+    {
+        try
+        {
+            // Get all open requirements
+            var allJobs = await RequirementService.GetAllAsync(true);
+            
+            _matchingJobs = new List<JobOpportunity>();
+            
+            foreach (var job in allJobs)
+            {
+                var jobSkills = job.RequirementSkills?.Select(rs => rs.Skill.SkillName).ToList() ?? new();
+                
+                // ⭐ Check if job requires ANY of the skills mentioned in career goal
+                var hasRelevantSkills = targetSkills.Any(targetSkill => 
+                    jobSkills.Any(jobSkill => 
+                        jobSkill.Equals(targetSkill, StringComparison.OrdinalIgnoreCase)));
+                
+                if (hasRelevantSkills)
+                {
+                    var matchResult = await EmployeeService.CalculateMatchScoreAsync(
+                        _currentEmployee!.EmployeeId, 
+                        job.RequirementId);
+                    
+                    _matchingJobs.Add(new JobOpportunity
+                    {
+                        RequirementId = job.RequirementId,
+                        Title = job.Title,
+                        Team = job.Team,
+                        Location = job.Location,
+                        Duration = job.Duration,
+                        RequirementSkills = job.RequirementSkills?.ToList() ?? new(),
+                        MatchPercentage = (int)matchResult.MatchPercentage
+                    });
+                    
+                    Console.WriteLine($"✅ Matched job: {job.Title} ({matchResult.MatchPercentage}%)");
+                }
+            }
+            
+            // Sort by match percentage
+            _matchingJobs = _matchingJobs
+                .OrderByDescending(j => j.MatchPercentage)
+                .Take(5)
+                .ToList();
+            
+            Console.WriteLine($"📋 Total matching jobs: {_matchingJobs.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error loading jobs: {ex}");
+        }
+    }
+
+    public class PythonParseResponse
+    {
+        public ParsedData? Parsed { get; set; }
+    }
+
+    public class ParsedData
+    {
+        public List<string> Skills { get; set; } = new();
+        public List<string> Categories { get; set; } = new();
+        [JsonPropertyName("category_skills")]
+        public List<string> CategorySkills { get; set; } = new();
+    }
+
+    private List<string> AnalyzeSkillsGap(string goal)
+    {
+        var goalLower = goal.ToLower();
+        var skillsToLearn = new List<string>();
+
+        // Cloud/DevOps path
+        if (goalLower.Contains("cloud") || goalLower.Contains("aws") || goalLower.Contains("azure") || 
+            goalLower.Contains("devops"))
+        {
+            if (!_skillsYouHave.Any(s => s.Contains("AWS")))
+                skillsToLearn.Add("AWS");
+            if (!_skillsYouHave.Any(s => s.Contains("Docker")))
+                skillsToLearn.Add("Docker");
+            if (!_skillsYouHave.Any(s => s.Contains("Kubernetes")))
+                skillsToLearn.Add("Kubernetes");
+            if (!_skillsYouHave.Any(s => s.Contains("Terraform")))
+                skillsToLearn.Add("Terraform");
+            if (!_skillsYouHave.Any(s => s.Contains("CI/CD")))
+                skillsToLearn.Add("CI/CD");
+        }
+
+        // Full Stack path
+        if (goalLower.Contains("full stack") || goalLower.Contains("fullstack"))
+        {
+            if (!_skillsYouHave.Any(s => s.Contains("React")))
+                skillsToLearn.Add("React");
+            if (!_skillsYouHave.Any(s => s.Contains("Node")))
+                skillsToLearn.Add("Node.js");
+            if (!_skillsYouHave.Any(s => s.Contains("MongoDB")))
+                skillsToLearn.Add("MongoDB");
+            if (!_skillsYouHave.Any(s => s.Contains("TypeScript")))
+                skillsToLearn.Add("TypeScript");
+        }
+
+        // Data Science path
+        if (goalLower.Contains("data") || goalLower.Contains("ml") || goalLower.Contains("ai") ||
+            goalLower.Contains("machine learning"))
+        {
+            if (!_skillsYouHave.Any(s => s.Contains("Python")))
+                skillsToLearn.Add("Python");
+            if (!_skillsYouHave.Any(s => s.Contains("Machine Learning")))
+                skillsToLearn.Add("Machine Learning");
+            if (!_skillsYouHave.Any(s => s.Contains("TensorFlow")))
+                skillsToLearn.Add("TensorFlow");
+            if (!_skillsYouHave.Any(s => s.Contains("SQL")))
+                skillsToLearn.Add("SQL");
+            if (!_skillsYouHave.Any(s => s.Contains("Pandas")))
+                skillsToLearn.Add("Pandas");
+        }
+
+        // Mobile Development path
+        if (goalLower.Contains("mobile") || goalLower.Contains("ios") || goalLower.Contains("android"))
+        {
+            if (!_skillsYouHave.Any(s => s.Contains("React Native")))
+                skillsToLearn.Add("React Native");
+            if (!_skillsYouHave.Any(s => s.Contains("Flutter")))
+                skillsToLearn.Add("Flutter");
+        }
+
+        // Backend path
+        if (goalLower.Contains("backend") || goalLower.Contains("api"))
+        {
+            if (!_skillsYouHave.Any(s => s.Contains("Node.js")))
+                skillsToLearn.Add("Node.js");
+            if (!_skillsYouHave.Any(s => s.Contains("Python")))
+                skillsToLearn.Add("Python");
+            if (!_skillsYouHave.Any(s => s.Contains("PostgreSQL")))
+                skillsToLearn.Add("PostgreSQL");
+        }
+
+        return skillsToLearn.Any() ? skillsToLearn : new List<string> { "Advanced " + (_skillsYouHave.FirstOrDefault() ?? "Programming") };
+    }
+
+    private List<CourseRecommendation> GenerateCourseRecommendations(List<string> skills)
+    {
+        var courses = new List<CourseRecommendation>();
+
+        foreach (var skill in skills.Take(5))
+        {
+            courses.Add(new CourseRecommendation
+            {
+                Title = $"Complete {skill} Course",
+                Provider = GetProviderForSkill(skill),
+                TargetSkill = skill,
+                Duration = "40 hours",
+                Level = "Intermediate",
+                Description = $"Master {skill} from fundamentals to advanced concepts with hands-on projects",
+                Url = GetCourseUrl(skill)
+            });
+        }
+
+        return courses;
+    }
+
+    private string GetProviderForSkill(string skill)
+    {
+        return skill switch
+        {
+            "AWS" => "AWS Training",
+            "Azure" => "Microsoft Learn",
+            "Docker" or "Kubernetes" => "Linux Foundation",
+            "React" or "Node.js" => "Meta / Coursera",
+            "Python" or "Machine Learning" or "TensorFlow" or "Pandas" => "DeepLearning.AI",
+            "TypeScript" => "Microsoft / Pluralsight",
+            "MongoDB" => "MongoDB University",
+            "PostgreSQL" or "SQL" => "PostgreSQL Tutorial",
+            _ => "Udemy / Coursera"
+        };
+    }
+
+    private string GetCourseUrl(string skill)
+    {
+        return skill switch
+        {
+            "AWS" => "https://aws.amazon.com/training/",
+            "Azure" => "https://learn.microsoft.com/en-us/training/azure/",
+            "Docker" => "https://www.docker.com/101-tutorial/",
+            "Kubernetes" => "https://kubernetes.io/training/",
+            "React" => "https://react.dev/learn",
+            "Node.js" => "https://nodejs.org/en/learn",
+            "Python" => "https://www.coursera.org/specializations/python",
+            "Machine Learning" => "https://www.coursera.org/specializations/machine-learning-introduction",
+            "TensorFlow" => "https://www.tensorflow.org/learn",
+            "TypeScript" => "https://www.typescriptlang.org/docs/",
+            "MongoDB" => "https://university.mongodb.com/",
+            "Flutter" => "https://flutter.dev/learn",
+            "React Native" => "https://reactnative.dev/docs/getting-started",
+            _ => "https://www.coursera.org/"
+        };
+    }
+
+    private async Task LoadMatchingJobsForGoal()
+    {
+        try
+        {
+            // Get all open requirements
+            var allJobs = await RequirementService.GetAllAsync(true);
+            
+            // Extract skill keywords from goal
+            var goalSkills = ExtractSkillsFromGoal(_careerGoalPrompt);
+            
+            // Filter jobs that have ANY of the mentioned skills
+            _matchingJobs = new List<JobOpportunity>();
+            
+            foreach (var job in allJobs)
+            {
+                var jobSkills = job.RequirementSkills?.Select(rs => rs.Skill.SkillName.ToLower()).ToList() ?? new();
+                
+                // Check if job has any of the goal skills or skills to learn
+                var hasRelevantSkills = goalSkills.Any(gs => jobSkills.Any(js => js.Contains(gs.ToLower()))) ||
+                                       _skillsToLearn.Any(stl => jobSkills.Any(js => js.Contains(stl.ToLower())));
+                
+                if (hasRelevantSkills)
+                {
+                    var matchResult = await EmployeeService.CalculateMatchScoreAsync(
+                        _currentEmployee!.EmployeeId, 
+                        job.RequirementId);
+                    
+                    _matchingJobs.Add(new JobOpportunity
+                    {
+                        RequirementId = job.RequirementId,
+                        Title = job.Title,
+                        Team = job.Team,
+                        Location = job.Location,
+                        Duration = job.Duration,
+                        RequirementSkills = job.RequirementSkills?.ToList() ?? new(),
+                        MatchPercentage = (int)matchResult.MatchPercentage
+                    });
+                }
+            }
+            
+            // Sort by match percentage
+            _matchingJobs = _matchingJobs
+                .OrderByDescending(j => j.MatchPercentage)
+                .Take(5)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading jobs: {ex}");
+        }
+    }
+
+    private List<string> ExtractSkillsFromGoal(string goal)
+    {
+        var commonSkills = new[] { 
+            "AWS", "Azure", "GCP", "Docker", "Kubernetes", "React", "Angular", "Vue",
+            "Node", "Python", "Java", "C#", "JavaScript", "TypeScript",
+            "MongoDB", "PostgreSQL", "MySQL", "Redis",
+            "Machine Learning", "AI", "TensorFlow", "PyTorch",
+            "DevOps", "CI/CD", "Terraform", "Ansible",
+            "Flutter", "React Native", "Swift", "Kotlin"
+        };
+        
+        var found = new List<string>();
+        var goalLower = goal.ToLower();
+        
+        foreach (var skill in commonSkills)
+        {
+            if (goalLower.Contains(skill.ToLower()))
+            {
+                found.Add(skill);
+            }
+        }
+        
+        return found;
+    }
+
+    private Color GetMatchColor(int percentage)
+    {
+        return percentage switch
+        {
+            >= 80 => Color.Success,
+            >= 60 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private void ViewJob(int requirementId)
+    {
+        Navigation.NavigateTo("/job-board");
+    }
+
+    // Models
+    public class CourseRecommendation
+    {
+        public string Title { get; set; } = "";
+        public string Provider { get; set; } = "";
+        public string TargetSkill { get; set; } = "";
+        public string Duration { get; set; } = "";
+        public string Level { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Url { get; set; } = "";
+    }
+
+    public class JobOpportunity
+    {
+        public int RequirementId { get; set; }
+        public string Title { get; set; } = "";
+        public Team? Team { get; set; }
+        public string? Location { get; set; }
+        public string Duration { get; set; } = "";
+        public List<RequirementSkill> RequirementSkills { get; set; } = new();
+        public int MatchPercentage { get; set; }
+    }
+
+    public class ClaudeResponse
+    {
+        public List<ClaudeContent>? Content { get; set; }
+    }
+
+    public class ClaudeContent
+    {
+        public string? Text { get; set; }
+    }
+}
