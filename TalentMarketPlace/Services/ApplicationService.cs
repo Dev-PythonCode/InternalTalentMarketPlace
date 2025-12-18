@@ -33,20 +33,20 @@ public class ApplicationService : IApplicationService
     }
 
     public async Task<List<Application>> GetByRequirementAsync(int requirementId)
-{
-    var applications = await _context.Applications
-        .Include(a => a.Employee)
-            .ThenInclude(e => e.Team)
-        .Include(a => a.Employee.EmployeeSkills)
-            .ThenInclude(es => es.Skill)
-        .Where(a => a.RequirementId == requirementId)
-        .ToListAsync();  // ← Get data first
-    
-    // Order in memory after retrieval
-    return applications
-        .OrderByDescending(a => a.AIScore ?? 0)
-        .ToList();
-}
+    {
+        var applications = await _context.Applications
+            .Include(a => a.Employee)
+                .ThenInclude(e => e.Team)
+            .Include(a => a.Employee.EmployeeSkills)
+                .ThenInclude(es => es.Skill)
+            .Where(a => a.RequirementId == requirementId)
+            .ToListAsync();  // ← Get data first
+        
+        // Order in memory after retrieval
+        return applications
+            .OrderByDescending(a => a.AIScore ?? 0)
+            .ToList();
+    }
 
     public async Task<List<Application>> GetByEmployeeAsync(int employeeId)
     {
@@ -87,6 +87,12 @@ public class ApplicationService : IApplicationService
         await _context.SaveChangesAsync();
         
         return application;  // ← Return the created application
+    }
+    public async Task<int> GetApplicationCountAsync(int requirementId)
+    {
+        return await _context.Applications
+            .Where(a => a.RequirementId == requirementId)
+            .CountAsync();
     }
    
     public async Task<Application> UpdateStatusAsync(int applicationId, string status, string? feedback)

@@ -3,6 +3,7 @@
 @inject ISkillService SkillService
 @inject IAuthService AuthService
 @inject INotificationService NotificationService
+@inject IApplicationService ApplicationService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -58,6 +59,7 @@ else if (FilteredRequirements.Any())
 {
     <MudTable Items="@FilteredRequirements" Dense="false" Hover="true" Striped="true" Elevation="2">
         <HeaderContent>
+            <MudTh>Req ID</MudTh>
             <MudTh>Title</MudTh>
             <MudTh>Status</MudTh>
             <MudTh>Team / Location</MudTh>
@@ -67,6 +69,13 @@ else if (FilteredRequirements.Any())
             <MudTh Style="text-align: center;">Search Matching Employee</MudTh>
         </HeaderContent>
         <RowTemplate>
+            <MudTd DataLabel="Req ID">
+                <MudLink OnClick="@(() => OpenEditDialog(context))" Color="Color.Primary" Underline="Underline.Hover">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">
+                        Req_@context.RequirementId
+                    </MudChip>
+                </MudLink>
+            </MudTd>
             <MudTd DataLabel="Title">
                 <MudLink OnClick="@(() => OpenEditDialog(context))" Color="Color.Primary" Underline="Underline.Hover">
                     <strong>@context.Title</strong>
@@ -119,9 +128,24 @@ else if (FilteredRequirements.Any())
                 }
             </MudTd>
             <MudTd DataLabel="Applications">
-                <MudChip T="string" Size="Size.Small" Color="Color.Info">
-                    @context.ApplicationCount
-                </MudChip>
+                @{
+                    var appCount = _applicationCounts.GetValueOrDefault(context.RequirementId, 0);
+                }
+                @if (appCount > 0)
+                {
+                    <MudLink Typo="Typo.body2" Color="Color.Primary" Underline="Underline.Always"
+                             OnClick="@(() => NavigateToApplicationReview(context.RequirementId))">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                            @appCount
+                        </MudChip>
+                    </MudLink>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        0
+                    </MudChip>
+                }
             </MudTd>
             <MudTd DataLabel="Posted">
                 <div>@context.PostedDate.ToString("MMM dd, yyyy")</div>
@@ -166,6 +190,7 @@ else
 @code {
     private List<Requirement> _myRequirements = new();
     private List<Skill> _availableSkills = new();
+    private Dictionary<int, int> _applicationCounts = new();
     private bool _isLoading = true;
     
     private string _statusFilter = "All";
@@ -213,6 +238,9 @@ else
                 Console.WriteLine($"Loading requirements for employee {employee.EmployeeId}...");
                 _myRequirements = await RequirementService.GetByManagerAsync(employee.EmployeeId);
                 Console.WriteLine($"Loaded {_myRequirements.Count} requirements");
+                
+                // Load application counts
+                await LoadApplicationCounts();
             }
         }
         catch (Exception ex)
@@ -224,6 +252,31 @@ else
         {
             _isLoading = false;
         }
+    }
+
+    private async Task LoadApplicationCounts()
+    {
+        try
+        {
+            _applicationCounts.Clear();
+            
+            foreach (var req in _myRequirements)
+            {
+                var count = await ApplicationService.GetApplicationCountAsync(req.RequirementId);
+                _applicationCounts[req.RequirementId] = count;
+            }
+            
+            Console.WriteLine($"✅ Loaded application counts for {_applicationCounts.Count} requirements");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading application counts: {ex}");
+        }
+    }
+
+    private void NavigateToApplicationReview(int requirementId)
+    {
+        Navigation.NavigateTo($"/application-review/{requirementId}");
     }
 
     private void OnStatusFilterChanged(string value)

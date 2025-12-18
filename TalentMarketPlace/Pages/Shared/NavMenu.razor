@@ -20,7 +20,7 @@
         </MudNavLink>
     }
 
-    @if (CurrentRole == "Manager")
+    @* @if (CurrentRole == "Manager")
     {
         <MudNavLink Href="/post-requirement" Icon="@Icons.Material.Filled.PostAdd" Match="NavLinkMatch.Prefix">
             Post Requirement
@@ -28,7 +28,7 @@
         <MudNavLink Href="/application-review" Icon="@Icons.Material.Filled.Assignment" Match="NavLinkMatch.Prefix">
             Review Applications
         </MudNavLink>
-    }
+    } *@
 
     @if (CurrentRole == "Employee")
     {
