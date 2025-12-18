@@ -31,132 +31,78 @@
 
 
 <MudGrid>
-    <!-- Resume Upload Section -->
-    <MudItem xs="12" md="6">
-        <MudCard Style="height: 100%;">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Class="mr-2" />
-                    Upload Resume
-                </MudText>
-                
-                <MudPaper Class="pa-6 text-center" Elevation="0" 
-                          Style="border: 2px dashed #ccc; cursor: pointer;"
-                          @onclick="TriggerFileUpload">
-                    <InputFile id="fileInput" OnChange="HandleFileUpload" style="display: none;" 
-                               accept=".docx,.pdf" />
-                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Secondary" />
-                    <MudText Typo="Typo.body1" Class="mt-2"><strong>Drag & drop your resume here</strong></MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">or click to browse (.docx, .pdf)</MudText>
-                </MudPaper>
-
-                @if (_isUploading)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-3" />
-                    <MudText Typo="Typo.caption" Class="mt-1">Parsing resume and extracting skills...</MudText>
-                }
-
-                @if (_extractedSkills.Any())
-                {
-                    <MudText Typo="Typo.h6" Class="mt-4 mb-2">
-                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Class="mr-2" />
-                        Auto-Extracted Skills
-                    </MudText>
-                    
-                    @foreach (var skill in _extractedSkills)
-                    {
-                        <MudPaper Class="pa-3 mb-2 d-flex justify-space-between align-center" Elevation="1">
-                            <div>
-                                <MudText Typo="Typo.body1"><strong>@skill.SkillName</strong></MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    @(skill.YearsOfExperience?.ToString("0.#") ?? "?") years • @(skill.ProficiencyLevel ?? "Unknown")
-                                </MudText>
-                            </div>
-                            <div class="d-flex align-center">
-                                <MudChip T ="string" Size="Size.Small" Color="@GetConfidenceColor(skill.ConfidenceScore)">
-                                    @(skill.ConfidenceScore * 100)% confidence
-                                </MudChip>
-                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" 
-                                               OnClick="@(() => AcceptExtractedSkill(skill))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
-                                               OnClick="@(() => EditExtractedSkill(skill))" />
-                            </div>
-                        </MudPaper>
-                    }
-                }
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+    
 
     <!-- Add Skill Manually Section -->
-    <MudItem xs="12" md="6">
-        <MudCard Style="height: 100%;">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
-                    Add Skill Manually
-                </MudText>
-                
+    <!-- Remove the entire Grid, replace with single full-width card -->
+    <MudItem>
+<MudCard Class="mb-4">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
+            Add Skill
+        </MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" md="6">
                 <MudSelect T="int?" Label="Skill" @bind-Value="_newSkillId" 
-           Variant="Variant.Outlined" Class="mb-3"
-           HelperText="Select a skill you want to add">
-    @foreach (var skill in _availableSkills.Where(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
-    {
-        <MudSelectItem T="int?" Value="@skill.SkillId">
-            @skill.SkillName
-            @if (skill.Category != null)
-            {
-                <span style="color: gray; font-size: 0.8em;"> (@skill.Category.CategoryName)</span>
-            }
-        </MudSelectItem>
-    }
-        </MudSelect>
-
-        @if (!_availableSkills.Any(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
-        {
-            <MudAlert Severity="Severity.Info" Class="mb-3">
-                You've added all available skills! 🎉
-            </MudAlert>
-        }
-                
-                <MudGrid>
-                    <MudItem xs="6">
-                        <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_newSkillYears" 
-                                         Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudSelect T="string" Label="Proficiency Level" @bind-Value="_newSkillLevel" Variant="Variant.Outlined">
-                            <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
-                            <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
-                            <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
-                            <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
-                        </MudSelect>
-                    </MudItem>
-                </MudGrid>
-                
-                <MudDatePicker Label="Last Used Date" @bind-Date="_newSkillLastUsed" Variant="Variant.Outlined" 
-                               Class="mt-3" />
-                
+                           Variant="Variant.Outlined" HelperText="Select a skill you want to add">
+                    @foreach (var skill in _availableSkills.Where(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
+                    {
+                        <MudSelectItem T="int?" Value="@skill.SkillId">
+                            @skill.SkillName
+                            @if (skill.Category != null)
+                            {
+                                <span style="color: gray; font-size: 0.8em;"> (@skill.Category.CategoryName)</span>
+                            }
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" md="3">
+                <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_newSkillYears" 
+                                 Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" />
+            </MudItem>
+            
+            <MudItem xs="12" md="3">
+                <MudSelect T="string" Label="Proficiency Level" @bind-Value="_newSkillLevel" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" md="6">
+                <MudDatePicker Label="Last Used Date" @bind-Date="_newSkillLastUsed" 
+                               Variant="Variant.Outlined" />
+            </MudItem>
+            
+            <MudItem xs="12" md="6" Class="d-flex align-end">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill" 
-                           Class="mt-3" StartIcon="@Icons.Material.Filled.Add">
+                           FullWidth="true" StartIcon="@Icons.Material.Filled.Add">
                     Add Skill
                 </MudButton>
+            </MudItem>
+        </MudGrid>
 
-                <MudDivider Class="my-4" />
+        <MudDivider Class="my-4" />
 
-                <MudText Typo="Typo.h6" Class="mb-3">Availability Status</MudText>
-                <MudRadioGroup T="string" @bind-SelectedOption="_availabilityStatus">
-                    <MudRadio T ="string" Option="@("Available")" Color="Color.Success">Available</MudRadio>
-                    <MudRadio T ="string" Option="@("Limited")" Color="Color.Warning">Limited</MudRadio>
-                    <MudRadio T ="string" Option="@("Not Available")" Color="Color.Error">Not Available</MudRadio>
-                </MudRadioGroup>
-                
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="UpdateAvailability" Class="mt-2">
-                    Update Status
-                </MudButton>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        <MudText Typo="Typo.h6" Class="mb-3">Availability Status</MudText>
+        <MudRadioGroup T="string" @bind-SelectedOption="_availabilityStatus">
+            <MudRadio T="string" Option="@("Available")" Color="Color.Success">Available</MudRadio>
+            <MudRadio T="string" Option="@("Limited")" Color="Color.Warning">Limited</MudRadio>
+            <MudRadio T="string" Option="@("Not Available")" Color="Color.Error">Not Available</MudRadio>
+        </MudRadioGroup>
+        
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="UpdateAvailability" Class="mt-2">
+            Update Status
+        </MudButton>
+    </MudCardContent>
+</MudCard>
+</MudItem>
+
 </MudGrid>
 
 <!-- Current Skills -->
