@@ -6,7 +6,7 @@
 @inject IDialogService _dialogService
 
 <MudText Typo="Typo.h4" Class="mb-2">My Profile</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage your skills and experience</MudText>
+<MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Manage your skills and experience</MudText>
 
 @if (_currentEmployee != null)
 {
@@ -15,19 +15,19 @@
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12" md="1" Class="d-flex justify-center">
-                    <MudAvatar Size="Size.Large" Color="Color.Primary">
+                    <MudAvatar Size="Size.Large" Color="Color.Warning">
                         @_currentEmployee.FullName[0]
                     </MudAvatar>
                 </MudItem>
                 <MudItem xs="12" md="11">
-                    <MudText Typo="Typo.h5" Color="Color.Primary"><strong>@_currentEmployee.FullName</strong></MudText>
-                    <MudText Typo="Typo.body1" Color="Color.Secondary">@_currentEmployee.Email</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    <MudText Typo="Typo.h5" Color="Color.Warning"><strong>@_currentEmployee.FullName</strong></MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Surface">@_currentEmployee.Email</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Surface">
                         @_currentEmployee.Designation • @(_currentEmployee.Team?.TeamName ?? "No Team") • @_currentEmployee.Location
                     </MudText>
                     @if (_totalExperienceDecimal > 0)
                     {
-                        <MudText Typo="Typo.body2" Class="mt-2" Color="Color.Primary">
+                        <MudText Typo="Typo.body2" Class="mt-2" Color="Color.Info">
                             <MudIcon Icon="@Icons.Material.Filled.WorkHistory" Size="Size.Small" Class="mr-1" />
                             <strong>@FormatTotalExperience() total experience</strong>
                         </MudText>
@@ -140,7 +140,7 @@
                         <MudRadio T="string" Option="@("Available")" Color="Color.Success" Class="mb-3">
                             <div>
                                 <MudText Typo="Typo.body1"><strong>Available</strong></MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudText Typo="Typo.caption" Color="Color.Info">
                                     Ready for new assignments
                                 </MudText>
                             </div>
@@ -148,7 +148,7 @@
                         <MudRadio T="string" Option="@("Limited")" Color="Color.Warning" Class="mb-3">
                             <div>
                                 <MudText Typo="Typo.body1"><strong>Limited</strong></MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudText Typo="Typo.caption" Color="Color.Info">
                                     Available part-time or for specific roles
                                 </MudText>
                             </div>
@@ -156,7 +156,7 @@
                         <MudRadio T="string" Option="@("Not Available")" Color="Color.Error" Class="mb-3">
                             <div>
                                 <MudText Typo="Typo.body1"><strong>Not Available</strong></MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudText Typo="Typo.caption" Color="Color.Info">
                                     Currently not looking for opportunities
                                 </MudText>
                             </div>

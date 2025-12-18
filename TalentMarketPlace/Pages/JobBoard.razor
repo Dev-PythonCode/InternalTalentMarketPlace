@@ -7,7 +7,7 @@
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" Class="mb-2">Current Job Openings</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
+<MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
 
 <!-- Filters with Toggle Switches -->
 <MudPaper Class="pa-3 mb-4" Elevation="1">
@@ -19,7 +19,7 @@
                        Label="My Skills Only"
                        ThumbIcon="@(_filterByMySkills ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
             </MudSwitch>
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-10">
+            <MudText Typo="Typo.caption" Color="Color.Dark" Class="ml-10">
                 @if (_filterByMySkills)
                 {
                     <span>✅ Showing jobs matching your skills only</span>
@@ -38,7 +38,7 @@
                        Label="My Location Only"
                        ThumbIcon="@(_filterByMyLocation ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
             </MudSwitch>
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-10">
+            <MudText Typo="Typo.caption" Color="Color.Dark" Class="ml-10">
                 @if (_filterByMyLocation)
                 {
                     <span>✅ Showing jobs in @(_currentEmployee?.Location ?? "your location") only</span>
@@ -58,7 +58,7 @@
 }
 else if (_filteredRequirements.Any())
 {
-    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+    <MudText Typo="Typo.body2" Color="Color.Primary" Class="mb-3">
         Showing @_filteredRequirements.Count of @_allRequirements.Count opportunities
     </MudText>
 
@@ -71,8 +71,8 @@ else if (_filteredRequirements.Any())
             <MudCardContent>
                 <div class="d-flex justify-space-between align-start mb-3">
                     <div>
-                        <MudText Typo="Typo.h6">@req.Title</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        <MudText Typo="Typo.h6" Color="Color.Info">@req.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Surface">
                             <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="mr-1" />
                             @(req.Team?.TeamName ?? "Any Team") •
                             <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mx-1" />

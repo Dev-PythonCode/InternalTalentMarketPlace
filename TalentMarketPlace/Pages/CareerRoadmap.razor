@@ -10,7 +10,7 @@
 <MudGrid Class="mb-4">
     <MudItem xs="12" md="8">
         <MudText Typo="Typo.h4">Career Roadmap</MudText>
-        <MudText Typo="Typo.body1" Color="Color.Secondary">
+        <MudText Typo="Typo.body1" Color="Color.Primary">
             Get personalized career guidance based on your skills and goals
         </MudText>
     </MudItem>
@@ -39,19 +39,19 @@
             </MudText>
             <MudGrid>
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Total Experience</MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Warning">Total Experience</MudText>
                     <MudText Typo="Typo.h6">@_currentEmployee.YearsOfExperience years</MudText>
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Skills</MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Warning">Skills</MudText>
                     <MudText Typo="Typo.h6">@_mySkills.Count skills</MudText>
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Current Role</MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Warning">Current Role</MudText>
                     <MudText Typo="Typo.h6">@_currentEmployee.Designation</MudText>
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Location</MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Warning">Location</MudText>
                     <MudText Typo="Typo.h6">@_currentEmployee.Location</MudText>
                 </MudItem>
             </MudGrid>
@@ -62,7 +62,7 @@
                 <div>
                     @foreach (var skill in _mySkills.Take(10))
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">
                             @skill.Skill.SkillName (@skill.YearsOfExperience yr)
                         </MudChip>
                     }
