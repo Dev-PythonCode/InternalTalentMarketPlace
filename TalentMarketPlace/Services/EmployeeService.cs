@@ -149,12 +149,18 @@ public class EmployeeService : IEmployeeService
 
     public async Task<List<EmployeeSkill>> GetEmployeeSkillsAsync(int employeeId)
     {
-        return await _context.EmployeeSkills
+        // ⭐ Get data first
+        var skills = await _context.EmployeeSkills
             .Include(es => es.Skill)
                 .ThenInclude(s => s.Category)
             .Where(es => es.EmployeeId == employeeId)
-            .OrderByDescending(es => es.YearsOfExperience)
-            .ToListAsync();
+            .ToListAsync(); // ← Convert to list FIRST
+        
+        // ⭐ Then sort in-memory if needed
+        return skills
+            .OrderBy(es => es.Skill.Category?.DisplayOrder ?? 0)
+            .ThenBy(es => es.Skill.SkillName)
+            .ToList();
     }
 
     public async Task<EmployeeSkill> AddSkillAsync(EmployeeSkill employeeSkill)

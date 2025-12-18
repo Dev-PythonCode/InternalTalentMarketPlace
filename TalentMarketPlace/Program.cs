@@ -3,8 +3,13 @@ using TalentMarketPlace.Data;
 using MudBlazor.Services;
 using TalentMarketPlace.Services;
 using TalentMarketPlace.Services.Interfaces;
+using TalentMarketPlace.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Get Python API URL early for logging
+var pythonApiUrl = builder.Configuration["PythonAI:ApiUrl"] ?? "http://localhost:5000";
+Console.WriteLine($"🔧 Configuration: Python API URL = {pythonApiUrl}");
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -16,19 +21,28 @@ builder.Services.AddDbContext<TalentMarketplaceDbContext>(options =>
 
 // Add Blazor Server
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = true;
+    });
 
 // Add MudBlazor
 builder.Services.AddMudServices();
 
 // Add HttpClient for Python API
+Console.WriteLine($"🔧 Registering HttpClient for Python API...");
+builder.Services.AddHttpClient();  // Add default factory
+
 builder.Services.AddHttpClient("PythonAPI", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["PythonApi:BaseUrl"] ?? "http://127.0.0.1:5000");
+    client.BaseAddress = new Uri(pythonApiUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
+    Console.WriteLine($"🔧 HttpClient 'PythonAPI' configured with BaseAddress: {client.BaseAddress}");
 });
 
 // Add Services
+Console.WriteLine($"🔧 Registering application services...");
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
@@ -63,8 +77,14 @@ builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
     logging.AddDebug();
+    logging.SetMinimumLevel(LogLevel.Debug); // Enable debug logging
 });
 
+builder.Services.Configure<PythonAISettings>(
+    builder.Configuration.GetSection("PythonAI")
+);
+
+Console.WriteLine($"🔧 Building application...");
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -80,6 +100,8 @@ app.UseRouting();
 app.UseCors("AllowPythonAPI");
 app.UseSession();
 
+Console.WriteLine($"🔧 Running database migrations...");
+
 // DATABASE MIGRATION & SEEDING
 using (var scope = app.Services.CreateScope())
 {
@@ -89,6 +111,8 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<TalentMarketplaceDbContext>();
         await context.Database.MigrateAsync();
         await SeedAdditionalData(context);
+        
+        Console.WriteLine($"✅ Database migrations completed successfully");
     }
     catch (Exception ex)
     {
@@ -96,6 +120,31 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while migrating the database.");
     }
 }
+
+// Test Python API connection
+Console.WriteLine($"🔧 Testing Python API connection to {pythonApiUrl}...");
+try
+{
+    using var testScope = app.Services.CreateScope();
+    var pythonApiService = testScope.ServiceProvider.GetRequiredService<IPythonApiService>();
+    var isHealthy = await pythonApiService.IsHealthyAsync();
+    
+    if (isHealthy)
+    {
+        Console.WriteLine($"✅ Python API is HEALTHY at {pythonApiUrl}");
+    }
+    else
+    {
+        Console.WriteLine($"⚠️ Python API health check FAILED at {pythonApiUrl}");
+        Console.WriteLine($"   Make sure Python API is running: cd /Users/dev/Projects/PythonAPI && source venv/bin/activate && python app.py");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Error testing Python API: {ex.Message}");
+}
+
+Console.WriteLine($"🚀 Starting web server...");
 
 // CRITICAL FIX: Map Blazor Hub and Fallback properly
 app.MapBlazorHub();

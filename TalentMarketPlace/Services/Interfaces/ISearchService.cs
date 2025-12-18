@@ -38,6 +38,7 @@ public class SearchResult
     public string? ParsedQuery { get; set; }
     public List<string>? ExtractedSkills { get; set; }
     public List<string>? AppliedFilters { get; set; }
+    public string? Message { get; set; }
 }
 
 public class EmployeeSearchResult

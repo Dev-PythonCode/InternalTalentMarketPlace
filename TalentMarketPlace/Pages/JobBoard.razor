@@ -173,9 +173,9 @@ else
     private Dictionary<int, decimal> _mySkillYears = new();
     private Employee? _currentEmployee;
     
-    private int? _minMatch;
-    private string _locationFilter = "";
-    private string _priorityFilter = "";
+    private int? _minMatch = null;
+    private string _locationFilter = "All";
+    private string _priorityFilter = "All";
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -186,7 +186,6 @@ else
     private async Task LoadData()
     {
         _isLoading = true;
-
         try
         {
             _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
@@ -197,7 +196,7 @@ else
             _mySkillIds = mySkills.Select(s => s.SkillId).ToHashSet();
             _mySkillYears = mySkills.ToDictionary(s => s.SkillId, s => s.YearsOfExperience);
 
-            // Get all open requirements
+            // ⭐ Get all open requirements (already a List from service)
             _requirements = await RequirementService.GetAllAsync(true);
 
             // Get applied requirements
@@ -205,6 +204,7 @@ else
             _appliedRequirements = applications.Select(a => a.RequirementId).ToHashSet();
 
             // Calculate match scores
+            _matchScores.Clear(); // Clear before recalculating
             foreach (var req in _requirements)
             {
                 var matchResult = await EmployeeService.CalculateMatchScoreAsync(
@@ -212,38 +212,46 @@ else
                 _matchScores[req.RequirementId] = matchResult.MatchPercentage;
             }
 
-            // Sort by match percentage
-            _requirements = _requirements.OrderByDescending(r => _matchScores.GetValueOrDefault(r.RequirementId, 0)).ToList();
+            // ⭐ Sort in-memory (client-side) - requirements is already a List
+            _requirements = _requirements
+                .OrderByDescending(r => _matchScores.GetValueOrDefault(r.RequirementId, 0))
+                .ToList();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading jobs: {ex.Message}", Severity.Error);
+            Console.WriteLine($"Error details: {ex}"); // Add full stack trace
         }
         finally
         {
             _isLoading = false;
         }
     }
-
     private async Task ApplyFilters()
     {
         await LoadData();
 
+        // ⭐ All filtering happens in-memory (after LoadData())
+        var filtered = _requirements.AsEnumerable(); // Already a List from LoadData()
+
         if (_minMatch.HasValue)
         {
-            _requirements = _requirements.Where(r => 
-                _matchScores.GetValueOrDefault(r.RequirementId, 0) >= _minMatch.Value).ToList();
+            filtered = filtered.Where(r => 
+                _matchScores.GetValueOrDefault(r.RequirementId, 0) >= _minMatch.Value);
         }
-        if (!string.IsNullOrEmpty(_locationFilter))
-        {
-            _requirements = _requirements.Where(r => r.Location == _locationFilter).ToList();
-        }
-        if (!string.IsNullOrEmpty(_priorityFilter))
-        {
-            _requirements = _requirements.Where(r => r.Priority == _priorityFilter).ToList();
-        }
-    }
 
+        if (!string.IsNullOrEmpty(_locationFilter) && _locationFilter != "All")
+        {
+            filtered = filtered.Where(r => r.Location == _locationFilter);
+        }
+
+        if (!string.IsNullOrEmpty(_priorityFilter) && _priorityFilter != "All")
+        {
+            filtered = filtered.Where(r => r.Priority == _priorityFilter);
+        }
+
+        _requirements = filtered.ToList();
+    }
     private async Task ApplyToJob(int requirementId)
     {
         if (_currentEmployee == null) return;
