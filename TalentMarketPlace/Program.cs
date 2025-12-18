@@ -21,7 +21,11 @@ builder.Services.AddDbContext<TalentMarketplaceDbContext>(options =>
 
 // Add Blazor Server
 builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = true;
+    });
 
 // Add MudBlazor
 builder.Services.AddMudServices();

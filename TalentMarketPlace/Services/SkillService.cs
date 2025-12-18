@@ -15,15 +15,19 @@ public class SkillService : ISkillService
 
     public async Task<List<Skill>> GetAllAsync()
     {
-        return await _context.Skills
+        // ⭐ Get data first WITHOUT ordering by decimal
+        var skills = await _context.Skills
             .Include(s => s.Category)
             .Include(s => s.SkillAliases)
             .Where(s => s.IsActive)
-            .OrderBy(s => s.Category.DisplayOrder)
+            .ToListAsync(); // ← Convert to list FIRST
+        
+        // ⭐ Then sort in-memory (client-side)
+        return skills
+            .OrderBy(s => s.Category?.DisplayOrder ?? 0)
             .ThenBy(s => s.SkillName)
-            .ToListAsync();
+            .ToList();
     }
-
     public async Task<List<Skill>> GetByCategoryAsync(int categoryId)
     {
         return await _context.Skills

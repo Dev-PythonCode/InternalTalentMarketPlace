@@ -97,12 +97,27 @@
                     Add Skill Manually
                 </MudText>
                 
-                <MudSelect T="int?" Label="Skill" @bind-Value="_newSkillId" Variant="Variant.Outlined" Class="mb-3">
-                    @foreach (var skill in _availableSkills)
-                    {
-                        <MudSelectItem T="int?" Value="@skill.SkillId">@skill.SkillName</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudSelect T="int?" Label="Skill" @bind-Value="_newSkillId" 
+           Variant="Variant.Outlined" Class="mb-3"
+           HelperText="Select a skill you want to add">
+    @foreach (var skill in _availableSkills.Where(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
+    {
+        <MudSelectItem T="int?" Value="@skill.SkillId">
+            @skill.SkillName
+            @if (skill.Category != null)
+            {
+                <span style="color: gray; font-size: 0.8em;"> (@skill.Category.CategoryName)</span>
+            }
+        </MudSelectItem>
+    }
+        </MudSelect>
+
+        @if (!_availableSkills.Any(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                You've added all available skills! 🎉
+            </MudAlert>
+        }
                 
                 <MudGrid>
                     <MudItem xs="6">
@@ -218,13 +233,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
-        _availableSkills = await SkillService.GetAllAsync();
-        
-        if (_currentEmployee != null)
+        try
         {
-            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
-            _availabilityStatus = _currentEmployee.AvailabilityStatus;
+            _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+            
+            // ⭐ Load skills first
+            _availableSkills = await SkillService.GetAllAsync();
+            Console.WriteLine($"Loaded {_availableSkills.Count} skills"); // Debug
+            
+            if (_currentEmployee != null)
+            {
+                _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
+                _availabilityStatus = _currentEmployee.AvailabilityStatus ?? "Available";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnInitializedAsync: {ex}");
+            Snackbar.Add($"Error loading profile: {ex.Message}", Severity.Error);
         }
     }
 
@@ -269,6 +295,14 @@
             return;
         }
 
+        // ⭐ CHECK FOR DUPLICATE
+        var existingSkill = _mySkills.FirstOrDefault(s => s.SkillId == _newSkillId.Value);
+        if (existingSkill != null)
+        {
+            Snackbar.Add($"Skill '{existingSkill.Skill.SkillName}' is already added. Please update it instead.", Severity.Warning);
+            return;
+        }
+
         try
         {
             var newSkill = new EmployeeSkill
@@ -288,6 +322,7 @@
             _newSkillId = null;
             _newSkillYears = 1;
             _newSkillLevel = "Intermediate";
+            _newSkillLastUsed = DateTime.Now;
             
             Snackbar.Add("Skill added successfully!", Severity.Success);
         }

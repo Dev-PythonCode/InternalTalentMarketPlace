@@ -26,23 +26,21 @@ public class RequirementService : IRequirementService
             .FirstOrDefaultAsync(r => r.RequirementId == requirementId);
     }
 
-    public async Task<List<Requirement>> GetAllAsync(bool activeOnly = true)
+    public async Task<List<Requirement>> GetAllAsync(bool openOnly = false)
     {
         var query = _context.Requirements
-            .Include(r => r.PostedBy)
             .Include(r => r.Team)
             .Include(r => r.RequirementSkills)
                 .ThenInclude(rs => rs.Skill)
             .AsQueryable();
 
-        if (activeOnly)
+        if (openOnly)
         {
-            query = query.Where(r => r.IsActive && r.Status == "Open");
+            query = query.Where(r => r.Status == "Open");
         }
 
-        return await query
-            .OrderByDescending(r => r.PostedDate)
-            .ToListAsync();
+        // ⭐ Convert to List BEFORE returning
+        return await query.ToListAsync();
     }
 
     public async Task<List<Requirement>> GetByManagerAsync(int managerId)
