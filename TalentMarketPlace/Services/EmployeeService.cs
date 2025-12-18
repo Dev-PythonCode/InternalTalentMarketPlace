@@ -171,6 +171,18 @@ public class EmployeeService : IEmployeeService
             .ThenBy(es => es.Skill.SkillName)
             .ToList();
     }
+    public async Task<bool> UpdateTotalExperienceAsync(int employeeId, decimal yearsOfExperience)
+    {
+        var employee = await _context.Employees.FindAsync(employeeId);
+        if (employee == null)
+            return false;
+        
+        employee.YearsOfExperience = yearsOfExperience;
+        employee.UpdatedDate = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
 
     public async Task<EmployeeSkill> AddSkillAsync(EmployeeSkill employeeSkill)
     {

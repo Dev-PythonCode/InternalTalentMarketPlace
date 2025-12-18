@@ -6,10 +6,11 @@
 @inject IDialogService _dialogService
 
 <MudText Typo="Typo.h4" Class="mb-2">My Profile</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage your skills and resume</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Manage your skills and experience</MudText>
 
 @if (_currentEmployee != null)
 {
+    <!-- Employee Info Card -->
     <MudCard Class="mb-4">
         <MudCardContent>
             <MudGrid>
@@ -28,95 +29,143 @@
             </MudGrid>
         </MudCardContent>
     </MudCard>
+
+    <!-- Total Experience Section -->
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.WorkHistory" Class="mr-2" />
+                Total Experience
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudNumericField T="int" Label="Years" @bind-Value="_totalExpYears" 
+                                     Variant="Variant.Outlined" Min="0" Max="50" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudNumericField T="int" Label="Months" @bind-Value="_totalExpMonths" 
+                                     Variant="Variant.Outlined" Min="0" Max="11" />
+                </MudItem>
+                <MudItem xs="12" md="4" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                               OnClick="UpdateTotalExperience" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        Update Total Experience
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+            
+            @if (_totalExperienceDecimal > 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-3">
+                    Total Experience: <strong>@_totalExperienceDecimal years</strong>
+                </MudAlert>
+            }
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Add Skill & Availability Section -->
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <!-- Left Half: Add Skill -->
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
+                        Add Skill
+                    </MudText>
+                    
+                    <MudSelect T="int?" Label="Skill *" @bind-Value="_newSkillId" 
+                               Variant="Variant.Outlined" Class="mb-3"
+                               HelperText="Select a skill you want to add">
+                        @foreach (var skill in _availableSkills.Where(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
+                        {
+                            <MudSelectItem T="int?" Value="@skill.SkillId">
+                                @skill.SkillName
+                                @if (skill.Category != null)
+                                {
+                                    <span style="color: gray; font-size: 0.8em;"> (@skill.Category.CategoryName)</span>
+                                }
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                    
+                    <MudNumericField T="decimal" Label="Years of Experience *" @bind-Value="_newSkillYears" 
+                                     Variant="Variant.Outlined" Step="0.5M" Min="0" Max="50" Class="mb-3" />
+                    
+                    <MudSelect T="string" Label="Proficiency Level *" @bind-Value="_newSkillLevel" 
+                               Variant="Variant.Outlined" Class="mb-3">
+                        <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
+                    </MudSelect>
+                    
+                    <MudDatePicker Label="Last Used Date" @bind-Date="_newSkillLastUsed" 
+                                   Variant="Variant.Outlined" Class="mb-3" />
+                    
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill" 
+                               FullWidth="true" StartIcon="@Icons.Material.Filled.Add">
+                        Add Skill
+                    </MudButton>
+                </MudItem>
+
+                <!-- Right Half: Availability Status -->
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Class="mr-2" />
+                        Availability Status *
+                    </MudText>
+                    
+                    <MudRadioGroup T="string" @bind-SelectedOption="_availabilityStatus">
+                        <MudRadio T="string" Option="@("Available")" Color="Color.Success" Class="mb-2">
+                            <div>
+                                <MudText Typo="Typo.body1"><strong>Available</strong></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Ready for new assignments
+                                </MudText>
+                            </div>
+                        </MudRadio>
+                        <MudRadio T="string" Option="@("Limited")" Color="Color.Warning" Class="mb-2">
+                            <div>
+                                <MudText Typo="Typo.body1"><strong>Limited</strong></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Available part-time or for specific roles
+                                </MudText>
+                            </div>
+                        </MudRadio>
+                        <MudRadio T="string" Option="@("Not Available")" Color="Color.Error" Class="mb-2">
+                            <div>
+                                <MudText Typo="Typo.body1"><strong>Not Available</strong></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Currently not looking for opportunities
+                                </MudText>
+                            </div>
+                        </MudRadio>
+                    </MudRadioGroup>
+                    
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" 
+                               OnClick="UpdateAvailability" Class="mt-3" FullWidth="true">
+                        Update Availability Status
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
 }
-
-
-<MudGrid>
-    
-
-    <!-- Add Skill Manually Section -->
-    <!-- Remove the entire Grid, replace with single full-width card -->
-    <MudItem>
-<MudCard Class="mb-4">
-    <MudCardContent>
-        <MudText Typo="Typo.h6" Class="mb-3">
-            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
-            Add Skill
-        </MudText>
-        
-        <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudSelect T="int?" Label="Skill" @bind-Value="_newSkillId" 
-                           Variant="Variant.Outlined" HelperText="Select a skill you want to add">
-                    @foreach (var skill in _availableSkills.Where(s => !_mySkills.Any(ms => ms.SkillId == s.SkillId)))
-                    {
-                        <MudSelectItem T="int?" Value="@skill.SkillId">
-                            @skill.SkillName
-                            @if (skill.Category != null)
-                            {
-                                <span style="color: gray; font-size: 0.8em;"> (@skill.Category.CategoryName)</span>
-                            }
-                        </MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-            
-            <MudItem xs="12" md="3">
-                <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_newSkillYears" 
-                                 Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" />
-            </MudItem>
-            
-            <MudItem xs="12" md="3">
-                <MudSelect T="string" Label="Proficiency Level" @bind-Value="_newSkillLevel" Variant="Variant.Outlined">
-                    <MudSelectItem T="string" Value="@("Beginner")">Beginner</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("Intermediate")">Intermediate</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("Advanced")">Advanced</MudSelectItem>
-                    <MudSelectItem T="string" Value="@("Expert")">Expert</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-            
-            <MudItem xs="12" md="6">
-                <MudDatePicker Label="Last Used Date" @bind-Date="_newSkillLastUsed" 
-                               Variant="Variant.Outlined" />
-            </MudItem>
-            
-            <MudItem xs="12" md="6" Class="d-flex align-end">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill" 
-                           FullWidth="true" StartIcon="@Icons.Material.Filled.Add">
-                    Add Skill
-                </MudButton>
-            </MudItem>
-        </MudGrid>
-
-        <MudDivider Class="my-4" />
-
-        <MudText Typo="Typo.h6" Class="mb-3">Availability Status</MudText>
-        <MudRadioGroup T="string" @bind-SelectedOption="_availabilityStatus">
-            <MudRadio T="string" Option="@("Available")" Color="Color.Success">Available</MudRadio>
-            <MudRadio T="string" Option="@("Limited")" Color="Color.Warning">Limited</MudRadio>
-            <MudRadio T="string" Option="@("Not Available")" Color="Color.Error">Not Available</MudRadio>
-        </MudRadioGroup>
-        
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="UpdateAvailability" Class="mt-2">
-            Update Status
-        </MudButton>
-    </MudCardContent>
-</MudCard>
-</MudItem>
-
-</MudGrid>
 
 <!-- Current Skills -->
 <MudCard Class="mt-4">
     <MudCardContent>
         <MudText Typo="Typo.h6" Class="mb-3">
             <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2" />
-            My Skills
+            My Skills (@_mySkills.Count)
         </MudText>
         
         @if (_mySkills.Any())
         {
-            <MudSimpleTable Dense="true" Hover="true">
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
                 <thead>
                     <tr>
                         <th>Skill</th>
@@ -134,22 +183,22 @@
                             <td><strong>@skill.Skill.SkillName</strong></td>
                             <td>@skill.YearsOfExperience</td>
                             <td>
-                                <MudChip T ="string" Size="Size.Small" Color="@GetLevelColor(skill.ProficiencyLevel)">
+                                <MudChip T="string" Size="Size.Small" Color="@GetLevelColor(skill.ProficiencyLevel)">
                                     @skill.ProficiencyLevel
                                 </MudChip>
                             </td>
                             <td>@(skill.LastUsedDate?.ToString("MMM yyyy") ?? "-")</td>
                             <td>
-                                <MudChip T ="string" Size="Size.Small" Variant="Variant.Outlined" 
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" 
                                          Color="@(skill.Source == "Auto" ? Color.Info : Color.Default)">
                                     @skill.Source
                                 </MudChip>
                             </td>
                             <td>
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" 
-                                               OnClick="@(() => EditSkill(skill))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                               OnClick="@(() => DeleteSkill(skill))" />
+                                               Color="Color.Primary" OnClick="@(() => EditSkill(skill))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" 
+                                               Color="Color.Error" OnClick="@(() => DeleteSkill(skill))" />
                             </td>
                         </tr>
                     }
@@ -158,20 +207,28 @@
         }
         else
         {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                No skills added yet. Upload your resume or add skills manually.
-            </MudText>
+            <MudPaper Class="pa-4 text-center" Elevation="0" Style="background: #f5f5f5;">
+                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body1" Class="mt-2">No skills added yet</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Add your first skill using the form above
+                </MudText>
+            </MudPaper>
         }
     </MudCardContent>
 </MudCard>
 
 <!-- Edit Skill Dialog -->
-<MudDialog @bind-IsVisible="_editDialogOpen">
+<MudDialog @bind-IsVisible="_editDialogOpen" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
+            Edit Skill: @(_editingSkill?.Skill.SkillName)
+        </MudText>
+    </TitleContent>
     <DialogContent>
-        <MudText Typo="Typo.h6" Class="mb-4">Edit Skill: @(_editingSkill?.Skill.SkillName)</MudText>
-        
         <MudNumericField T="decimal" Label="Years of Experience" @bind-Value="_editSkillYears" 
-                         Variant="Variant.Outlined" Step="0.5M" Min="0" Max="30" Class="mb-3" />
+                         Variant="Variant.Outlined" Step="0.5M" Min="0" Max="50" Class="mb-3" />
         
         <MudSelect T="string" Label="Proficiency Level" @bind-Value="_editSkillLevel" 
                    Variant="Variant.Outlined" Class="mb-3">
@@ -185,8 +242,10 @@
                        Variant="Variant.Outlined" Class="mb-3" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CancelEdit">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveEditedSkill">Save</MudButton>
+        <MudButton OnClick="CancelEdit" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveEditedSkill">
+            Save Changes
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -194,20 +253,29 @@
     private Employee? _currentEmployee;
     private List<Skill> _availableSkills = new();
     private List<EmployeeSkill> _mySkills = new();
-    private List<ExtractedSkill> _extractedSkills = new();
     
+    // Total Experience
+    private int _totalExpYears = 0;
+    private int _totalExpMonths = 0;
+    private decimal _totalExperienceDecimal = 0;
+    
+    // Add Skill
     private int? _newSkillId;
     private decimal _newSkillYears = 1;
     private string _newSkillLevel = "Intermediate";
     private DateTime? _newSkillLastUsed = DateTime.Now;
+    
+    // Availability
     private string _availabilityStatus = "Available";
-    private bool _isUploading = false;
+    
+    // Edit Skill Dialog
     private bool _editDialogOpen = false;
     private EmployeeSkill? _editingSkill = null;
-    private int? _editSkillId;
     private decimal _editSkillYears;
     private string _editSkillLevel = "Intermediate";
     private DateTime? _editSkillLastUsed;
+    
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -215,59 +283,81 @@
         {
             _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
             
-            // ⭐ Load skills first
             _availableSkills = await SkillService.GetAllAsync();
-            Console.WriteLine($"Loaded {_availableSkills.Count} skills"); // Debug
+            Console.WriteLine($"✅ Loaded {_availableSkills.Count} skills");
             
             if (_currentEmployee != null)
             {
                 _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
                 _availabilityStatus = _currentEmployee.AvailabilityStatus ?? "Available";
+                
+                // Load total experience
+                _totalExperienceDecimal = _currentEmployee.YearsOfExperience;
+                _totalExpYears = (int)_totalExperienceDecimal;
+                _totalExpMonths = (int)((_totalExperienceDecimal - _totalExpYears) * 12);
+                
+                Console.WriteLine($"✅ Total Experience: {_totalExpYears} years, {_totalExpMonths} months");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in OnInitializedAsync: {ex}");
+            Console.WriteLine($"❌ Error in OnInitializedAsync: {ex}");
             Snackbar.Add($"Error loading profile: {ex.Message}", Severity.Error);
         }
     }
 
-    private void TriggerFileUpload()
+    private async Task UpdateTotalExperience()
     {
-        // JavaScript interop would be needed to trigger the file input
-    }
+        if (_currentEmployee == null) return;
 
-    private async Task HandleFileUpload(InputFileChangeEventArgs e)
-    {
-        _isUploading = true;
-        
+        // Validation
+        if (_totalExpYears == 0 && _totalExpMonths == 0)
+        {
+            Snackbar.Add("Please enter your total experience", Severity.Warning);
+            return;
+        }
+
+        if (_totalExpMonths > 11)
+        {
+            Snackbar.Add("Months must be between 0 and 11", Severity.Warning);
+            return;
+        }
+
         try
         {
-            // This would call the Python API to parse the resume
-            // For now, simulate extracted skills
-            await Task.Delay(2000);
+            // Calculate decimal (e.g., 5 years 6 months = 5.5)
+            _totalExperienceDecimal = _totalExpYears + (_totalExpMonths / 12m);
             
-            _extractedSkills = new List<ExtractedSkill>
+            var success = await EmployeeService.UpdateTotalExperienceAsync(
+                _currentEmployee.EmployeeId, 
+                _totalExperienceDecimal);
+            
+            if (success)
             {
-                new ExtractedSkill { SkillName = "Python", YearsOfExperience = 5, ProficiencyLevel = "Expert", ConfidenceScore = 0.9m },
-                new ExtractedSkill { SkillName = "AWS", YearsOfExperience = 3, ProficiencyLevel = "Advanced", ConfidenceScore = 0.75m }
-            };
-            
-            Snackbar.Add("Resume parsed successfully!", Severity.Success);
+                _currentEmployee.YearsOfExperience = _totalExperienceDecimal;
+                Snackbar.Add($"Total experience updated to {_totalExperienceDecimal} years!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to update experience", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error parsing resume: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _isUploading = false;
+            Snackbar.Add($"Error updating experience: {ex.Message}", Severity.Error);
         }
     }
 
     private async Task AddSkill()
     {
-        if (_newSkillId == null || _currentEmployee == null)
+        if (_currentEmployee == null)
+        {
+            Snackbar.Add("Not authenticated", Severity.Error);
+            return;
+        }
+
+        // Validation
+        if (_newSkillId == null)
         {
             Snackbar.Add("Please select a skill", Severity.Warning);
             return;
@@ -277,7 +367,21 @@
         var existingSkill = _mySkills.FirstOrDefault(s => s.SkillId == _newSkillId.Value);
         if (existingSkill != null)
         {
-            Snackbar.Add($"Skill '{existingSkill.Skill.SkillName}' is already added. Please update it instead.", Severity.Warning);
+            Snackbar.Add($"'{existingSkill.Skill.SkillName}' is already added. Please update it instead.", Severity.Warning);
+            return;
+        }
+
+        // ⭐ VALIDATE SKILL EXPERIENCE DOES NOT EXCEED TOTAL EXPERIENCE
+        if (_totalExperienceDecimal == 0)
+        {
+            Snackbar.Add("Please update your total experience first", Severity.Warning);
+            return;
+        }
+
+        if (_newSkillYears > _totalExperienceDecimal)
+        {
+            Snackbar.Add($"Skill experience ({_newSkillYears} years) cannot exceed total experience ({_totalExperienceDecimal} years)", 
+                         Severity.Warning);
             return;
         }
 
@@ -322,6 +426,7 @@
             
             if (success)
             {
+                _currentEmployee.AvailabilityStatus = _availabilityStatus;
                 Snackbar.Add("Availability updated!", Severity.Success);
             }
             else
@@ -333,19 +438,54 @@
         {
             Snackbar.Add($"Error updating availability: {ex.Message}", Severity.Error);
         }
-    }    
-    private void AcceptExtractedSkill(ExtractedSkill skill)
-    {
-        // Add to skills
-        Snackbar.Add($"Added {skill.SkillName} to your skills", Severity.Success);
-        _extractedSkills.Remove(skill);
     }
 
-    private void EditExtractedSkill(ExtractedSkill skill)
+    private void EditSkill(EmployeeSkill skill)
     {
-        // Open edit dialog
+        _editingSkill = skill;
+        _editSkillYears = skill.YearsOfExperience;
+        _editSkillLevel = skill.ProficiencyLevel ?? "Intermediate";
+        _editSkillLastUsed = skill.LastUsedDate;
+        _editDialogOpen = true;
     }
 
+    private async Task SaveEditedSkill()
+    {
+        if (_editingSkill == null) return;
+
+        // ⭐ VALIDATE SKILL EXPERIENCE
+        if (_editSkillYears > _totalExperienceDecimal)
+        {
+            Snackbar.Add($"Skill experience ({_editSkillYears} years) cannot exceed total experience ({_totalExperienceDecimal} years)", 
+                         Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _editingSkill.YearsOfExperience = _editSkillYears;
+            _editingSkill.ProficiencyLevel = _editSkillLevel;
+            _editingSkill.LastUsedDate = _editSkillLastUsed;
+
+            await EmployeeService.UpdateSkillAsync(_editingSkill);
+            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee!.EmployeeId);
+            
+            _editDialogOpen = false;
+            _editingSkill = null;
+            
+            Snackbar.Add("Skill updated successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating skill: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editDialogOpen = false;
+        _editingSkill = null;
+    }
 
     private async Task DeleteSkill(EmployeeSkill skill)
     {
@@ -380,16 +520,6 @@
         }
     }
 
-    private Color GetConfidenceColor(decimal confidence)
-    {
-        return confidence switch
-        {
-            >= 0.8m => Color.Success,
-            >= 0.6m => Color.Warning,
-            _ => Color.Error
-        };
-    }
-
     private Color GetLevelColor(string? level)
     {
         return level switch
@@ -397,44 +527,16 @@
             "Expert" => Color.Success,
             "Advanced" => Color.Primary,
             "Intermediate" => Color.Warning,
+            "Beginner" => Color.Info,
             _ => Color.Default
         };
     }
-    private void EditSkill(EmployeeSkill skill)
+
+    public class ExtractedSkill
     {
-        _editingSkill = skill;
-        _editSkillId = skill.SkillId;
-        _editSkillYears = skill.YearsOfExperience;
-        _editSkillLevel = skill.ProficiencyLevel ?? "Intermediate";
-        _editSkillLastUsed = skill.LastUsedDate;
-        _editDialogOpen = true;
-    }
-
-    private async Task SaveEditedSkill()
-    {
-        if (_editingSkill == null) return;
-
-        try
-        {
-            _editingSkill.YearsOfExperience = _editSkillYears;
-            _editingSkill.ProficiencyLevel = _editSkillLevel;
-            _editingSkill.LastUsedDate = _editSkillLastUsed;
-
-            await EmployeeService.UpdateSkillAsync(_editingSkill);
-            _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee!.EmployeeId);
-            
-            _editDialogOpen = false;
-            Snackbar.Add("Skill updated successfully!", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error updating skill: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private void CancelEdit()
-    {
-        _editDialogOpen = false;
-        _editingSkill = null;
+        public string SkillName { get; set; } = "";
+        public decimal? YearsOfExperience { get; set; }
+        public string? ProficiencyLevel { get; set; }
+        public decimal ConfidenceScore { get; set; }
     }
 }
