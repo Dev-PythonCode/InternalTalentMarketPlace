@@ -86,22 +86,37 @@ else
             </MudCardContent>
         </MudCard>
 
-        <!-- Stats Summary -->
+        <!-- Stats Summary with Filters -->
         @if (_applications.Any())
         {
             <MudPaper Class="pa-3 mb-4" Elevation="1">
                 <div class="d-flex gap-2">
-                    <MudChip T="string" Color="Color.Primary">@_applications.Count Total</MudChip>
-                    <MudChip T="string" Color="Color.Success">@_applications.Count(a => a.AIScore >= 80) Good Fit</MudChip>
-                    <MudChip T="string" Color="Color.Warning">@_applications.Count(a => a.AIScore >= 60 && a.AIScore < 80) Needs Training</MudChip>
-                    <MudChip T="string" Color="Color.Error">@_applications.Count(a => a.AIScore < 60) Not Recommended</MudChip>
+                    <MudChip T="string" Color="Color.Primary" OnClick="@(() => ClearFilters())">@_applications.Count Total</MudChip>
+                    <MudTooltip Text="Candidate meets or exceeds all mandatory skill requirements with strong experience levels (80%+)">
+                        <MudChip T="string" Color="Color.Success" OnClick="@(() => FilterByCategory("GoodFit"))"
+                                 Style="@GetFilterStyle("GoodFit")">
+                            @_applications.Count(a => a.MatchPercentage >= 80) Good Fit
+                        </MudChip>
+                    </MudTooltip>
+                    <MudTooltip Text="Candidate has foundational skills but would benefit from upskilling (60-79%)">
+                        <MudChip T="string" Color="Color.Warning" OnClick="@(() => FilterByCategory("NeedsTraining"))"
+                                 Style="@GetFilterStyle("NeedsTraining")">
+                            @_applications.Count(a => a.MatchPercentage >= 60 && a.MatchPercentage < 80) Needs Training
+                        </MudChip>
+                    </MudTooltip>
+                    <MudTooltip Text="Significant skill gaps exist for this role (<60%)">
+                        <MudChip T="string" Color="Color.Error" OnClick="@(() => FilterByCategory("NotRecommended"))"
+                                 Style="@GetFilterStyle("NotRecommended")">
+                            @_applications.Count(a => a.MatchPercentage < 60) Not Recommended
+                        </MudChip>
+                    </MudTooltip>
                 </div>
             </MudPaper>
         }
 
         @if (_applications.Any())
         {
-            @foreach (var app in _applications.OrderByDescending(a => a.AIScore))
+            @foreach (var app in _filteredApplications.OrderByDescending(a => a.MatchPercentage))
             {
                 <MudCard Class="mb-3">
                     <MudCardContent>
@@ -132,27 +147,40 @@ else
                             </MudItem>
                         </MudGrid>
 
-                        <!-- AI Score Section -->
+                        <!-- Match Score Section (using MatchPercentage for consistency) -->
                         <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
                             <div class="mr-4">
-                                <MudText Typo="Typo.h3" Color="@GetScoreColor(app.AIScore ?? 0)">
-                                    @(app.AIScore?.ToString("0") ?? "?")%
+                                <MudText Typo="Typo.h3" Color="@GetScoreColor(app.MatchPercentage ?? 0)">
+                                    @(app.MatchPercentage?.ToString("0.00") ?? "?")%
                                 </MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">AI Score</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Match Score</MudText>
                             </div>
                             <div>
                                 <MudText Typo="Typo.body1">
-                                    <MudIcon Icon="@GetRecommendationIcon(app.AIRecommendation)" 
-                                             Color="@GetRecommendationColor(app.AIRecommendation)" Class="mr-1" />
-                                    <strong style="color: @GetRecommendationColorHex(app.AIRecommendation)">
-                                        @(app.AIRecommendation ?? "Pending Analysis")
+                                    <MudIcon Icon="@GetCategoryIcon(app.MatchPercentage ?? 0)" 
+                                             Color="@GetCategoryColor(app.MatchPercentage ?? 0)" Class="mr-1" />
+                                    <strong style="color: @GetCategoryColorHex(app.MatchPercentage ?? 0)">
+                                        @GetCategoryName(app.MatchPercentage ?? 0)
                                     </strong>
                                 </MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                    @GetRecommendationDescription(app.AIRecommendation)
+                                    @GetCategoryDescription(app.MatchPercentage ?? 0)
                                 </MudText>
                             </div>
                         </MudPaper>
+
+                        <!-- Missing Skills Summary -->
+                        @{
+                            var missingSkills = _selectedRequirement?.RequirementSkills?
+                                .Where(rs => !app.Employee.EmployeeSkills.Any(es => es.SkillId == rs.SkillId))
+                                .ToList() ?? new List<RequirementSkill>();
+                        }
+                        @if (missingSkills.Any())
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Warning">
+                                <strong>Missing:</strong> @string.Join(", ", missingSkills.Select(s => s.Skill.SkillName))
+                            </MudAlert>
+                        }
 
                         <!-- Skill Comparison -->
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Skill Comparison</MudText>
@@ -189,7 +217,7 @@ else
                         </MudGrid>
 
                         <!-- Learning Suggestions (if needed) -->
-                        @if (app.AIScore < 80)
+                        @if (app.MatchPercentage < 80)
                         {
                             <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background: #fef3c7;">
                                 <MudText Typo="Typo.subtitle2" Style="color: #92400e;">
@@ -266,10 +294,12 @@ else
 
     private List<Requirement> _myRequirements = new();
     private List<Application> _applications = new();
+    private List<Application> _filteredApplications = new();  // ⭐ For filtered results
     private Dictionary<int, int> _applicationCounts = new();
     private Requirement? _selectedRequirement;
     private int? _selectedRequirementId;
     private bool _isLoading = true;
+    private string? _selectedCategory = null;  // ⭐ For tracking selected filter
 
     protected override async Task OnInitializedAsync()
     {
@@ -361,6 +391,8 @@ else
         {
             _selectedRequirement = await RequirementService.GetByIdAsync(_selectedRequirementId.Value);
             _applications = await ApplicationService.GetByRequirementAsync(_selectedRequirementId.Value);
+            _filteredApplications = _applications;  // ⭐ Initialize filtered list
+            _selectedCategory = null;  // ⭐ Reset filter when changing requirement
         }
         catch (Exception ex)
         {
@@ -370,6 +402,99 @@ else
         {
             _isLoading = false;
         }
+    }
+
+    // ⭐ NEW: Filter by category
+    private void FilterByCategory(string category)
+    {
+        if (_selectedCategory == category)
+        {
+            // Click same category again to clear filter
+            ClearFilters();
+            return;
+        }
+
+        _selectedCategory = category;
+
+        _filteredApplications = category switch
+        {
+            "GoodFit" => _applications.Where(a => a.MatchPercentage >= 80).ToList(),
+            "NeedsTraining" => _applications.Where(a => a.MatchPercentage >= 60 && a.MatchPercentage < 80).ToList(),
+            "NotRecommended" => _applications.Where(a => a.MatchPercentage < 60).ToList(),
+            _ => _applications
+        };
+    }
+
+    // ⭐ NEW: Clear filters
+    private void ClearFilters()
+    {
+        _selectedCategory = null;
+        _filteredApplications = _applications;
+    }
+
+    // ⭐ NEW: Helper method for filter style
+    private string GetFilterStyle(string category)
+    {
+        if (_selectedCategory != category)
+            return "cursor: pointer;";
+
+        return category switch
+        {
+            "GoodFit" => "cursor: pointer; border: 2px solid #10b981;",
+            "NeedsTraining" => "cursor: pointer; border: 2px solid #f59e0b;",
+            "NotRecommended" => "cursor: pointer; border: 2px solid #ef4444;",
+            _ => "cursor: pointer;"
+        };
+    }
+
+    private string GetCategoryName(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => "Good Fit",
+            >= 60 => "Needs Training",
+            _ => "Not Recommended"
+        };
+    }
+
+    private string GetCategoryDescription(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => "Candidate meets or exceeds all mandatory skill requirements with strong experience levels.",
+            >= 60 => "Candidate has foundational skills but would benefit from upskilling.",
+            _ => "Significant skill gaps exist for this role.",
+        };
+    }
+
+    private string GetCategoryIcon(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => Icons.Material.Filled.CheckCircle,
+            >= 60 => Icons.Material.Filled.Warning,
+            _ => Icons.Material.Filled.Cancel
+        };
+    }
+
+    private Color GetCategoryColor(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => Color.Success,
+            >= 60 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private string GetCategoryColorHex(decimal score)
+    {
+        return score switch
+        {
+            >= 80 => "#10b981",
+            >= 60 => "#f59e0b",
+            _ => "#ef4444"
+        };
     }
 
     private async Task UpdateStatus(int applicationId, string status)
@@ -419,47 +544,6 @@ else
             "Filled" => Color.Info,
             "On Hold" => Color.Warning,
             _ => Color.Default
-        };
-    }
-
-    private string GetRecommendationIcon(string? recommendation)
-    {
-        return recommendation switch
-        {
-            "Good fit" => Icons.Material.Filled.CheckCircle,
-            "Needs training" => Icons.Material.Filled.Warning,
-            _ => Icons.Material.Filled.Cancel
-        };
-    }
-
-    private Color GetRecommendationColor(string? recommendation)
-    {
-        return recommendation switch
-        {
-            "Good fit" => Color.Success,
-            "Needs training" => Color.Warning,
-            _ => Color.Error
-        };
-    }
-
-    private string GetRecommendationColorHex(string? recommendation)
-    {
-        return recommendation switch
-        {
-            "Good fit" => "#10b981",
-            "Needs training" => "#f59e0b",
-            _ => "#ef4444"
-        };
-    }
-
-    private string GetRecommendationDescription(string? recommendation)
-    {
-        return recommendation switch
-        {
-            "Good fit" => "Candidate meets or exceeds all mandatory skill requirements with strong experience levels.",
-            "Needs training" => "Candidate has foundational skills but would benefit from upskilling.",
-            "Not recommended" => "Significant skill gaps exist for this role.",
-            _ => "Analysis pending"
         };
     }
 

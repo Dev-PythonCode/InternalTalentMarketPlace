@@ -7,48 +7,62 @@
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" Class="mb-2">Current Job Openings</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
+<MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
 
-<!-- Filters -->
-<MudGrid Class="mb-4">
-    <MudItem xs="12" md="3">
-        <MudSelect T="int?" Label="Min Match %" @bind-Value="_minMatch" Variant="Variant.Outlined" Dense="true">
-            <MudSelectItem T="int?" Value="null">All Matches</MudSelectItem>
-            <MudSelectItem T="int?" Value="80">80%+ Match</MudSelectItem>
-            <MudSelectItem T="int?" Value="60">60%+ Match</MudSelectItem>
-            <MudSelectItem T="int?" Value="40">40%+ Match</MudSelectItem>
-        </MudSelect>
-    </MudItem>
-    <MudItem xs="12" md="3">
-        <MudSelect T="string" Label="Location" @bind-Value="_locationFilter" Variant="Variant.Outlined" Dense="true">
-            <MudSelectItem T="string" Value="@("All")">All Locations</MudSelectItem>
-            <MudSelectItem T="string" Value="@("Bangalore")">Bangalore</MudSelectItem>
-            <MudSelectItem T="string" Value="@("Chennai")">Chennai</MudSelectItem>
-            <MudSelectItem T="string" Value="@("Mumbai")">Mumbai</MudSelectItem>
-        </MudSelect>
-    </MudItem>
-    <MudItem xs="12" md="3">
-        <MudSelect T="string" Label="Priority" @bind-Value="_priorityFilter" Variant="Variant.Outlined" Dense="true">
-            <MudSelectItem T="string" Value="@("All")">All Priorities</MudSelectItem>
-            <MudSelectItem T="string" Value="@("High")">High</MudSelectItem>
-            <MudSelectItem T="string" Value="@("Medium")">Medium</MudSelectItem>
-            <MudSelectItem T="string" Value="@("Low")">Low</MudSelectItem>
-        </MudSelect>
-    </MudItem>
-    <MudItem xs="12" md="3" Class="d-flex align-center">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyFilters" FullWidth="true">
-            Apply Filters
-        </MudButton>
-    </MudItem>
-</MudGrid>
+<!-- Filters with Toggle Switches -->
+<MudPaper Class="pa-3 mb-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudSwitch @bind-Value="_filterByMySkills"
+                       @bind-Value:after="OnFiltersChanged"
+                       Color="Color.Success"
+                       Label="My Skills Only"
+                       ThumbIcon="@(_filterByMySkills ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
+            </MudSwitch>
+            <MudText Typo="Typo.caption" Color="Color.Dark" Class="ml-10">
+                @if (_filterByMySkills)
+                {
+                    <span>✅ Showing jobs matching your skills only</span>
+                }
+                else
+                {
+                    <span>❌ Showing all jobs regardless of skills</span>
+                }
+            </MudText>
+        </MudItem>
+        
+        <MudItem xs="12" md="6">
+            <MudSwitch @bind-Value="_filterByMyLocation"
+                       @bind-Value:after="OnFiltersChanged"
+                       Color="Color.Success"
+                       Label="My Location Only"
+                       ThumbIcon="@(_filterByMyLocation ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
+            </MudSwitch>
+            <MudText Typo="Typo.caption" Color="Color.Dark" Class="ml-10">
+                @if (_filterByMyLocation)
+                {
+                    <span>✅ Showing jobs in @(_currentEmployee?.Location ?? "your location") only</span>
+                }
+                else
+                {
+                    <span>❌ Showing jobs from all locations</span>
+                }
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
 
 @if (_isLoading)
 {
     <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
 }
-else if (_requirements.Any())
+else if (_filteredRequirements.Any())
 {
-    @foreach (var req in _requirements)
+    <MudText Typo="Typo.body2" Color="Color.Primary" Class="mb-3">
+        Showing @_filteredRequirements.Count of @_allRequirements.Count opportunities
+    </MudText>
+
+    @foreach (var req in _filteredRequirements)
     {
         var matchScore = _matchScores.GetValueOrDefault(req.RequirementId, 0);
         var hasApplied = _appliedRequirements.Contains(req.RequirementId);
@@ -57,8 +71,8 @@ else if (_requirements.Any())
             <MudCardContent>
                 <div class="d-flex justify-space-between align-start mb-3">
                     <div>
-                        <MudText Typo="Typo.h6">@req.Title</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        <MudText Typo="Typo.h6" Color="Color.Info">@req.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Surface">
                             <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" Class="mr-1" />
                             @(req.Team?.TeamName ?? "Any Team") •
                             <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" Class="mx-1" />
@@ -69,7 +83,7 @@ else if (_requirements.Any())
                             Posted @GetTimeAgo(req.PostedDate)
                         </MudText>
                     </div>
-                    <MudChip T ="string" Color="@GetPriorityColor(req.Priority)" Size="Size.Small">
+                    <MudChip T="string" Color="@GetPriorityColor(req.Priority)" Size="Size.Small">
                         @req.Priority Priority
                     </MudChip>
                 </div>
@@ -97,7 +111,7 @@ else if (_requirements.Any())
                         var hasSkill = _mySkillIds.Contains(skill.SkillId);
                         var mySkillYears = _mySkillYears.GetValueOrDefault(skill.SkillId, 0);
                         
-                        <MudChip T ="string" Size="Size.Small" Class="mr-1 mb-1"
+                        <MudChip T="string" Size="Size.Small" Class="mr-1 mb-1"
                                  Color="@(hasSkill && mySkillYears >= skill.MinYearsRequired ? Color.Success : 
                                          hasSkill ? Color.Warning : Color.Error)"
                                  Variant="Variant.Filled">
@@ -153,24 +167,39 @@ else
 {
     <MudPaper Class="pa-8 text-center">
         <MudIcon Icon="@Icons.Material.Filled.WorkOff" Size="Size.Large" Color="Color.Secondary" />
-        <MudText Typo="Typo.h6" Class="mt-3">No open opportunities</MudText>
+        <MudText Typo="Typo.h6" Class="mt-3">No matching opportunities</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Check back later for new requirements that match your skills.
+            @if (_filterByMySkills && _filterByMyLocation)
+            {
+                <span>No jobs found matching both your skills and location. Try disabling one filter.</span>
+            }
+            else if (_filterByMySkills)
+            {
+                <span>No jobs found matching your skills. Try disabling the skill filter.</span>
+            }
+            else if (_filterByMyLocation)
+            {
+                <span>No jobs found in your location. Try disabling the location filter.</span>
+            }
+            else
+            {
+                <span>Check back later for new requirements.</span>
+            }
         </MudText>
     </MudPaper>
 }
 
 @code {
-    private List<Requirement> _requirements = new();
+    private List<Requirement> _allRequirements = new();
+    private List<Requirement> _filteredRequirements = new();
     private Dictionary<int, decimal> _matchScores = new();
     private HashSet<int> _appliedRequirements = new();
     private HashSet<int> _mySkillIds = new();
     private Dictionary<int, decimal> _mySkillYears = new();
     private Employee? _currentEmployee;
     
-    private int? _minMatch = null;
-    private string _locationFilter = "All";
-    private string _priorityFilter = "All";
+    private bool _filterByMySkills = true;  // ⭐ Default ON
+    private bool _filterByMyLocation = true; // ⭐ Default ON
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -186,67 +215,148 @@ else
             _currentEmployee = await AuthService.GetCurrentEmployeeAsync();
             if (_currentEmployee == null) return;
 
+            Console.WriteLine($"👤 Current Employee: {_currentEmployee.FullName}");
+            Console.WriteLine($"📍 Location: {_currentEmployee.Location}");
+
             // Get employee skills
             var mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
             _mySkillIds = mySkills.Select(s => s.SkillId).ToHashSet();
             _mySkillYears = mySkills.ToDictionary(s => s.SkillId, s => s.YearsOfExperience);
+            
+            Console.WriteLine($"🎯 My Skills: {string.Join(", ", mySkills.Select(s => s.Skill.SkillName))}");
 
-            // ⭐ Get all open requirements (already a List from service)
-            _requirements = await RequirementService.GetAllAsync(true);
+            // Get all open requirements
+            _allRequirements = await RequirementService.GetAllAsync(true);
+            Console.WriteLine($"📋 Total Requirements: {_allRequirements.Count}");
 
             // Get applied requirements
             var applications = await ApplicationService.GetByEmployeeAsync(_currentEmployee.EmployeeId);
             _appliedRequirements = applications.Select(a => a.RequirementId).ToHashSet();
 
-            // Calculate match scores
-            _matchScores.Clear(); // Clear before recalculating
-            foreach (var req in _requirements)
+            // Calculate match scores for ALL jobs
+            _matchScores.Clear();
+            foreach (var req in _allRequirements)
             {
                 var matchResult = await EmployeeService.CalculateMatchScoreAsync(
                     _currentEmployee.EmployeeId, req.RequirementId);
                 _matchScores[req.RequirementId] = matchResult.MatchPercentage;
             }
 
-            // ⭐ Sort in-memory (client-side) - requirements is already a List
-            _requirements = _requirements
-                .OrderByDescending(r => _matchScores.GetValueOrDefault(r.RequirementId, 0))
-                .ToList();
+            // Apply filters
+            ApplyFilters();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading jobs: {ex.Message}", Severity.Error);
-            Console.WriteLine($"Error details: {ex}"); // Add full stack trace
+            Console.WriteLine($"❌ Error details: {ex}");
         }
         finally
         {
             _isLoading = false;
         }
     }
-    private async Task ApplyFilters()
+
+    private void OnFiltersChanged()
     {
-        await LoadData();
-
-        // ⭐ All filtering happens in-memory (after LoadData())
-        var filtered = _requirements.AsEnumerable(); // Already a List from LoadData()
-
-        if (_minMatch.HasValue)
-        {
-            filtered = filtered.Where(r => 
-                _matchScores.GetValueOrDefault(r.RequirementId, 0) >= _minMatch.Value);
-        }
-
-        if (!string.IsNullOrEmpty(_locationFilter) && _locationFilter != "All")
-        {
-            filtered = filtered.Where(r => r.Location == _locationFilter);
-        }
-
-        if (!string.IsNullOrEmpty(_priorityFilter) && _priorityFilter != "All")
-        {
-            filtered = filtered.Where(r => r.Priority == _priorityFilter);
-        }
-
-        _requirements = filtered.ToList();
+        Console.WriteLine($"🔄 Filters Changed - Skill: {_filterByMySkills}, Location: {_filterByMyLocation}");
+        ApplyFilters();
     }
+
+    private void ApplyFilters()
+    {
+        Console.WriteLine($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Console.WriteLine($"🔍 APPLYING FILTERS");
+        Console.WriteLine($"Skill Filter: {_filterByMySkills}");
+        Console.WriteLine($"Location Filter: {_filterByMyLocation}");
+        Console.WriteLine($"Total Requirements: {_allRequirements.Count}");
+        
+        // ⭐ START WITH ALL REQUIREMENTS
+        IEnumerable<Requirement> filtered = _allRequirements;
+
+        // ⭐ ONLY Filter by My Skills if enabled
+        if (_filterByMySkills)
+        {
+            if (_mySkillIds.Any())
+            {
+                var beforeCount = filtered.Count();
+                filtered = filtered.Where(r => 
+                    r.RequirementSkills != null && 
+                    r.RequirementSkills.Any(rs => _mySkillIds.Contains(rs.SkillId)));
+                
+                Console.WriteLine($"🎯 Skill Filter APPLIED: {beforeCount} → {filtered.Count()} jobs");
+            }
+            else
+            {
+                Console.WriteLine($"🎯 Skill Filter ENABLED but user has no skills - showing 0 jobs");
+                filtered = Enumerable.Empty<Requirement>();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"🎯 Skill Filter DISABLED - showing ALL skills");
+        }
+
+        // ⭐ ONLY Filter by My Location if enabled
+        if (_filterByMyLocation)
+        {
+            if (!string.IsNullOrEmpty(_currentEmployee?.Location))
+            {
+                var beforeCount = filtered.Count();
+                var myLocation = _currentEmployee.Location;
+                
+                filtered = filtered.Where(r => 
+                    string.IsNullOrWhiteSpace(r.Location) || 
+                    r.Location.Equals("Any", StringComparison.OrdinalIgnoreCase) ||
+                    r.Location.Equals(myLocation, StringComparison.OrdinalIgnoreCase));
+                
+                Console.WriteLine($"📍 Location Filter APPLIED ({myLocation}): {beforeCount} → {filtered.Count()} jobs");
+            }
+            else
+            {
+                Console.WriteLine($"📍 Location Filter ENABLED but user has no location set");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"📍 Location Filter DISABLED - showing ALL locations");
+        }
+
+        // Sort by match percentage (descending)
+        _filteredRequirements = filtered
+            .OrderByDescending(r => _matchScores.GetValueOrDefault(r.RequirementId, 0))
+            .ToList();
+        
+        Console.WriteLine($"✅ FINAL RESULT: {_filteredRequirements.Count} of {_allRequirements.Count} jobs");
+        
+        // ⭐ DEBUG: Show all filtered job titles
+        if (_filteredRequirements.Any())
+        {
+            foreach (var job in _filteredRequirements)
+            {
+                var skills = job.RequirementSkills?.Select(rs => rs.Skill.SkillName).ToList() ?? new List<string>();
+                Console.WriteLine($"   📄 {job.Title} | Location: [{job.Location ?? "NULL"}] | Skills: {string.Join(", ", skills)}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"   ⚠️ No jobs after filtering");
+        }
+        
+        // ⭐ DEBUG: Show what was filtered OUT
+        var excludedJobs = _allRequirements.Except(_filteredRequirements).ToList();
+        if (excludedJobs.Any())
+        {
+            Console.WriteLine($"❌ EXCLUDED {excludedJobs.Count} jobs:");
+            foreach (var job in excludedJobs)
+            {
+                var skills = job.RequirementSkills?.Select(rs => rs.Skill.SkillName).ToList() ?? new List<string>();
+                Console.WriteLine($"   ✗ {job.Title} | Location: [{job.Location ?? "NULL"}] | Skills: {string.Join(", ", skills)}");
+            }
+        }
+        
+        Console.WriteLine($"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
+
     private async Task ApplyToJob(int requirementId)
     {
         if (_currentEmployee == null) return;

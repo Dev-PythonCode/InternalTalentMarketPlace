@@ -53,7 +53,7 @@ public class ParsedQuery
     public string? Location { get; set; }
 
     [JsonPropertyName("availability_status")]
-    public string? AvailabilityStatus { get; set; }
+    public AvailabilityStatus? AvailabilityStatus { get; set; }
 
     [JsonPropertyName("skill_levels")]
     public List<string> SkillLevels { get; set; } = new();
@@ -189,6 +189,18 @@ public class ChatSearchEmployee
 
     [JsonPropertyName("skills")]
     public List<ChatSearchSkill> Skills { get; set; } = new();
+}
+
+public class AvailabilityStatus
+{
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("keywords")]
+    public List<string> Keywords { get; set; } = new();
+
+    [JsonPropertyName("details")]
+    public string? Details { get; set; }
 }
 
 public class ChatSearchSkill
