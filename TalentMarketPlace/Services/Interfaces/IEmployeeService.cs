@@ -8,6 +8,7 @@ public interface IEmployeeService
     Task<List<Employee>> GetAllAsync();
     Task<List<Employee>> SearchAsync(EmployeeSearchCriteria criteria);
     Task<Employee> CreateAsync(Employee employee);
+    Task<bool> UpdateTotalExperienceAsync(int employeeId, decimal yearsOfExperience);
     Task<Employee> UpdateAsync(Employee employee);
     Task<bool> UpdateAvailabilityAsync(int employeeId, string status);
     Task<bool> UpdateResumeAsync(int employeeId, string resumeUrl);

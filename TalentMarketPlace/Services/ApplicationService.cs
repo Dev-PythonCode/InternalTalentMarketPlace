@@ -33,69 +33,68 @@ public class ApplicationService : IApplicationService
     }
 
     public async Task<List<Application>> GetByRequirementAsync(int requirementId)
-{
-    var applications = await _context.Applications
-        .Include(a => a.Employee)
-            .ThenInclude(e => e.Team)
-        .Include(a => a.Employee.EmployeeSkills)
-            .ThenInclude(es => es.Skill)
-        .Where(a => a.RequirementId == requirementId)
-        .ToListAsync();  // ← Get data first
-    
-    // Order in memory after retrieval
-    return applications
-        .OrderByDescending(a => a.AIScore ?? 0)
-        .ToList();
-}
+    {
+        var applications = await _context.Applications
+            .Include(a => a.Employee)
+                .ThenInclude(e => e.Team)
+            .Include(a => a.Employee.EmployeeSkills)
+                .ThenInclude(es => es.Skill)
+            .Where(a => a.RequirementId == requirementId)
+            .ToListAsync();  // ← Get data first
+        
+        // Order in memory after retrieval
+        return applications
+            .OrderByDescending(a => a.AIScore ?? 0)
+            .ToList();
+    }
 
     public async Task<List<Application>> GetByEmployeeAsync(int employeeId)
     {
-        return await _context.Applications
+        var applications = await _context.Applications
+            .Include(a => a.Requirement)
+                .ThenInclude(r => r.Team)
             .Include(a => a.Requirement)
                 .ThenInclude(r => r.RequirementSkills)
                     .ThenInclude(rs => rs.Skill)
             .Where(a => a.EmployeeId == employeeId)
             .OrderByDescending(a => a.AppliedDate)
             .ToListAsync();
+        
+        return applications;
     }
 
-    public async Task<Application> ApplyAsync(int employeeId, int requirementId, string? coverLetter)
+   public async Task<Application> ApplyAsync(int employeeId, int requirementId, string? coverLetter)
     {
         // Check if already applied
         var existing = await _context.Applications
             .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.RequirementId == requirementId);
-
+        
         if (existing != null)
-            throw new InvalidOperationException("You have already applied to this requirement");
-
-        // Validate and calculate scores
-        var validation = await ValidateApplicationAsync(employeeId, requirementId);
+        {
+            throw new Exception("You have already applied to this position");
+        }
 
         var application = new Application
         {
             EmployeeId = employeeId,
             RequirementId = requirementId,
-            CoverLetter = coverLetter,
-            MatchPercentage = validation.MatchPercentage,
-            AIScore = validation.AIScore,
-            AIRecommendation = validation.Recommendation,
-            Status = "Pending",
-            AppliedDate = DateTime.UtcNow
+            AppliedDate = DateTime.Now,  // ← Use your actual property name
+            Status = "Applied",
+            CoverLetter = coverLetter!
         };
 
         _context.Applications.Add(application);
-
-        // Update application count on requirement
-        var requirement = await _context.Requirements.FindAsync(requirementId);
-        if (requirement != null)
-        {
-            requirement.ApplicationCount++;
-        }
-
         await _context.SaveChangesAsync();
-        return application;
+        
+        return application;  // ← Return the created application
     }
-
+    public async Task<int> GetApplicationCountAsync(int requirementId)
+    {
+        return await _context.Applications
+            .Where(a => a.RequirementId == requirementId)
+            .CountAsync();
+    }
+   
     public async Task<Application> UpdateStatusAsync(int applicationId, string status, string? feedback)
     {
         var application = await _context.Applications.FindAsync(applicationId);
@@ -103,7 +102,7 @@ public class ApplicationService : IApplicationService
             throw new ArgumentException("Application not found", nameof(applicationId));
 
         application.Status = status;
-        application.ManagerFeedback = feedback;
+        application.ManagerFeedback = feedback!;
         application.ReviewedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

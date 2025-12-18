@@ -1,0 +1,138 @@
+@page "/my-applications"
+@inject IApplicationService ApplicationService
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-2">My Applications</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Track your job applications and their status
+</MudText>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_applications.Any())
+{
+    <MudCard>
+        <MudCardContent>
+            <MudTable Items="_applications" Hover="true" Striped="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Position</MudTh>
+                    <MudTh>Team</MudTh>
+                    <MudTh>Location</MudTh>
+                    <MudTh>Applied Date</MudTh>
+                    <MudTh>Application Status</MudTh>
+                    <MudTh>Requirement Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Position">
+                        <MudText Typo="Typo.body2"><strong>@context.Requirement.Title</strong></MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Team">@(context.Requirement.Team?.TeamName ?? "-")</MudTd>
+                    <MudTd DataLabel="Location">@(context.Requirement.Location ?? "-")</MudTd>
+                    <MudTd DataLabel="Applied Date">
+                        @context.AppliedDate.ToString("MMM dd, yyyy")
+                    </MudTd>
+                    <MudTd DataLabel="Application Status">
+                        <MudChip T="string" Size="Size.Small" Color="@GetApplicationStatusColor(context.Status)">
+                            @context.Status
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Requirement Status">
+                        <MudChip T="string" Size="Size.Small" Color="@GetRequirementStatusColor(context.Requirement.Status)" 
+                                 Variant="Variant.Outlined">
+                            @context.Requirement.Status
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                                   OnClick="@(() => ViewDetails(context.RequirementId))">
+                            View Details
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+}
+else
+{
+    <MudPaper Class="pa-8 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.WorkOff" Size="Size.Large" Color="Color.Secondary" />
+        <MudText Typo="Typo.h6" Class="mt-3">No Applications Yet</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            You haven't applied to any positions yet. Check out current openings!
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                   Class="mt-3" OnClick="GoToOpenings">
+            Browse Current Openings
+        </MudButton>
+    </MudPaper>
+}
+
+@code {
+    private List<Application> _applications = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplications();
+    }
+
+    private async Task LoadApplications()
+    {
+        _isLoading = true;
+        try
+        {
+            var currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+            if (currentEmployee != null)
+            {
+                _applications = await ApplicationService.GetByEmployeeAsync(currentEmployee.EmployeeId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading applications: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private Color GetApplicationStatusColor(string status)
+    {
+        return status switch
+        {
+            "Accepted" => Color.Success,
+            "Shortlisted" => Color.Info,
+            "Under Review" => Color.Warning,
+            "Rejected" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetRequirementStatusColor(string status)
+    {
+        return status switch
+        {
+            "Open" => Color.Success,
+            "Closed" => Color.Error,
+            "On Hold" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private void ViewDetails(int requirementId)
+    {
+        Navigation.NavigateTo($"/job-board");
+    }
+
+    private void GoToOpenings()
+    {
+        Navigation.NavigateTo("/job-board");
+    }
+}

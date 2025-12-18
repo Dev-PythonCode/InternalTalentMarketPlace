@@ -9,6 +9,7 @@ public interface IApplicationService
     Task<Application> UpdateStatusAsync(int applicationId, string status, string? feedback);
     Task<bool> WithdrawAsync(int applicationId);
     Task<bool> HasAppliedAsync(int employeeId, int requirementId);
+    Task<int> GetApplicationCountAsync(int requirementId);
     Task<ApplicationValidation> ValidateApplicationAsync(int employeeId, int requirementId);
 }
 

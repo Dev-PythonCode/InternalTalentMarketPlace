@@ -1,0 +1,123 @@
+@page "/learning"
+@inject NavigationManager Navigation
+@inject IRequirementService RequirementService
+
+<MudText Typo="Typo.h4" Class="mb-2">Learning Path</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Recommended courses to bridge your skill gaps
+</MudText>
+
+@if (_requirement != null)
+{
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6">For Position: @_requirement.Title</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                @_requirement.Team?.TeamName • @_requirement.Location
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+<MudText Typo="Typo.h6" Class="mb-3">Recommended Courses</MudText>
+
+@foreach (var course in _courses)
+{
+    <MudCard Class="mb-3">
+        <MudCardContent>
+            <div class="d-flex justify-space-between align-center">
+                <div>
+                    <MudText Typo="Typo.h6">@course.Title</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@course.Provider</MudText>
+                    <MudText Typo="Typo.caption">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                        @course.Duration •
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Small" />
+                        @course.Level
+                    </MudText>
+                </div>
+                <div>
+                    <MudChip T="string" Color="Color.Primary">@course.Skill</MudChip>
+                </div>
+            </div>
+            <MudText Typo="Typo.body2" Class="mt-2">@course.Description</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       Href="@course.Url" Target="_blank" Class="mt-2"
+                       StartIcon="@Icons.Material.Filled.OpenInNew">
+                Start Learning
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+}
+
+<MudButton Variant="Variant.Outlined" OnClick="GoBack" Class="mt-3">
+    Back to Current Openings
+</MudButton>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "req")]
+    public int? RequirementId { get; set; }
+
+    private Requirement? _requirement;
+    private List<CourseRecommendation> _courses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RequirementId.HasValue)
+        {
+            _requirement = await RequirementService.GetByIdAsync(RequirementId.Value);
+        }
+
+        // Sample courses
+        _courses = new List<CourseRecommendation>
+        {
+            new CourseRecommendation
+            {
+                Title = "AWS Certified Solutions Architect",
+                Provider = "AWS Training",
+                Skill = "AWS",
+                Duration = "40 hours",
+                Level = "Intermediate",
+                Description = "Learn to design and deploy scalable systems on AWS",
+                Url = "https://aws.amazon.com/training/"
+            },
+            new CourseRecommendation
+            {
+                Title = "Python for Everybody",
+                Provider = "Coursera",
+                Skill = "Python",
+                Duration = "8 months",
+                Level = "Beginner",
+                Description = "Complete Python programming course from basics to advanced",
+                Url = "https://www.coursera.org/specializations/python"
+            },
+            new CourseRecommendation
+            {
+                Title = "React - The Complete Guide",
+                Provider = "Udemy",
+                Skill = "React",
+                Duration = "48 hours",
+                Level = "All Levels",
+                Description = "Master React including Hooks, Redux, and Next.js",
+                Url = "https://www.udemy.com/topic/react/"
+            }
+        };
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/job-board");
+    }
+
+    public class CourseRecommendation
+    {
+        public string Title { get; set; } = "";
+        public string Provider { get; set; } = "";
+        public string Skill { get; set; } = "";
+        public string Duration { get; set; } = "";
+        public string Level { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Url { get; set; } = "";
+    }
+}

@@ -8,6 +8,9 @@
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" Class="mb-2">Application Review</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Review and manage applications for your requirements
+</MudText>
 
 @if (_isLoading)
 {
@@ -31,27 +34,69 @@ else if (!_myRequirements.Any())
 else
 {
     <!-- Requirement Selector -->
-    <MudSelect T="int?" Value="_selectedRequirementId"
-               ValueChanged="OnRequirementChanged">
-        @foreach (var req in _myRequirements)
-        {
-            <MudSelectItem T="int?" Value="@req.RequirementId">
-                @req.Title (@req.ApplicationCount applications)
-            </MudSelectItem>
-        }
-    </MudSelect>
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudSelect T="int?" Value="_selectedRequirementId"
+                       ValueChanged="OnRequirementChanged"
+                       Label="Select Requirement"
+                       Variant="Variant.Outlined"
+                       Adornment="Adornment.Start"
+                       AdornmentIcon="@Icons.Material.Filled.Work">
+                @foreach (var req in _myRequirements)
+                {
+                    var appCount = _applicationCounts.GetValueOrDefault(req.RequirementId, 0);
+                    <MudSelectItem T="int?" Value="@req.RequirementId">
+                        <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                            <div>
+                                <strong>Req_@req.RequirementId</strong> - @req.Title
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Style="margin-left: 8px;">
+                                @appCount
+                            </MudChip>
+                        </div>
+                    </MudSelectItem>
+                }
+            </MudSelect>
+        </MudCardContent>
+    </MudCard>
 
     @if (_selectedRequirement != null)
     {
+        <!-- Requirement Details -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" md="8">
+                        <MudText Typo="Typo.h6">@_selectedRequirement.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                            @(_selectedRequirement.Team?.TeamName ?? "Any Team") •
+                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                            @(_selectedRequirement.Location ?? "Any Location") •
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" />
+                            Posted @_selectedRequirement.PostedDate.ToString("MMM dd, yyyy")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="4" Class="text-right">
+                        <MudChip T="string" Color="@GetStatusColor(_selectedRequirement.Status)">
+                            @_selectedRequirement.Status
+                        </MudChip>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
         <!-- Stats Summary -->
         @if (_applications.Any())
         {
-            <div class="d-flex gap-2 mb-4">
-                <MudChip T="string" Color="Color.Primary">@_applications.Count Total Applications</MudChip>
-                <MudChip T="string" Color="Color.Success">@_applications.Count(a => a.AIScore >= 80) Good Fit</MudChip>
-                <MudChip T="string" Color="Color.Warning">@_applications.Count(a => a.AIScore >= 60 && a.AIScore < 80) Needs Training</MudChip>
-                <MudChip T="string" Color="Color.Error">@_applications.Count(a => a.AIScore < 60) Not Recommended</MudChip>
-            </div>
+            <MudPaper Class="pa-3 mb-4" Elevation="1">
+                <div class="d-flex gap-2">
+                    <MudChip T="string" Color="Color.Primary">@_applications.Count Total</MudChip>
+                    <MudChip T="string" Color="Color.Success">@_applications.Count(a => a.AIScore >= 80) Good Fit</MudChip>
+                    <MudChip T="string" Color="Color.Warning">@_applications.Count(a => a.AIScore >= 60 && a.AIScore < 80) Needs Training</MudChip>
+                    <MudChip T="string" Color="Color.Error">@_applications.Count(a => a.AIScore < 60) Not Recommended</MudChip>
+                </div>
+            </MudPaper>
         }
 
         @if (_applications.Any())
@@ -208,7 +253,7 @@ else
                 <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Secondary" />
                 <MudText Typo="Typo.h6" Class="mt-3">No applications yet</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Applications will appear here once employees apply to your requirements.
+                    Applications will appear here once employees apply to this requirement.
                 </MudText>
             </MudPaper>
         }
@@ -221,6 +266,7 @@ else
 
     private List<Requirement> _myRequirements = new();
     private List<Application> _applications = new();
+    private Dictionary<int, int> _applicationCounts = new();
     private Requirement? _selectedRequirement;
     private int? _selectedRequirementId;
     private bool _isLoading = true;
@@ -254,6 +300,9 @@ else
 
             _myRequirements = await RequirementService.GetByManagerAsync(employee.EmployeeId);
 
+            // Load application counts
+            await LoadApplicationCounts();
+
             if (RequirementId.HasValue)
             {
                 _selectedRequirementId = RequirementId;
@@ -275,6 +324,24 @@ else
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private async Task LoadApplicationCounts()
+    {
+        try
+        {
+            _applicationCounts.Clear();
+            
+            foreach (var req in _myRequirements)
+            {
+                var count = await ApplicationService.GetApplicationCountAsync(req.RequirementId);
+                _applicationCounts[req.RequirementId] = count;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading application counts: {ex}");
         }
     }
 
@@ -340,6 +407,18 @@ else
             >= 80 => Color.Success,
             >= 60 => Color.Warning,
             _ => Color.Error
+        };
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Open" => Color.Success,
+            "Closed" => Color.Default,
+            "Filled" => Color.Info,
+            "On Hold" => Color.Warning,
+            _ => Color.Default
         };
     }
 
