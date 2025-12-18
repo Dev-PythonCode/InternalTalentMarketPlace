@@ -39,8 +39,29 @@ public class ApplicationService : IApplicationService
                 .ThenInclude(e => e.Team)
             .Include(a => a.Employee.EmployeeSkills)
                 .ThenInclude(es => es.Skill)
+            .Include(a => a.Requirement)
+                .ThenInclude(r => r.RequirementSkills)
+                    .ThenInclude(rs => rs.Skill)
             .Where(a => a.RequirementId == requirementId)
             .ToListAsync();  // ← Get data first
+        
+        // ⭐ FIX: Calculate AIScore if it's missing
+        foreach (var app in applications.Where(a => a.AIScore == null))
+        {
+            try
+            {
+                var validation = await ValidateApplicationAsync(app.EmployeeId, app.RequirementId);
+                app.AIScore = validation.AIScore;
+                app.MatchPercentage = validation.MatchPercentage;
+                
+                // Save the calculated scores
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating AIScore for application {app.ApplicationId}: {ex.Message}");
+            }
+        }
         
         // Order in memory after retrieval
         return applications

@@ -99,9 +99,19 @@ public class PythonApiService : IPythonApiService
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 
             // Deserialize from the raw JSON string
-            var result = JsonSerializer.Deserialize<ParseQueryResult>(rawJson, options);
+            ParseQueryResult? result = null;
+            try
+            {
+                result = JsonSerializer.Deserialize<ParseQueryResult>(rawJson, options);
+            }
+            catch (JsonException jex)
+            {
+                _logger.LogWarning(jex, "Primary deserialization failed, attempting tolerant mapping");
+                // Try tolerant mapping when strict deserialization fails due to type mismatches
+                result = MapJsonToParseQueryResult(rawJson);
+            }
 
-            // ⭐ CRITICAL: Log what we deserialized
+            // ⭐ CRITICAL: Log what we deserialized or mapped
             Console.WriteLine("========================================");
             Console.WriteLine("=== DESERIALIZED RESULT ===");
             Console.WriteLine($"Result is null: {result == null}");
@@ -174,6 +184,152 @@ public class PythonApiService : IPythonApiService
             {
                 Error = $"Exception: {ex.Message}"
             };
+        }
+    }
+
+    // Attempt to map raw JSON into ParseQueryResult tolerantly (handles snake_case and camelCase)
+    private ParseQueryResult? MapJsonToParseQueryResult(string rawJson)
+    {
+        using var doc = JsonDocument.Parse(rawJson);
+        var root = doc.RootElement;
+
+        string GetString(JsonElement obj, params string[] keys)
+        {
+            foreach (var k in keys)
+            {
+                if (obj.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.String)
+                    return v.GetString() ?? string.Empty;
+            }
+            return string.Empty;
+        }
+
+        List<string> GetStringList(JsonElement obj, params string[] keys)
+        {
+            foreach (var k in keys)
+            {
+                if (obj.TryGetProperty(k, out var v) && v.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<string>();
+                    foreach (var item in v.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.String)
+                            list.Add(item.GetString() ?? string.Empty);
+                    }
+                    return list;
+                }
+            }
+            return new List<string>();
+        }
+
+        try
+        {
+            var parsedResult = new ParseQueryResult();
+
+            // original query
+            parsedResult.OriginalQuery = GetString(root, "original_query", "originalQuery", "originalquery");
+
+            // top-level skills_found
+            if (root.TryGetProperty("skills_found", out var sf) && sf.ValueKind == JsonValueKind.Number)
+                parsedResult.SkillsFound = sf.GetInt32();
+
+            // applied_filters
+            parsedResult.AppliedFilters = GetStringList(root, "applied_filters", "appliedFilters");
+
+            // parsed object
+                if (root.TryGetProperty("parsed", out var parsedEl) && parsedEl.ValueKind == JsonValueKind.Object)
+            {
+                var p = new ParsedQuery();
+                p.Skills = GetStringList(parsedEl, "skills", "skillList", "skill_list");
+                p.Categories = GetStringList(parsedEl, "categories", "categoryList", "category_list");
+                p.CategorySkills = GetStringList(parsedEl, "category_skills", "categorySkills");
+
+                if (parsedEl.TryGetProperty("min_years_experience", out var myn) && myn.ValueKind == JsonValueKind.Number)
+                    p.MinYearsExperience = myn.GetDecimal();
+                else if (parsedEl.TryGetProperty("minYearsExperience", out var myn2) && myn2.ValueKind == JsonValueKind.Number)
+                    p.MinYearsExperience = myn2.GetDecimal();
+
+                if (parsedEl.TryGetProperty("max_years_experience", out var mxn) && mxn.ValueKind == JsonValueKind.Number)
+                    p.MaxYearsExperience = mxn.GetDecimal();
+                else if (parsedEl.TryGetProperty("maxYearsExperience", out var mxn2) && mxn2.ValueKind == JsonValueKind.Number)
+                    p.MaxYearsExperience = mxn2.GetDecimal();
+
+                p.ExperienceOperator = GetString(parsedEl, "experience_operator", "experienceOperator");
+                p.Location = GetString(parsedEl, "location", "Location", "location");
+                // availability_status may be an object; if so, store its raw JSON representation
+                if (parsedEl.TryGetProperty("availability_status", out var av))
+                {
+                    // Map availability_status into structured AvailabilityStatus model
+                    if (av.ValueKind == JsonValueKind.Object)
+                    {
+                        var asObj = new AvailabilityStatus();
+                        asObj.Status = GetString(av, "status", "Status");
+                        asObj.Keywords = GetStringList(av, "keywords", "keyword_list", "keywords");
+                        var details = GetString(av, "details", "Details");
+                        asObj.Details = string.IsNullOrEmpty(details) ? null : details;
+                        p.AvailabilityStatus = asObj;
+                    }
+                    else if (av.ValueKind == JsonValueKind.String)
+                    {
+                        p.AvailabilityStatus = new AvailabilityStatus { Status = av.GetString() };
+                    }
+                    else
+                    {
+                        p.AvailabilityStatus = null;
+                    }
+                }
+                p.SkillLevels = GetStringList(parsedEl, "skill_levels", "skillLevels");
+                p.Roles = GetStringList(parsedEl, "roles", "roleList", "roles");
+
+                // Map experience_context if present
+                if (parsedEl.TryGetProperty("experience_context", out var ec) && ec.ValueKind == JsonValueKind.Object)
+                {
+                    var expCtx = new ExperienceContext();
+                    expCtx.Type = GetString(ec, "type", "Type");
+                    var skillStr = GetString(ec, "skill", "Skill");
+                    expCtx.Skill = string.IsNullOrEmpty(skillStr) ? null : skillStr;
+                    expCtx.Reason = GetString(ec, "reason", "Reason");
+                    p.ExperienceContext = expCtx;
+                }
+
+                // Map skill_requirements array if present
+                if (parsedEl.TryGetProperty("skill_requirements", out var sr) && sr.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<SkillRequirement>();
+                    foreach (var item in sr.EnumerateArray())
+                    {
+                        if (item.ValueKind != JsonValueKind.Object) continue;
+                        var req = new SkillRequirement();
+                        req.Skill = GetString(item, "skill", "Skill");
+
+                        if (item.TryGetProperty("min_years", out var minY) && minY.ValueKind == JsonValueKind.Number)
+                            req.MinYears = minY.GetDecimal();
+                        else if (item.TryGetProperty("minYears", out var minY2) && minY2.ValueKind == JsonValueKind.Number)
+                            req.MinYears = minY2.GetDecimal();
+
+                        if (item.TryGetProperty("max_years", out var maxY) && maxY.ValueKind == JsonValueKind.Number)
+                            req.MaxYears = maxY.GetDecimal();
+                        else if (item.TryGetProperty("maxYears", out var maxY2) && maxY2.ValueKind == JsonValueKind.Number)
+                            req.MaxYears = maxY2.GetDecimal();
+
+                        req.Operator = GetString(item, "operator", "Operator");
+                        req.ExperienceType = GetString(item, "experience_type", "experienceType");
+                        list.Add(req);
+                    }
+                    p.SkillRequirements = list;
+                }
+
+                parsedResult.Parsed = p;
+            }
+
+            // error
+            parsedResult.Error = GetString(root, "error", "Error", "errorMessage");
+
+            return parsedResult;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error mapping JSON to ParseQueryResult");
+            return null;
         }
     }
 
