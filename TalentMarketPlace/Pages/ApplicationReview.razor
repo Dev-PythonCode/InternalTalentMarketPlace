@@ -102,13 +102,13 @@ else
     else if (!_selectedRequirementId.HasValue)
     {
         <!-- All Applications Summary -->
-        <MudCard Class="mb-4">
+        <MudCard Class="mb-4" Style="background-color: #a0c4d0;">
             <MudCardContent>
                 <MudText Typo="Typo.h6">
                     <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
                     All Applications Overview
                 </MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                <MudText Typo="Typo.body2" Color="Color.Surface">
                     Viewing applications across @_myRequirements.Count requirements
                 </MudText>
             </MudCardContent>
@@ -118,7 +118,7 @@ else
     <!-- Stats Summary with Filters -->
     @if (_applications.Any())
     {
-        <MudPaper Class="pa-3 mb-4" Elevation="1">
+        <MudPaper Class="pa-3 mb-4" Elevation="1" Style="background-color: #c3e9f6;">
             <div class="d-flex gap-2 flex-wrap">
                 <MudChip T="string" Color="Color.Primary" OnClick="@(() => ClearFilters())"
                          Style="cursor: pointer;">
