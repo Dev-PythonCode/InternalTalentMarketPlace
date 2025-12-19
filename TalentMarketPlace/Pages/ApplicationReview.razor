@@ -42,6 +42,19 @@ else
                        Variant="Variant.Outlined"
                        Adornment="Adornment.Start"
                        AdornmentIcon="@Icons.Material.Filled.Work">
+                <!-- All Applications Option -->
+                <MudSelectItem T="int?" Value="null">
+                    <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                        <div>
+                            <strong>All Applications</strong> - View all applications
+                        </div>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Style="margin-left: 8px;">
+                            @_totalApplicationsCount
+                        </MudChip>
+                    </div>
+                </MudSelectItem>
+                
+                <!-- Individual Requirements -->
                 @foreach (var req in _myRequirements)
                 {
                     var appCount = _applicationCounts.GetValueOrDefault(req.RequirementId, 0);
@@ -60,9 +73,9 @@ else
         </MudCardContent>
     </MudCard>
 
-    @if (_selectedRequirement != null)
+    @if (_selectedRequirementId.HasValue && _selectedRequirement != null)
     {
-        <!-- Requirement Details -->
+        <!-- Requirement Details (Only show when specific requirement is selected) -->
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudGrid>
@@ -85,104 +98,151 @@ else
                 </MudGrid>
             </MudCardContent>
         </MudCard>
+    }
+    else if (!_selectedRequirementId.HasValue)
+    {
+        <!-- All Applications Summary -->
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
+                    All Applications Overview
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Viewing applications across @_myRequirements.Count requirements
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    }
 
-        <!-- Stats Summary with Filters -->
-        @if (_applications.Any())
-        {
-            <MudPaper Class="pa-3 mb-4" Elevation="1">
-                <div class="d-flex gap-2">
-                    <MudChip T="string" Color="Color.Primary" OnClick="@(() => ClearFilters())">@_applications.Count Total</MudChip>
-                    <MudTooltip Text="Candidate meets or exceeds all mandatory skill requirements with strong experience levels (80%+)">
-                        <MudChip T="string" Color="Color.Success" OnClick="@(() => FilterByCategory("GoodFit"))"
-                                 Style="@GetFilterStyle("GoodFit")">
-                            @_applications.Count(a => a.MatchPercentage >= 80) Good Fit
-                        </MudChip>
-                    </MudTooltip>
-                    <MudTooltip Text="Candidate has foundational skills but would benefit from upskilling (60-79%)">
-                        <MudChip T="string" Color="Color.Warning" OnClick="@(() => FilterByCategory("NeedsTraining"))"
-                                 Style="@GetFilterStyle("NeedsTraining")">
-                            @_applications.Count(a => a.MatchPercentage >= 60 && a.MatchPercentage < 80) Needs Training
-                        </MudChip>
-                    </MudTooltip>
-                    <MudTooltip Text="Significant skill gaps exist for this role (<60%)">
-                        <MudChip T="string" Color="Color.Error" OnClick="@(() => FilterByCategory("NotRecommended"))"
-                                 Style="@GetFilterStyle("NotRecommended")">
-                            @_applications.Count(a => a.MatchPercentage < 60) Not Recommended
-                        </MudChip>
-                    </MudTooltip>
-                </div>
-            </MudPaper>
-        }
+    <!-- Stats Summary with Filters -->
+    @if (_applications.Any())
+    {
+        <MudPaper Class="pa-3 mb-4" Elevation="1">
+            <div class="d-flex gap-2 flex-wrap">
+                <MudChip T="string" Color="Color.Primary" OnClick="@(() => ClearFilters())"
+                         Style="cursor: pointer;">
+                    @_applications.Count Total
+                </MudChip>
+                <MudTooltip Text="Candidate meets or exceeds all mandatory skill requirements with strong experience levels (80%+)">
+                    <MudChip T="string" Color="Color.Success" OnClick="@(() => FilterByCategory("GoodFit"))"
+                             Style="@GetFilterStyle("GoodFit")">
+                        @_applications.Count(a => a.MatchPercentage >= 80) Good Fit
+                    </MudChip>
+                </MudTooltip>
+                <MudTooltip Text="Candidate has foundational skills but would benefit from upskilling (60-79%)">
+                    <MudChip T="string" Color="Color.Warning" OnClick="@(() => FilterByCategory("NeedsTraining"))"
+                             Style="@GetFilterStyle("NeedsTraining")">
+                        @_applications.Count(a => a.MatchPercentage >= 60 && a.MatchPercentage < 80) Needs Training
+                    </MudChip>
+                </MudTooltip>
+                <MudTooltip Text="Significant skill gaps exist for this role (<60%)">
+                    <MudChip T="string" Color="Color.Error" OnClick="@(() => FilterByCategory("NotRecommended"))"
+                             Style="@GetFilterStyle("NotRecommended")">
+                        @_applications.Count(a => a.MatchPercentage < 60) Not Recommended
+                    </MudChip>
+                </MudTooltip>
+                
+                <!-- Application Status Filters -->
+                <MudDivider Vertical="true" FlexItem="true" />
+                
+                <MudChip T="string" Color="Color.Default" OnClick="@(() => FilterByStatus("Pending"))"
+                         Style="@GetStatusFilterStyle("Pending")">
+                    @_applications.Count(a => a.Status == "Pending") Pending
+                </MudChip>
+                <MudChip T="string" Color="Color.Info" OnClick="@(() => FilterByStatus("Shortlisted"))"
+                         Style="@GetStatusFilterStyle("Shortlisted")">
+                    @_applications.Count(a => a.Status == "Shortlisted") Shortlisted
+                </MudChip>
+                <MudChip T="string" Color="Color.Success" OnClick="@(() => FilterByStatus("Accepted"))"
+                         Style="@GetStatusFilterStyle("Accepted")">
+                    @_applications.Count(a => a.Status == "Accepted") Accepted
+                </MudChip>
+                <MudChip T="string" Color="Color.Error" OnClick="@(() => FilterByStatus("Rejected"))"
+                         Style="@GetStatusFilterStyle("Rejected")">
+                    @_applications.Count(a => a.Status == "Rejected") Rejected
+                </MudChip>
+            </div>
+        </MudPaper>
+    }
 
-        @if (_applications.Any())
+    @if (_filteredApplications.Any())
+    {
+        @foreach (var app in _filteredApplications.OrderByDescending(a => a.MatchPercentage))
         {
-            @foreach (var app in _filteredApplications.OrderByDescending(a => a.MatchPercentage))
-            {
-                <MudCard Class="mb-3">
-                    <MudCardContent>
-                        <MudGrid>
-                            <!-- Employee Info -->
-                            <MudItem xs="12" md="8">
-                                <div class="d-flex gap-3 mb-3">
-                                    <MudAvatar Size="Size.Large" Color="Color.Primary">
-                                        @app.Employee.FullName[0]
-                                    </MudAvatar>
-                                    <div>
-                                        <MudText Typo="Typo.h6">@app.Employee.FullName</MudText>
-                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                            @app.Employee.Designation • @(app.Employee.Team?.TeamName ?? "No Team") • @app.Employee.Location
-                                        </MudText>
-                                        @{
-                                            var (badgeColor, badgeText) = GetAvailabilityBadge(app.Employee.AvailabilityStatus);
-                                        }
-                                        <MudChip T="string" Size="Size.Small" Color="@badgeColor">@badgeText</MudChip>
-                                    </div>
+            <MudCard Class="mb-3">
+                <MudCardContent>
+                    <MudGrid>
+                        <!-- Employee Info -->
+                        <MudItem xs="12" md="8">
+                            <div class="d-flex gap-3 mb-3">
+                                <MudAvatar Size="Size.Large" Color="Color.Primary">
+                                    @app.Employee.FullName[0]
+                                </MudAvatar>
+                                <div>
+                                    <MudText Typo="Typo.h6">@app.Employee.FullName</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        @app.Employee.Designation • @(app.Employee.Team?.TeamName ?? "No Team") • @app.Employee.Location
+                                    </MudText>
+                                    @if (!_selectedRequirementId.HasValue)
+                                    {
+                                        <!-- Show which requirement they applied for when viewing all -->
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="mt-1">
+                                            Applied to: @app.Requirement.Title
+                                        </MudChip>
+                                    }
+                                    @{
+                                        var (badgeColor, badgeText) = GetAvailabilityBadge(app.Employee.AvailabilityStatus);
+                                    }
+                                    <MudChip T="string" Size="Size.Small" Color="@badgeColor">@badgeText</MudChip>
                                 </div>
-                            </MudItem>
-                            
-                            <MudItem xs="12" md="4" Class="text-right">
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Applied @GetTimeAgo(app.AppliedDate)
-                                </MudText>
-                            </MudItem>
-                        </MudGrid>
-
-                        <!-- Match Score Section (using MatchPercentage for consistency) -->
-                        <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
-                            <div class="mr-4">
-                                <MudText Typo="Typo.h3" Color="@GetScoreColor(app.MatchPercentage ?? 0)">
-                                    @(app.MatchPercentage?.ToString("0.00") ?? "?")%
-                                </MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Match Score</MudText>
                             </div>
-                            <div>
-                                <MudText Typo="Typo.body1">
-                                    <MudIcon Icon="@GetCategoryIcon(app.MatchPercentage ?? 0)" 
-                                             Color="@GetCategoryColor(app.MatchPercentage ?? 0)" Class="mr-1" />
-                                    <strong style="color: @GetCategoryColorHex(app.MatchPercentage ?? 0)">
-                                        @GetCategoryName(app.MatchPercentage ?? 0)
-                                    </strong>
-                                </MudText>
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                    @GetCategoryDescription(app.MatchPercentage ?? 0)
-                                </MudText>
-                            </div>
-                        </MudPaper>
+                        </MudItem>
+                        
+                        <MudItem xs="12" md="4" Class="text-right">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Applied @GetTimeAgo(app.AppliedDate)
+                            </MudText>
+                        </MudItem>
+                    </MudGrid>
 
+                    <!-- Match Score Section -->
+                    <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
+                        <div class="mr-4">
+                            <MudText Typo="Typo.h3" Color="@GetScoreColor(app.MatchPercentage ?? 0)">
+                                @(app.MatchPercentage?.ToString("0.00") ?? "?")%
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Match Score</MudText>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.body1">
+                                <MudIcon Icon="@GetCategoryIcon(app.MatchPercentage ?? 0)" 
+                                         Color="@GetCategoryColor(app.MatchPercentage ?? 0)" Class="mr-1" />
+                                <strong style="color: @GetCategoryColorHex(app.MatchPercentage ?? 0)">
+                                    @GetCategoryName(app.MatchPercentage ?? 0)
+                                </strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                @GetCategoryDescription(app.MatchPercentage ?? 0)
+                            </MudText>
+                        </div>
+                    </MudPaper>
+
+                    <!-- Skill Comparison (only show if specific requirement is selected) -->
+                    @if (_selectedRequirement != null)
+                    {
+                        var missingSkills = _selectedRequirement.RequirementSkills?
+                            .Where(rs => !app.Employee.EmployeeSkills.Any(es => es.SkillId == rs.SkillId))
+                            .ToList() ?? new List<RequirementSkill>();
+                        
                         <!-- Missing Skills Summary -->
-                        @{
-                            var missingSkills = _selectedRequirement?.RequirementSkills?
-                                .Where(rs => !app.Employee.EmployeeSkills.Any(es => es.SkillId == rs.SkillId))
-                                .ToList() ?? new List<RequirementSkill>();
-                        }
-                        @if (missingSkills.Any())
+                        if (missingSkills.Any())
                         {
                             <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Warning">
                                 <strong>Missing:</strong> @string.Join(", ", missingSkills.Select(s => s.Skill.SkillName))
                             </MudAlert>
                         }
 
-                        <!-- Skill Comparison -->
                         <MudText Typo="Typo.subtitle2" Class="mb-2">Skill Comparison</MudText>
                         <MudGrid>
                             @foreach (var reqSkill in _selectedRequirement.RequirementSkills)
@@ -217,74 +277,85 @@ else
                         </MudGrid>
 
                         <!-- Learning Suggestions (if needed) -->
-                        @if (app.MatchPercentage < 80)
+                        if (app.MatchPercentage < 80 && missingSkills.Any())
                         {
                             <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background: #fef3c7;">
                                 <MudText Typo="Typo.subtitle2" Style="color: #92400e;">
                                     <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
-                                    Suggested Learning Path:
+                                    Missing Skills to Learn:
                                 </MudText>
                                 <MudList T="string" Dense="true">
-                                    <MudListItem Dense="true" Style="color: #92400e; font-size: 13px;">
-                                        Complete Python Bootcamp (30 hrs)
-                                    </MudListItem>
-                                    <MudListItem Dense="true" Style="color: #92400e; font-size: 13px;">
-                                        AWS Fundamentals (20 hrs)
-                                    </MudListItem>
+                                    @foreach (var skill in missingSkills.Take(3))
+                                    {
+                                        <MudListItem T="string" Dense="true" Style="color: #92400e; font-size: 13px;">
+                                            @skill.Skill.SkillName (@skill.MinYearsRequired years required)
+                                        </MudListItem>
+                                    }
                                 </MudList>
                             </MudPaper>
                         }
+                    }
 
-                        <!-- Action Buttons -->
-                        <div class="d-flex gap-2 mt-3">
-                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
-                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Accepted"))"
-                                       StartIcon="@Icons.Material.Filled.Check"
-                                       Disabled="@(app.Status == "Accepted")">
-                                Accept
-                            </MudButton>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Shortlisted"))"
-                                       StartIcon="@Icons.Material.Filled.List"
-                                       Disabled="@(app.Status == "Shortlisted")">
-                                Shortlist
-                            </MudButton>
-                            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-                                       OnClick="@(() => UpdateStatus(app.ApplicationId, "Rejected"))"
-                                       StartIcon="@Icons.Material.Filled.Close"
-                                       Disabled="@(app.Status == "Rejected")">
-                                Reject
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Comment">
-                                Add Feedback
-                            </MudButton>
-                        </div>
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 mt-3">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                   OnClick="@(() => UpdateStatus(app.ApplicationId, "Accepted"))"
+                                   StartIcon="@Icons.Material.Filled.Check"
+                                   Disabled="@(app.Status == "Accepted")">
+                            Accept
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   OnClick="@(() => UpdateStatus(app.ApplicationId, "Shortlisted"))"
+                                   StartIcon="@Icons.Material.Filled.List"
+                                   Disabled="@(app.Status == "Shortlisted")">
+                            Shortlist
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => UpdateStatus(app.ApplicationId, "Rejected"))"
+                                   StartIcon="@Icons.Material.Filled.Close"
+                                   Disabled="@(app.Status == "Rejected")">
+                            Reject
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Comment">
+                            Add Feedback
+                        </MudButton>
+                    </div>
 
-                        @if (app.Status != "Pending")
-                        {
-                            <MudAlert Severity="@GetStatusSeverity(app.Status)" Dense="true" Class="mt-2">
-                                Status: @app.Status
-                                @if (app.ReviewedDate.HasValue)
-                                {
-                                    <span> • Reviewed @app.ReviewedDate.Value.ToString("MMM dd, yyyy")</span>
-                                }
-                            </MudAlert>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            }
+                    @if (app.Status != "Pending")
+                    {
+                        <MudAlert Severity="@GetStatusSeverity(app.Status)" Dense="true" Class="mt-2">
+                            Status: @app.Status
+                            @if (app.ReviewedDate.HasValue)
+                            {
+                                <span> • Reviewed @app.ReviewedDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                        </MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
         }
-        else
-        {
-            <MudPaper Class="pa-8 text-center">
-                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Secondary" />
-                <MudText Typo="Typo.h6" Class="mt-3">No applications yet</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Applications will appear here once employees apply to this requirement.
-                </MudText>
-            </MudPaper>
-        }
+    }
+    else
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Secondary" />
+            <MudText Typo="Typo.h6" Class="mt-3">No applications found</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                @if (_selectedCategory != null || _selectedStatus != null)
+                {
+                    <span>No applications match your selected filters. Try clearing the filters.</span>
+                }
+                else if (_selectedRequirementId.HasValue)
+                {
+                    <span>No applications yet for this requirement.</span>
+                }
+                else
+                {
+                    <span>No applications received across all requirements yet.</span>
+                }
+            </MudText>
+        </MudPaper>
     }
 }
 
@@ -294,12 +365,14 @@ else
 
     private List<Requirement> _myRequirements = new();
     private List<Application> _applications = new();
-    private List<Application> _filteredApplications = new();  // ⭐ For filtered results
+    private List<Application> _filteredApplications = new();
     private Dictionary<int, int> _applicationCounts = new();
     private Requirement? _selectedRequirement;
     private int? _selectedRequirementId;
     private bool _isLoading = true;
-    private string? _selectedCategory = null;  // ⭐ For tracking selected filter
+    private string? _selectedCategory = null;
+    private string? _selectedStatus = null;
+    private int _totalApplicationsCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -308,6 +381,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        // Only set selected requirement if navigating with RequirementId parameter
         if (RequirementId.HasValue && RequirementId != _selectedRequirementId)
         {
             _selectedRequirementId = RequirementId;
@@ -333,23 +407,24 @@ else
             // Load application counts
             await LoadApplicationCounts();
 
+            // Default behavior: Show "All Applications" unless navigating from a specific requirement
             if (RequirementId.HasValue)
             {
+                // Coming from Post Requirement page - select specific requirement
                 _selectedRequirementId = RequirementId;
             }
-            else if (_myRequirements.Any())
+            else
             {
-                _selectedRequirementId = _myRequirements.First().RequirementId;
+                // Default page load - show "All Applications"
+                _selectedRequirementId = null;
             }
 
-            if (_selectedRequirementId.HasValue)
-            {
-                await LoadApplications();
-            }
+            await LoadApplications();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading requirements: {ex.Message}", Severity.Error);
+            Console.WriteLine($"❌ Error: {ex}");
         }
         finally
         {
@@ -362,16 +437,20 @@ else
         try
         {
             _applicationCounts.Clear();
+            _totalApplicationsCount = 0;
             
             foreach (var req in _myRequirements)
             {
                 var count = await ApplicationService.GetApplicationCountAsync(req.RequirementId);
                 _applicationCounts[req.RequirementId] = count;
+                _totalApplicationsCount += count;
             }
+            
+            Console.WriteLine($"📊 Total Applications: {_totalApplicationsCount}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading application counts: {ex}");
+            Console.WriteLine($"❌ Error loading application counts: {ex}");
         }
     }
 
@@ -383,20 +462,34 @@ else
 
     private async Task LoadApplications()
     {
-        if (!_selectedRequirementId.HasValue) return;
-
         _isLoading = true;
 
         try
         {
-            _selectedRequirement = await RequirementService.GetByIdAsync(_selectedRequirementId.Value);
-            _applications = await ApplicationService.GetByRequirementAsync(_selectedRequirementId.Value);
-            _filteredApplications = _applications;  // ⭐ Initialize filtered list
-            _selectedCategory = null;  // ⭐ Reset filter when changing requirement
+            if (_selectedRequirementId.HasValue)
+            {
+                // Load specific requirement and its applications
+                _selectedRequirement = await RequirementService.GetByIdAsync(_selectedRequirementId.Value);
+                _applications = await ApplicationService.GetByRequirementAsync(_selectedRequirementId.Value);
+                Console.WriteLine($"📋 Loaded {_applications.Count} applications for Req_{_selectedRequirementId}");
+            }
+            else
+            {
+                // Load ALL applications across ALL requirements
+                _selectedRequirement = null;
+                var currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+                _applications = await ApplicationService.GetByManagerAsync(currentEmployee!.EmployeeId);
+                Console.WriteLine($"📋 Loaded {_applications.Count} applications across all requirements");
+            }
+            
+            _filteredApplications = _applications;
+            _selectedCategory = null;
+            _selectedStatus = null;
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading applications: {ex.Message}", Severity.Error);
+            Console.WriteLine($"❌ Error: {ex}");
         }
         finally
         {
@@ -404,17 +497,16 @@ else
         }
     }
 
-    // ⭐ NEW: Filter by category
     private void FilterByCategory(string category)
     {
         if (_selectedCategory == category)
         {
-            // Click same category again to clear filter
             ClearFilters();
             return;
         }
 
         _selectedCategory = category;
+        _selectedStatus = null;
 
         _filteredApplications = category switch
         {
@@ -425,14 +517,27 @@ else
         };
     }
 
-    // ⭐ NEW: Clear filters
+    private void FilterByStatus(string status)
+    {
+        if (_selectedStatus == status)
+        {
+            ClearFilters();
+            return;
+        }
+
+        _selectedStatus = status;
+        _selectedCategory = null;
+
+        _filteredApplications = _applications.Where(a => a.Status == status).ToList();
+    }
+
     private void ClearFilters()
     {
         _selectedCategory = null;
+        _selectedStatus = null;
         _filteredApplications = _applications;
     }
 
-    // ⭐ NEW: Helper method for filter style
     private string GetFilterStyle(string category)
     {
         if (_selectedCategory != category)
@@ -440,11 +545,19 @@ else
 
         return category switch
         {
-            "GoodFit" => "cursor: pointer; border: 2px solid #10b981;",
-            "NeedsTraining" => "cursor: pointer; border: 2px solid #f59e0b;",
-            "NotRecommended" => "cursor: pointer; border: 2px solid #ef4444;",
+            "GoodFit" => "cursor: pointer; border: 2px solid #10b981; font-weight: bold;",
+            "NeedsTraining" => "cursor: pointer; border: 2px solid #f59e0b; font-weight: bold;",
+            "NotRecommended" => "cursor: pointer; border: 2px solid #ef4444; font-weight: bold;",
             _ => "cursor: pointer;"
         };
+    }
+
+    private string GetStatusFilterStyle(string status)
+    {
+        if (_selectedStatus != status)
+            return "cursor: pointer;";
+
+        return "cursor: pointer; border: 2px solid #2196F3; font-weight: bold;";
     }
 
     private string GetCategoryName(decimal score)
@@ -504,7 +617,6 @@ else
             await ApplicationService.UpdateStatusAsync(applicationId, status, null);
             await NotificationService.NotifyApplicationStatusAsync(applicationId);
             
-            // Refresh
             await LoadApplications();
             
             Snackbar.Add($"Application {status.ToLower()}", Severity.Success);

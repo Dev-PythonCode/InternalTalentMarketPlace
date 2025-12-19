@@ -10,6 +10,7 @@ public interface IApplicationService
     Task<bool> WithdrawAsync(int applicationId);
     Task<bool> HasAppliedAsync(int employeeId, int requirementId);
     Task<int> GetApplicationCountAsync(int requirementId);
+    Task<List<Application>> GetByManagerAsync(int managerId);
     Task<List<Application>> GetAllAsync();
     Task<ApplicationValidation> ValidateApplicationAsync(int employeeId, int requirementId);
 }
