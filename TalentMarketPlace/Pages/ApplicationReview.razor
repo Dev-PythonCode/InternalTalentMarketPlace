@@ -48,7 +48,7 @@ else
                         <div>
                             <strong>All Applications</strong> - View all applications
                         </div>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Style="margin-left: 8px;">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Style="margin-left: 8px;">
                             @_totalApplicationsCount
                         </MudChip>
                     </div>
@@ -209,7 +209,7 @@ else
                     <!-- Match Score Section -->
                     <MudPaper Class="pa-3 mb-3 d-flex align-center" Elevation="0" Style="background: #f5f5f5;">
                         <div class="mr-4">
-                            <MudText Typo="Typo.h3" Color="@GetScoreColor(app.MatchPercentage ?? 0)">
+                            <MudText Typo="Typo.h4" Color="@GetScoreColor(app.MatchPercentage ?? 0)">
                                 @(app.MatchPercentage?.ToString("0.00") ?? "?")%
                             </MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Match Score</MudText>

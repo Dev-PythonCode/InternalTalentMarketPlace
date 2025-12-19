@@ -14,7 +14,7 @@
                 @foreach (var message in _messages)
                 {
                     <div class="d-flex gap-2 mb-3 @(message.IsUser ? "flex-row-reverse" : "")">
-                        <MudAvatar Size="Size.Small" Color="@(message.IsUser ? Color.Primary : Color.Default)">
+                        <MudAvatar Size="Size.Small" Color="@(message.IsUser ? Color.Success : Color.Default)">
                             @if (message.IsUser)
                             {
                                 <MudIcon Icon="@Icons.Material.Filled.Person" />
@@ -70,7 +70,7 @@
                 <MudTextField @bind-Value="_currentMessage" Placeholder="Type your search query..."
                               Variant="Variant.Outlined" FullWidth="true"
                               OnKeyDown="HandleKeyDown" Disabled="@_isProcessing" />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendMessage"
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SendMessage"
                            Disabled="@_isProcessing" Style="height: 56px;">
                     <MudIcon Icon="@Icons.Material.Filled.Send" />
                 </MudButton>

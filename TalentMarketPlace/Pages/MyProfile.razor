@@ -13,7 +13,7 @@
     <!-- Employee Info Card -->
     <MudCard Class="mb-4">
         <MudCardContent>
-            <MudGrid>
+            <MudGrid> 
                 <MudItem xs="12" md="1" Class="d-flex justify-center">
                     <MudAvatar Size="Size.Large" Color="Color.Warning">
                         @_currentEmployee.FullName[0]
@@ -55,7 +55,7 @@
                                      Variant="Variant.Outlined" Min="0" Max="11" />
                 </MudItem>
                 <MudItem xs="12" md="4" Class="d-flex align-end">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" 
                                OnClick="UpdateTotalExperience" FullWidth="true"
                                StartIcon="@Icons.Material.Filled.Save">
                         Save
@@ -114,7 +114,7 @@
                                    Variant="Variant.Outlined" Class="mb-3" />
                     
                     <div Class="d-flex gap-2">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" 
                                    OnClick="@(_editingSkill != null ? (Func<Task>)SaveEditedSkillInline : AddSkill)" 
                                    FullWidth="true" StartIcon="@(_editingSkill != null ? Icons.Material.Filled.Save : Icons.Material.Filled.Add)">
                             @(_editingSkill != null ? "Save Changes" : "Add Skill")
