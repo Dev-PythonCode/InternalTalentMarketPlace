@@ -8,8 +8,8 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<MudText Typo="Typo.h4" Class="mb-2">Manage Requirements</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+<MudText Typo="Typo.h4" Class="mb-2">Post & Manage Requirements</MudText>
+<MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">
     View and manage all job/project requirements
 </MudText>
 
@@ -59,14 +59,14 @@ else if (FilteredRequirements.Any())
 {
     <MudTable Items="@FilteredRequirements" Dense="false" Hover="true" Striped="true" Elevation="2">
         <HeaderContent>
-            <MudTh>Req ID</MudTh>
-            <MudTh>Title</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Team / Location</MudTh>
-            <MudTh>Required Skills</MudTh>
-            <MudTh>Applications</MudTh>
-            <MudTh>Posted Date</MudTh>
-            <MudTh Style="text-align: center;">Search Matching Employee</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Req ID</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Title</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Status</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Team / Location</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Required Skills</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Applications</MudTh>
+            <MudTh Style="background-color: #a0c4d0;">Posted Date</MudTh>
+            <MudTh Style="text-align: center; background-color: #a0c4d0;">Search Matching Employee</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Req ID">

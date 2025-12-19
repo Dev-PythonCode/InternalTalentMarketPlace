@@ -115,7 +115,58 @@ public class ApplicationService : IApplicationService
             .Where(a => a.RequirementId == requirementId)
             .CountAsync();
     }
-   
+    public async Task<List<Application>> GetAllAsync()
+    {
+        return await _context.Applications
+            .Include(a => a.Employee)
+            .Include(a => a.Requirement)
+            .OrderByDescending(a => a.AppliedDate)
+            .ToListAsync();
+    }
+    public async Task<List<Application>> GetByManagerAsync(int managerId)
+    {
+        try
+        {
+            Console.WriteLine($"📊 Loading applications for manager {managerId}");
+            
+            // Get all requirements posted by this manager
+            var managerRequirements = await _context.Requirements
+                .Where(r => r.PostedById == managerId)
+                .Select(r => r.RequirementId)
+                .ToListAsync();
+            
+            Console.WriteLine($"📋 Found {managerRequirements.Count} requirements for this manager");
+            
+            // Get all applications for those requirements (convert to list FIRST)
+            var applications = await _context.Applications
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e.Team)
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e.EmployeeSkills)
+                        .ThenInclude(es => es.Skill)
+                .Include(a => a.Requirement)
+                    .ThenInclude(r => r.Team)
+                .Include(a => a.Requirement)
+                    .ThenInclude(r => r.RequirementSkills)
+                        .ThenInclude(rs => rs.Skill)
+                .Where(a => managerRequirements.Contains(a.RequirementId))
+                .ToListAsync();
+            
+            Console.WriteLine($"✅ Loaded {applications.Count} applications");
+            
+            // Order in memory (client-side) to avoid SQLite decimal ordering issue
+            return applications
+                .OrderByDescending(a => a.MatchPercentage ?? 0)
+                .ThenByDescending(a => a.AppliedDate)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error in GetByManagerAsync: {ex.Message}");
+            throw;
+        }
+    }
+    
     public async Task<Application> UpdateStatusAsync(int applicationId, string status, string? feedback)
     {
         var application = await _context.Applications.FindAsync(applicationId);

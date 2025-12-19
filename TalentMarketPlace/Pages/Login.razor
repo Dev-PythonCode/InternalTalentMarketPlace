@@ -13,12 +13,13 @@
 <div class="login-container">
     <MudPaper Elevation="3" Class="pa-8" Style="max-width: 400px; margin: 100px auto;">
         <div class="text-center mb-6">
-            <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Primary" />
-            <MudText Typo="Typo.h4" Class="mt-2">Talent Marketplace</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">Find Internal Talent First</MudText>
+            <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Style="color: #356fd2;"/>
+            <MudText Typo="Typo.h2" Style="color: #0d3272;" Class="mt-2">One RRD</MudText>
+
+            <MudText Typo="Typo.body2" Style="color: #0d3272;">Empower Internal Talents</MudText>
         </div>
 
-        <MudText Typo="Typo.h6" Class="mb-4">Sign In</MudText>
+        <MudText Typo="Typo.h6" Class="mb-4" Style="color: #3970ce;">Sign In</MudText>
 
         <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4" Style="width: 100%;">
             <MudButton Style="flex: 1;" Variant="@(_selectedRole == "HR" ? Variant.Filled : Variant.Outlined)" 
@@ -46,13 +47,13 @@
                       InputType="InputType.Password" Class="mb-4" FullWidth="true"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" />
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" 
+        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" 
                    OnClick="HandleLogin" Disabled="@_isLoading">
             @if (_isLoading)
             {
                 <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
             }
-            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2"/>
             Sign In
         </MudButton>
 
@@ -161,7 +162,7 @@
 <style>
     .login-container {
         min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #9da9e2 0%, #214490 100%);
         display: flex;
         align-items: center;
         justify-content: center;

@@ -2,53 +2,84 @@
 @inject IEmployeeService EmployeeService
 @inject ISkillService SkillService
 @inject IRequirementService RequirementService
+@inject IApplicationService ApplicationService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" Class="mb-2">HR Dashboard</MudText>
-<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Overview of your talent pool</MudText>
+<MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Overview of your talent pool</MudText>
 
 <!-- Quick Stats -->
 <MudGrid>
-    <MudItem xs="12" sm="6" md="3">
-        <MudCard Style="cursor: pointer;" @onclick="@(() => Navigation.NavigateTo("/search-results"))">
+    <!-- Total Employees - Blue -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="cursor: pointer; background-color: #2196F3;" @onclick="@(() => Navigation.NavigateTo("/search-results"))">
             <MudCardContent Class="text-center">
-                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Color="Color.Primary" />
-                <MudText Typo="Typo.h4" Color="Color.Primary">@_totalEmployees</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Total Employees</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Large" Style="color: white;" />
+                <MudText Typo="Typo.h4" Style="color: white;">@_totalEmployees</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9);">Total Employees</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudCard>
+
+    <!-- Available Employees - Green -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="background-color: #4CAF50;">
             <MudCardContent Class="text-center">
-                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
-                <MudText Typo="Typo.h4" Color="Color.Success">@_availableEmployees</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Available</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Style="color: white;" />
+                <MudText Typo="Typo.h4" Style="color: white;">@_availableEmployees</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9);">Available Employees</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudCard>
+
+    <!-- Skills Tracked - Yellow (clickable to admin) -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="cursor: pointer; background-color: #FFC107;" @onclick="@(() => Navigation.NavigateTo("/admin"))">
             <MudCardContent Class="text-center">
-                <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Large" Color="Color.Info" />
-                <MudText Typo="Typo.h4" Color="Color.Info">@_totalSkills</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Skills Tracked</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Large" Style="color: rgba(71, 75, 78, 0.87);" />
+                <MudText Typo="Typo.h4" Style="color: rgba(71, 75, 78, 0.87);">@_totalSkills</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(71, 75, 78, 0.87);">Skills Tracked</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
-    <MudItem xs="12" sm="6" md="3">
-        <MudCard Style="cursor: pointer;" @onclick="@(() => Navigation.NavigateTo("/application-review"))">
+
+    <!-- Total Open Requirements - Orange -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="cursor: pointer; background-color: #FF9800;" @onclick="@(() => Navigation.NavigateTo("/post-requirement"))">
             <MudCardContent Class="text-center">
-                <MudIcon Icon="@Icons.Material.Filled.WorkOutline" Size="Size.Large" Color="Color.Warning" />
-                <MudText Typo="Typo.h4" Color="Color.Warning">@_openRequirements</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Open Requirements</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.WorkOutline" Size="Size.Large" Style="color: white;" />
+                <MudText Typo="Typo.h4" Style="color: white;">@_openRequirements</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9);">Total Open Requirements</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Total Applications - Light Blue -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="cursor: pointer; background-color: #03A9F4;" @onclick="@(() => Navigation.NavigateTo("/application-review"))">
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Style="color: white;" />
+                <MudText Typo="Typo.h4" Style="color: white;">@_totalApplications</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9);">Total Applications</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Shortlisted - Light Green -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Style="cursor: pointer; background-color: #8BC34A;" @onclick="@(() => Navigation.NavigateTo("/application-review"))">
+            <MudCardContent Class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Stars" Size="Size.Large" Style="color: white;" />
+                <MudText Typo="Typo.h4" Style="color: white;">@_shortlistedCount</MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9);">Shortlisted</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
 </MudGrid>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+<!-- Action Button -->
+<MudButton Variant="Variant.Filled" Color="Color.Success" Class="mt-4"
            OnClick="@(() => Navigation.NavigateTo("/search-results"))"
            StartIcon="@Icons.Material.Filled.Search">
     Search Talent
@@ -59,24 +90,47 @@
     private int _availableEmployees = 0;
     private int _totalSkills = 0;
     private int _openRequirements = 0;
+    private int _totalApplications = 0;
+    private int _shortlistedCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Total Employees
             var employees = await EmployeeService.GetAllAsync();
             _totalEmployees = employees.Count;
+            
+            // Available Employees
             _availableEmployees = employees.Count(e => e.AvailabilityStatus == "Available");
-
+            
+            // Skills Tracked
             var skills = await SkillService.GetAllAsync();
             _totalSkills = skills.Count;
-
+            
+            // Open Requirements
             var requirements = await RequirementService.GetAllAsync(true);
             _openRequirements = requirements.Count;
+            
+            // Total Applications (all applications across all requirements)
+            var allApplications = await ApplicationService.GetAllAsync();
+            _totalApplications = allApplications.Count;
+            
+            // Shortlisted Applications
+            _shortlistedCount = allApplications.Count(a => a.Status == "Shortlisted");
+            
+            Console.WriteLine($"📊 Dashboard Stats:");
+            Console.WriteLine($"   Total Employees: {_totalEmployees}");
+            Console.WriteLine($"   Available: {_availableEmployees}");
+            Console.WriteLine($"   Skills: {_totalSkills}");
+            Console.WriteLine($"   Open Requirements: {_openRequirements}");
+            Console.WriteLine($"   Total Applications: {_totalApplications}");
+            Console.WriteLine($"   Shortlisted: {_shortlistedCount}");
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+            Console.WriteLine($"❌ Dashboard error: {ex}");
         }
     }
 }
