@@ -181,7 +181,7 @@ else
                                 </MudAvatar>
                                 <div>
                                     <MudText Typo="Typo.h6">@app.Employee.FullName</MudText>
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    <MudText Typo="Typo.body2" Color="Color.Surface">
                                         @app.Employee.Designation • @(app.Employee.Team?.TeamName ?? "No Team") • @app.Employee.Location
                                     </MudText>
                                     @if (!_selectedRequirementId.HasValue)
