@@ -52,6 +52,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPythonApiService, PythonApiService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<AuthStateProvider>();
+builder.Services.AddScoped<ChatSessionService>();
+
 
 // Add Session
 builder.Services.AddDistributedMemoryCache();
