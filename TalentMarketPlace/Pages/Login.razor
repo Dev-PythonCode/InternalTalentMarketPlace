@@ -19,9 +19,9 @@
             <MudText Typo="Typo.body2" Style="color: #0d3272;">Empower Internal Talents</MudText>
         </div>
 
-        <MudText Typo="Typo.h6" Class="mb-4">Sign In</MudText>
+        <MudText Typo="Typo.h6" Class="mb-4" Style="color: #3970ce;">Sign In</MudText>
 
-        <MudButtonGroup Color="Color.Info" Variant="Variant.Outlined" Class="mb-4" Style="width: 100%;">
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4" Style="width: 100%;">
             <MudButton Style="flex: 1;" Variant="@(_selectedRole == "HR" ? Variant.Filled : Variant.Outlined)" 
                        OnClick="@(() => SelectRole("HR"))">
                 <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Class="mr-1" Size="Size.Small" />
@@ -47,13 +47,13 @@
                       InputType="InputType.Password" Class="mb-4" FullWidth="true"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" />
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" 
+        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" 
                    OnClick="HandleLogin" Disabled="@_isLoading">
             @if (_isLoading)
             {
                 <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
             }
-            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2"/>
             Sign In
         </MudButton>
 
