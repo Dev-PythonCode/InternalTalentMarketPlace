@@ -115,6 +115,14 @@ public class ApplicationService : IApplicationService
             .Where(a => a.RequirementId == requirementId)
             .CountAsync();
     }
+    public async Task<List<Application>> GetAllAsync()
+    {
+        return await _context.Applications
+            .Include(a => a.Employee)
+            .Include(a => a.Requirement)
+            .OrderByDescending(a => a.AppliedDate)
+            .ToListAsync();
+    }
    
     public async Task<Application> UpdateStatusAsync(int applicationId, string status, string? feedback)
     {
