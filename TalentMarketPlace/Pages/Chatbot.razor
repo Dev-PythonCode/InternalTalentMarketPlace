@@ -2,6 +2,8 @@
 @inject ISearchService SearchService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject ChatSessionService ChatSession
+
 
 <MudText Typo="Typo.h4" Class="mb-2">AI Chat Assistant</MudText>
 <MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Search for talent using natural language</MudText>
@@ -29,18 +31,18 @@
                             @if (message.ParsedInfo != null)
                             {
                                 <MudText Typo="Typo.body1" Class="mb-2">@message.Text</MudText>
-                                <MudText Typo="Typo.subtitle2">Parsed query:</MudText>
+                                @* <MudText Typo="Typo.subtitle2">Parsed query:</MudText>
                                 <MudList T ="string" Dense="true">
                                     @foreach (var item in message.ParsedInfo)
                                     {
                                         <MudListItem Dense="true" Style="font-size: 13px;">• @item</MudListItem>
                                     }
-                                </MudList>
+                                </MudList> *@
                                 @if (message.ResultCount > 0)
                                 {
                                     <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                                                OnClick="@(() => ViewResults(message.Query))">
-                                        View @message.ResultCount Results →
+                                        Click To View @message.ResultCount Result(s) →
                                     </MudButton>
                                 }
                             }
@@ -94,24 +96,37 @@
                     </MudChip>
                 </MudChipSet>
             </div>
+            <div class="d-flex justify-end mb-2">
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="ClearChat">
+                    Clear Chat
+                </MudButton>
+            </div>
+
         </MudCardContent>
     </MudCard>
 </MudContainer>
 
 @code {
-    private List<ChatMessage> _messages = new();
+    private List<ChatMessage> _messages => ChatSession.Messages;
+
     private string _currentMessage = "";
     private bool _isProcessing = false;
 
     protected override void OnInitialized()
     {
-        // Add welcome message
-        _messages.Add(new ChatMessage
+        if (!ChatSession.HasMessages)
         {
-            IsUser = false,
-            Text = "Hello! I'm your talent search assistant. Ask me to find employees by skills, experience, location, or availability. For example: \"Find Python developers with 5 years experience in Bangalore\""
-        });
+            ChatSession.AddMessage(new ChatMessage
+            {
+                IsUser = false,
+                Text = "Hello! I'm your talent search assistant. Ask me to find employees by skills, experience, location, or availability."
+            });
+        }
     }
+
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
@@ -129,7 +144,7 @@
         _currentMessage = "";
 
         // Add user message
-        _messages.Add(new ChatMessage
+        ChatSession.AddMessage(new ChatMessage
         {
             IsUser = true,
             Text = query,
@@ -156,10 +171,10 @@
             }
 
             // Add bot response
-            _messages.Add(new ChatMessage
+            ChatSession.AddMessage(new ChatMessage
             {
                 IsUser = false,
-                Text = $"I found {result.TotalCount} employees matching your criteria:",
+                Text = $"I found {result.TotalCount} employee(s) matching your criteria:",
                 ParsedInfo = parsedInfo,
                 ResultCount = result.TotalCount,
                 Query = query
@@ -167,7 +182,7 @@
         }
         catch (Exception ex)
         {
-            _messages.Add(new ChatMessage
+            ChatSession.AddMessage(new ChatMessage
             {
                 IsUser = false,
                 Text = $"Sorry, I encountered an error: {ex.Message}. Please try rephrasing your query."
@@ -192,7 +207,19 @@
         }
     }
 
-    private class ChatMessage
+    private void ClearChat()
+    {
+        ChatSession.Clear();
+
+        ChatSession.AddMessage(new ChatMessage
+        {
+            IsUser = false,
+            Text = "Chat cleared. How can I help you today?"
+        });
+    }
+
+
+    public class ChatMessage
     {
         public bool IsUser { get; set; }
         public string Text { get; set; } = "";

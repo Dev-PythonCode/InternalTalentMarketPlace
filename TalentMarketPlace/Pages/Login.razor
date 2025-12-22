@@ -10,74 +10,104 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<div class="login-container">
-    <MudPaper Elevation="3" Class="pa-8" Style="max-width: 400px; margin: 100px auto;">
-        <div class="text-center mb-6">
-            <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Style="color: #356fd2;"/>
-            <MudText Typo="Typo.h2" Style="color: #0d3272;" Class="mt-2">One RRD</MudText>
+<div class="ai-light-wrapper @_selectedRole.ToLower()">
 
-            <MudText Typo="Typo.body2" Style="color: #0d3272;">Empower Internal Talents</MudText>
+
+    <!-- LEFT AI PANEL -->
+    <div class="ai-light-visual">
+        <div class="ai-light-overlay">
+            <MudIcon Icon="@Icons.Material.Filled.Psychology"
+                     Size="Size.Large"
+                     Class="ai-light-icon" />
+
+            <MudText Typo="Typo.h3" Class="ai-light-title">
+                One RRD AI
+            </MudText>            
+
+            <MudText Typo="Typo.subtitle1" Class="ai-light-subtitle">
+                Intelligent Internal Talent Marketplace
+            </MudText>
+
+            <MudText Typo="Typo.caption" Class="ai-typing-text mb-3">
+                @_aiTypingText
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="ai-light-desc">
+                AI-driven skill matching • Career pathways • Talent insights
+            </MudText>
         </div>
 
-        <MudText Typo="Typo.h6" Class="mb-4" Style="color: #3970ce;">Sign In</MudText>
+        <div class="ai-wave"></div>
+    </div>
 
-        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="mb-4" Style="width: 100%;">
-            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "HR" ? Variant.Filled : Variant.Outlined)" 
-                       OnClick="@(() => SelectRole("HR"))">
-                <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Class="mr-1" Size="Size.Small" />
-                HR
+    <!-- LOGIN FORM -->
+    <div class="ai-light-form">
+        <MudPaper Elevation="4" Class="pa-8 ai-light-card">
+
+            <MudText Typo="Typo.h5" Class="mb-2">
+                Welcome!
+            </MudText>
+
+            <MudText Typo="Typo.caption" Color="Color.Info" Class="mb-4">
+                Sign in to your AI-powered workspace
+            </MudText>
+
+            <MudButtonGroup Variant="Variant.Outlined" Class="mb-4" Style="width:100%">
+                <MudButton Style="flex:1"
+                           Variant="@(_selectedRole=="HR" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => SelectRole("HR"))">
+                    HR
+                </MudButton>
+                <MudButton Style="flex:1"
+                           Variant="@(_selectedRole=="Manager" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => SelectRole("Manager"))">
+                    Manager
+                </MudButton>
+                <MudButton Style="flex:1"
+                           Variant="@(_selectedRole=="Employee" ? Variant.Filled : Variant.Outlined)"
+                           OnClick="@(() => SelectRole("Employee"))">
+                    Employee
+                </MudButton>
+            </MudButtonGroup>
+
+            <MudTextField @bind-Value="_email"
+                          Label="Email Address"
+                          Variant="Variant.Outlined"
+                          FullWidth
+                          Class="mb-3" />
+
+            <MudTextField @bind-Value="_password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          FullWidth
+                          Class="mb-4" />
+
+            <MudButton FullWidth
+                       Variant="Variant.Filled"
+                       Disabled="@_isLoading"
+                       OnClick="HandleLogin"
+                       Class="ai-login-btn">
+                @if (_isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-2" />
+                }
+                Sign In
             </MudButton>
-            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "Manager" ? Variant.Filled : Variant.Outlined)"
-                       OnClick="@(() => SelectRole("Manager"))">
-                <MudIcon Icon="@Icons.Material.Filled.Business" Class="mr-1" Size="Size.Small" />
-                Manager
-            </MudButton>
-            <MudButton Style="flex: 1;" Variant="@(_selectedRole == "Employee" ? Variant.Filled : Variant.Outlined)"
-                       OnClick="@(() => SelectRole("Employee"))">
-                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-1" Size="Size.Small" />
-                Employee
-            </MudButton>
-        </MudButtonGroup>
 
-        <MudTextField @bind-Value="_email" Label="Email Address" Variant="Variant.Outlined" 
-                      InputType="InputType.Email" Class="mb-3" FullWidth="true"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email" />
 
-        <MudTextField @bind-Value="_password" Label="Password" Variant="Variant.Outlined" 
-                      InputType="InputType.Password" Class="mb-4" FullWidth="true"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Lock" />
-
-        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" 
-                   OnClick="HandleLogin" Disabled="@_isLoading">
-            @if (_isLoading)
+            @if (!string.IsNullOrEmpty(_errorMessage))
             {
-                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                <MudAlert Severity="Severity.Error" Class="mt-4">
+                    @_errorMessage
+                </MudAlert>
             }
-            <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2"/>
-            Sign In
-        </MudButton>
 
-        @if (!string.IsNullOrEmpty(_errorMessage))
-        {
-            <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
-        }
-
-        <MudDivider Class="my-4" />
-
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-            Demo Accounts:
-        </MudText>
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-            HR: hr.manager@company.com
-        </MudText>
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-            Manager: tech.manager@company.com
-        </MudText>
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-            Employee: arun.kumar@company.com
-        </MudText>
-    </MudPaper>
+        </MudPaper>
+    </div>
 </div>
+
+
 
 @code {
     private string _email = "tech.manager@company.com"; // Default to Manager
@@ -85,6 +115,29 @@
     private string _selectedRole = "Manager"; // Default to Manager
     private string _errorMessage = "";
     private bool _isLoading = false;
+
+    private string _aiTypingText = "";
+    private readonly string _aiMessage = "Empowering Internal Talents...";
+    private int _typingIndex = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await StartTypingEffect();
+        }
+    }
+
+    private async Task StartTypingEffect()
+    {
+        while (_typingIndex < _aiMessage.Length)
+        {
+            _aiTypingText += _aiMessage[_typingIndex];
+            _typingIndex++;
+            StateHasChanged();
+            await Task.Delay(45);
+        }
+    }
 
     private MudTheme _theme = new MudTheme()
     {
@@ -160,11 +213,133 @@
 }
 
 <style>
-    .login-container {
+
+    .ai-login-btn {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #a8f163, #066c12);
+        color: white;
+    }
+
+        .ai-login-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient( 120deg, transparent, rgba(255,255,255,0.4), transparent );
+            animation: shimmer 2.5s infinite;
+        }
+    @@keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    /* Role-based AI accent */
+    .hr .ai-light-icon,
+    .hr .ai-login-btn {
+        color: #7c3aed;
+    }
+
+    .manager .ai-light-icon
+    {
+        color: #6082eb;
+    }
+    .manager .ai-login-btn {
+        color: #ebecef;
+    }
+
+    .employee .ai-light-icon,
+    .employee .ai-login-btn {
+        color: #059669;
+    }
+
+    .ai-light-wrapper {
+        display: flex;
         min-height: 100vh;
-        background: linear-gradient(135deg, #9da9e2 0%, #214490 100%);
+        background: #f8fafc;
+    }
+
+    /* LEFT PANEL */
+    .ai-light-visual {
+        flex: 1.1;
+        position: relative;
+        background: linear-gradient(135deg, #e0e7ff, #f0f9ff);
+    }
+
+    .ai-light-overlay {
+        padding: 80px 60px;
+    }
+
+    .ai-light-icon {
+        color: #4f46e5;
+        font-size: 56px;
+    }
+
+    .ai-light-title {
+        font-weight: 700;
+        margin-top: 12px;
+    }
+
+    .ai-light-subtitle {
+        opacity: 0.85;
+    }
+
+    .ai-light-desc {
+        margin-top: 16px;
+        color: #475569;
+    }
+
+    /* AI WAVE */
+    .ai-wave {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 200px;
+        background: url('/images/ai-wave.svg') no-repeat bottom;
+        background-size: cover;
+    }
+
+    /* LOGIN FORM */
+    .ai-light-form {
+        flex: 0.9;
         display: flex;
         align-items: center;
         justify-content: center;
     }
+
+    .ai-light-card {
+        width: 100%;
+        max-width: 420px;
+        border-radius: 16px;
+        background: white;
+    }
+
+    /* MOBILE */
+    @@media (max-width: 900px) {
+        .ai-light-visual {
+            display: none;
+        }
+    }
+
+    .ai-wave {
+        animation: waveFloat 6s ease-in-out infinite;
+    }
+
+    @@keyframes waveFloat {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(8px);
+        }
+    }
+
 </style>

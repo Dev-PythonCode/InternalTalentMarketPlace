@@ -1,0 +1,20 @@
+<svg width="1440" height="320" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.25"></stop>
+      <stop offset="50%" stop-color="#8B5CF6" stop-opacity="0.18"></stop>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.22"></stop>
+    </linearGradient>
+  </defs>
+
+  <path fill="url(#aiGradient)" d="
+    M0,224
+    C120,210 240,170 360,165
+    C480,160 600,200 720,205
+    C840,210 960,185 1080,170
+    C1200,155 1320,170 1440,180
+    L1440,320 L0,320 Z">
+  </path>
+
+</svg>
