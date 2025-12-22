@@ -31,18 +31,18 @@
                             @if (message.ParsedInfo != null)
                             {
                                 <MudText Typo="Typo.body1" Class="mb-2">@message.Text</MudText>
-                                <MudText Typo="Typo.subtitle2">Parsed query:</MudText>
+                                @* <MudText Typo="Typo.subtitle2">Parsed query:</MudText>
                                 <MudList T ="string" Dense="true">
                                     @foreach (var item in message.ParsedInfo)
                                     {
                                         <MudListItem Dense="true" Style="font-size: 13px;">• @item</MudListItem>
                                     }
-                                </MudList>
+                                </MudList> *@
                                 @if (message.ResultCount > 0)
                                 {
                                     <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                                                OnClick="@(() => ViewResults(message.Query))">
-                                        View @message.ResultCount Results →
+                                        Click To View @message.ResultCount Result(s) →
                                     </MudButton>
                                 }
                             }
@@ -174,7 +174,7 @@
             ChatSession.AddMessage(new ChatMessage
             {
                 IsUser = false,
-                Text = $"I found {result.TotalCount} employees matching your criteria:",
+                Text = $"I found {result.TotalCount} employee(s) matching your criteria:",
                 ParsedInfo = parsedInfo,
                 ResultCount = result.TotalCount,
                 Query = query
