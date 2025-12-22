@@ -202,6 +202,111 @@
             </MudCardContent>
         </MudCard>
 
+        @if (_roadmapData != null && (_roadmapData.LearningPath?.Any() ?? false))
+        {
+            <!-- Structured Learning Path Phases -->
+            <MudCard Class="mb-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.DynamicForm" Class="mr-2" />
+                        Structured Learning Path - @_roadmapData.MatchedProfile
+                    </MudText>
+                    
+                    <MudGrid Class="mb-4">
+                        <MudItem xs="12" md="3">
+                            <MudPaper Class="pa-3" Elevation="0" Style="background: #e3f2fd;">
+                                <MudText Typo="Typo.subtitle2" Style="color: #1565c0;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                                    Timeline
+                                </MudText>
+                                <MudText Typo="Typo.h6" Class="mt-1">
+                                    @(_roadmapData.TimelineWeeks) weeks
+                                </MudText>
+                                <MudText Typo="Typo.caption">@_roadmapData.EffortPerWeek</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Class="pa-3" Elevation="0" Style="background: #f3e5f5;">
+                                <MudText Typo="Typo.subtitle2" Style="color: #6a1b9a;">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                                    Career Path
+                                </MudText>
+                                <MudText Typo="Typo.body2" Class="mt-1">@_roadmapData.CareerPath</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Class="pa-3" Elevation="0" Style="background: #f1f8e9;">
+                                <MudText Typo="Typo.subtitle2" Style="color: #33691e;">
+                                    <MudIcon Icon="@Icons.Material.Filled.LocalOffer" Size="Size.Small" />
+                                    Market Demand
+                                </MudText>
+                                <MudText Typo="Typo.body2" Class="mt-1">@_roadmapData.JobMarket</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Class="pa-3" Elevation="0" Style="background: #fff3e0;">
+                                <MudText Typo="Typo.subtitle2" Style="color: #e65100;">
+                                    <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Size="Size.Small" />
+                                    Salary Range
+                                </MudText>
+                                <MudText Typo="Typo.h6" Class="mt-1">@_roadmapData.SalaryRangeUsd</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <!-- Learning Phases Timeline -->
+                    <MudText Typo="Typo.subtitle1" Class="mb-3" Style="font-weight: 600;">
+                        <MudIcon Icon="@Icons.Material.Filled.School" Class="mr-2" />
+                        Phase-by-Phase Learning Guide
+                    </MudText>
+                    
+                    <MudTimeline TimelinePosition="TimelinePosition.Start">
+                        @{
+                            var phaseNumber = 1;
+                            var colors = new[] { Color.Success, Color.Primary, Color.Info, Color.Warning, Color.Error, Color.Secondary, Color.Tertiary };
+                            foreach (var phase in _roadmapData.LearningPath)
+                            {
+                                var phaseColor = colors[(phaseNumber - 1) % colors.Length];
+                                var phaseStyle = $"border-left: 4px solid; border-left-color: var(--mud-palette-{phaseColor.ToString().ToLower()});";
+                                
+                                <MudTimelineItem Color="phaseColor" Size="Size.Small" Elevation="2">
+                                    <ItemOpposite>
+                                        <MudText Typo="Typo.caption" Style="font-weight: 600;">
+                                            Phase @phaseNumber
+                                        </MudText>
+                                    </ItemOpposite>
+                                    <ItemContent>
+                                        <MudPaper Class="pa-3" Elevation="1">
+                                            <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">
+                                                @phase
+                                            </MudText>
+                                        </MudPaper>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                                phaseNumber++;
+                            }
+                        }
+                    </MudTimeline>
+
+                    @if (_roadmapData.PrerequisiteSkills?.Any() ?? false)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2" Style="color: #d32f2f;">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" />
+                            Prerequisites
+                        </MudText>
+                        <div>
+                            @foreach (var prereq in _roadmapData.PrerequisiteSkills)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text">
+                                    @prereq
+                                </MudChip>
+                            }
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+
         <!-- Recommended Courses -->
         <MudCard Class="mb-4">
             <MudCardContent>
