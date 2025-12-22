@@ -174,4 +174,62 @@ public class RequirementService : IRequirementService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    /// <summary>
+    /// Find open requirements that match the given core skills.
+    /// Returns requirements where the core skills match at least the specified percentage of required skills.
+    /// </summary>
+    public async Task<List<Requirement>> FindBySkillsAsync(List<string> coreSkillNames, int minimumMatchPercentage = 70)
+    {
+        if (!coreSkillNames.Any())
+            return new List<Requirement>();
+
+        // Normalize skill names
+        var normalizedSkillNames = coreSkillNames
+            .Select(s => s.ToLower().Trim())
+            .Distinct()
+            .ToList();
+
+        // Get all open requirements with their skills
+        var openRequirements = await _context.Requirements
+            .Include(r => r.RequirementSkills)
+                .ThenInclude(rs => rs.Skill)
+            .Include(r => r.PostedBy)
+            .Include(r => r.Team)
+            .Where(r => r.Status == "Open" && r.IsActive)
+            .ToListAsync();
+
+        // Filter requirements where at least minimumMatchPercentage of required skills are in coreSkillNames
+        var matchedRequirements = new List<Requirement>();
+
+        foreach (var requirement in openRequirements)
+        {
+            if (!requirement.RequirementSkills.Any())
+                continue;
+
+            var requiredSkillNames = requirement.RequirementSkills
+                .Select(rs => rs.Skill.SkillName.ToLower().Trim())
+                .ToList();
+
+            // Calculate match percentage: how many required skills are in core skills
+            var matchedCount = requiredSkillNames
+                .Count(rSkill => normalizedSkillNames.Any(cSkill => 
+                    rSkill.Contains(cSkill) || cSkill.Contains(rSkill)))
+                ;
+
+            var matchPercentage = requiredSkillNames.Count > 0
+                ? (matchedCount * 100) / requiredSkillNames.Count
+                : 0;
+
+            if (matchPercentage >= minimumMatchPercentage)
+            {
+                matchedRequirements.Add(requirement);
+            }
+        }
+
+        // Sort by match percentage (highest first)
+        return matchedRequirements
+            .OrderByDescending(r => r.RequirementSkills.Count)
+            .ToList();
+    }
 }
