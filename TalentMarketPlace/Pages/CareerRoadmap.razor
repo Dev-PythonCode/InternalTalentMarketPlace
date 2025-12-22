@@ -4,7 +4,9 @@
 @inject IAuthService AuthService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@inject HttpClient HttpClient
+@inject HttpClient Http
+@using System.Net.Http.Json
+@using System.Text.Json
 @using System.Text.Json.Serialization
 @using TalentMarketPlace.Models
 
@@ -468,7 +470,7 @@
             await Task.Delay(500); // Brief UI feedback
             // ⭐ STEP 1: Prefer Python roadmap endpoint which returns recommended skills and parsed data
             var roadmapUrl = "http://localhost:5000/career_roadmap";
-            var roadmapResp = await HttpClient.PostAsJsonAsync(roadmapUrl, new { prompt = _careerGoalPrompt });
+            var roadmapResp = await Http.PostAsJsonAsync(roadmapUrl, new { prompt = _careerGoalPrompt });
 
             if (roadmapResp.IsSuccessStatusCode)
             {
@@ -498,7 +500,7 @@
 
             // Fallback: call parse endpoint (legacy)
             var pythonApiUrl = "http://localhost:5000/parse"; // Your Python API
-            var parseResponse = await HttpClient.PostAsJsonAsync(pythonApiUrl, new { query = _careerGoalPrompt });
+            var parseResponse = await Http.PostAsJsonAsync(pythonApiUrl, new { query = _careerGoalPrompt });
 
             if (parseResponse.IsSuccessStatusCode)
             {
@@ -837,6 +839,38 @@
         Navigation.NavigateTo("/job-board");
     }
 
+    private async Task LoadCommonSkills()
+    {
+        try
+        {
+            var response = await Http.GetAsync("http://localhost:5000/skills");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var skillsResponse = JsonSerializer.Deserialize<SkillsResponse>(json);
+                
+                if (skillsResponse?.Skills != null)
+                {
+                    _commonSkills = skillsResponse.Skills;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading skills from API: {ex.Message}");
+            // Fallback to hardcoded skills
+            _commonSkills = new List<string>
+            {
+                "AWS", "Azure", "Docker", "Kubernetes", "Python", "Java", "C#", "JavaScript",
+                "React", "Angular", "Vue.js", "SQL", "MongoDB", "Git", "CI/CD", "Terraform",
+                "CloudFormation", "Jenkins", "GitHub", "Agile", "Scrum", "REST API", "GraphQL",
+                "Microservices", "Machine Learning", "Data Science", "TensorFlow", "PyTorch",
+                "Git", "Linux", "Windows", "DevOps", ".NET", "Node.js", "Go", "Rust"
+            };
+        }
+    }
+
     // Models
     public class CourseRecommendation
     {
@@ -868,5 +902,17 @@
     public class ClaudeContent
     {
         public string? Text { get; set; }
+    }
+
+    public class SkillsResponse
+    {
+        [JsonPropertyName("total_skills")]
+        public int? TotalSkills { get; set; }
+
+        [JsonPropertyName("skills")]
+        public List<string>? Skills { get; set; }
+
+        [JsonPropertyName("categories")]
+        public List<string>? Categories { get; set; }
     }
 }
