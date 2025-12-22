@@ -14,6 +14,15 @@ namespace TalentMarketPlace.Models
         [JsonPropertyName("recommended_skills")]
         public List<string>? RecommendedSkills { get; set; }
 
+        [JsonPropertyName("optional_skills")]
+        public List<string>? OptionalSkills { get; set; }
+
+        [JsonPropertyName("mandatory_skills_count")]
+        public int? MandatorySkillsCount { get; set; }
+
+        [JsonPropertyName("optional_skills_count")]
+        public int? OptionalSkillsCount { get; set; }
+
         [JsonPropertyName("learning_path")]
         public List<string>? LearningPath { get; set; }
 
@@ -22,6 +31,21 @@ namespace TalentMarketPlace.Models
 
         [JsonPropertyName("timeline_weeks")]
         public int? TimelineWeeks { get; set; }
+
+        [JsonPropertyName("effort_per_week")]
+        public string? EffortPerWeek { get; set; }
+
+        [JsonPropertyName("prerequisite_skills")]
+        public List<string>? PrerequisiteSkills { get; set; }
+
+        [JsonPropertyName("career_path")]
+        public string? CareerPath { get; set; }
+
+        [JsonPropertyName("job_market")]
+        public string? JobMarket { get; set; }
+
+        [JsonPropertyName("salary_range_usd")]
+        public string? SalaryRangeUsd { get; set; }
 
         [JsonPropertyName("notes")]
         public string? Notes { get; set; }
