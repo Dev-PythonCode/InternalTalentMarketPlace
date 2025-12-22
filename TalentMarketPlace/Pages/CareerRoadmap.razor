@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject HttpClient HttpClient
 @using System.Text.Json.Serialization
+@using TalentMarketPlace.Models
 
 <MudGrid Class="mb-4">
     <MudItem xs="12" md="8">
@@ -400,6 +401,9 @@
     private List<CourseRecommendation> _recommendedCourses = new();
     private List<JobOpportunity> _matchingJobs = new();
     private string _aiInsights = "";
+    // Roadmap + dynamic skills
+    private RoadmapResponse? _roadmapData;
+    private List<string> _commonSkills = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -411,6 +415,8 @@
             {
                 _mySkills = await EmployeeService.GetEmployeeSkillsAsync(_currentEmployee.EmployeeId);
             }
+            // Load dynamic skills from Python API
+            await LoadCommonSkills();
         }
         catch (Exception ex)
         {
@@ -460,41 +466,55 @@
         try
         {
             await Task.Delay(500); // Brief UI feedback
-            
-            // ⭐ STEP 1: Use Python API to parse career goal and extract skills
-            var pythonApiUrl = "http://localhost:5000/parse"; // Your Python API
-            var parseResponse = await HttpClient.PostAsJsonAsync(pythonApiUrl, new { query = _careerGoalPrompt });
-            
-            if (parseResponse.IsSuccessStatusCode)
+            // ⭐ STEP 1: Prefer Python roadmap endpoint which returns recommended skills and parsed data
+            var roadmapUrl = "http://localhost:5000/career_roadmap";
+            var roadmapResp = await HttpClient.PostAsJsonAsync(roadmapUrl, new { prompt = _careerGoalPrompt });
+
+            if (roadmapResp.IsSuccessStatusCode)
             {
-                var parsedResult = await parseResponse.Content.ReadFromJsonAsync<PythonParseResponse>();
-                
-                // Extract skills mentioned in goal
-                var mentionedSkills = parsedResult?.Parsed?.Skills ?? new List<string>();
-                var mentionedCategories = parsedResult?.Parsed?.Categories ?? new List<string>();
-                var categorySkills = parsedResult?.Parsed?.CategorySkills ?? new List<string>();
-                
-                // Combine explicit skills and category-expanded skills
-                var allMentionedSkills = mentionedSkills.Concat(categorySkills).Distinct().ToList();
-                
-                Console.WriteLine($"✅ Python API found {allMentionedSkills.Count} skills in goal");
-                
-                // ⭐ STEP 2: Analyze current skills
+                var roadmap = await roadmapResp.Content.ReadFromJsonAsync<RoadmapResponse>();
+
+                var recommendedSkills = roadmap?.RecommendedSkills ?? new List<string>();
+                var mentionedSkills = roadmap?.Parsed?.Skills ?? new List<string>();
+                var categorySkills = roadmap?.Parsed?.CategorySkills ?? new List<string>();
+
+                var allMentionedSkills = recommendedSkills.Concat(mentionedSkills).Concat(categorySkills).Distinct().ToList();
+
+                Console.WriteLine($"✅ Roadmap API returned {allMentionedSkills.Count} candidate skills");
+
+                // Analyze current skills
                 _skillsYouHave = _mySkills.Select(s => s.Skill.SkillName).ToList();
-                
-                // ⭐ STEP 3: Find skills gap (skills mentioned in goal that you don't have)
+
+                // Find skills gap
                 _skillsToLearn = allMentionedSkills
                     .Where(skill => !_skillsYouHave.Any(s => s.Equals(skill, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
-                
-                Console.WriteLine($"📊 Skills you have: {_skillsYouHave.Count}");
-                Console.WriteLine($"📚 Skills to learn: {_skillsToLearn.Count}");
-                
-                // ⭐ STEP 4: Generate course recommendations
+
                 _recommendedCourses = GenerateCourseRecommendations(_skillsToLearn);
-                
-                // ⭐ STEP 5: Find matching jobs with these skills
                 await LoadMatchingJobsForSkills(allMentionedSkills);
+                _aiInsights = roadmap?.Notes ?? "";
+                return;
+            }
+
+            // Fallback: call parse endpoint (legacy)
+            var pythonApiUrl = "http://localhost:5000/parse"; // Your Python API
+            var parseResponse = await HttpClient.PostAsJsonAsync(pythonApiUrl, new { query = _careerGoalPrompt });
+
+            if (parseResponse.IsSuccessStatusCode)
+            {
+                var parsedResult = await parseResponse.Content.ReadFromJsonAsync<PythonParseResponse>();
+
+                var mentionedSkills = parsedResult?.Parsed?.Skills ?? new List<string>();
+                var categorySkills = parsedResult?.Parsed?.CategorySkills ?? new List<string>();
+                var allMentioned = mentionedSkills.Concat(categorySkills).Distinct().ToList();
+
+                _skillsYouHave = _mySkills.Select(s => s.Skill.SkillName).ToList();
+                _skillsToLearn = allMentioned
+                    .Where(skill => !_skillsYouHave.Any(s => s.Equals(skill, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                _recommendedCourses = GenerateCourseRecommendations(_skillsToLearn);
+                await LoadMatchingJobsForSkills(allMentioned);
             }
             else
             {
@@ -788,27 +808,18 @@
 
     private List<string> ExtractSkillsFromGoal(string goal)
     {
-        var commonSkills = new[] { 
-            "AWS", "Azure", "GCP", "Docker", "Kubernetes", "React", "Angular", "Vue",
-            "Node", "Python", "Java", "C#", "JavaScript", "TypeScript",
-            "MongoDB", "PostgreSQL", "MySQL", "Redis",
-            "Machine Learning", "AI", "TensorFlow", "PyTorch",
-            "DevOps", "CI/CD", "Terraform", "Ansible",
-            "Flutter", "React Native", "Swift", "Kotlin"
-        };
-        
         var found = new List<string>();
         var goalLower = goal.ToLower();
-        
-        foreach (var skill in commonSkills)
+
+        foreach (var skill in _commonSkills)
         {
-            if (goalLower.Contains(skill.ToLower()))
+            if (!string.IsNullOrWhiteSpace(skill) && goalLower.Contains(skill.ToLower()))
             {
                 found.Add(skill);
             }
         }
-        
-        return found;
+
+        return found.Distinct().ToList();
     }
 
     private Color GetMatchColor(int percentage)
