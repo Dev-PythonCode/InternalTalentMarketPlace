@@ -58,6 +58,24 @@ namespace TalentMarketPlace.Models
 
         [JsonPropertyName("skills_found")]
         public int? SkillsFound { get; set; }
+
+        [JsonPropertyName("matching_requirements")]
+        public MatchingRequirementsInfo? MatchingRequirements { get; set; }
+    }
+
+    public class MatchingRequirementsInfo
+    {
+        [JsonPropertyName("core_skills_count")]
+        public int CoreSkillsCount { get; set; }
+
+        [JsonPropertyName("core_skills")]
+        public List<string>? CoreSkills { get; set; } = new();
+
+        [JsonPropertyName("search_note")]
+        public string? SearchNote { get; set; }
+
+        [JsonPropertyName("integration_hint")]
+        public string? IntegrationHint { get; set; }
     }
 
     public class ParsedData

@@ -37,7 +37,7 @@
     <MudCard Class="mb-4">
         <MudCardContent>
             <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Color="Color.Info"/>
                 Your Current Profile
             </MudText>
             <MudGrid>
@@ -84,11 +84,12 @@
     <MudCard Class="mb-4">
         <MudCardContent>
             <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Class="mr-2" />
+                <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Class="mr-2" Color="Color.Info"/>
                 What's Your Career Goal?
             </MudText>
             
             <MudTextField @bind-Value="_careerGoalPrompt" 
+                          @ref="_careerGoalInput"
                           Label="Describe your career aspirations" 
                           Variant="Variant.Outlined"
                           Lines="3"
@@ -142,9 +143,18 @@
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="mr-2" />
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="mr-2" Color="Color.Info"/>
                     Skills Gap Analysis
                 </MudText>
+                <MudButton Variant="Variant.Text" Size="Size.Small"
+                           OnClick="@(() => _expandSkillGap = !_expandSkillGap)"
+                           EndIcon="@(_expandSkillGap ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Class="mb-3">
+                    @(_expandSkillGap ? "Collapse" : "Expand")
+                </MudButton>
+
+                @if (_expandSkillGap)
+                {
                 
                 <MudGrid>
                     <MudItem xs="12" md="6">
@@ -199,6 +209,7 @@
                         </MudPaper>
                     </MudItem>
                 </MudGrid>
+                }
             </MudCardContent>
         </MudCard>
 
@@ -208,12 +219,21 @@
             <MudCard Class="mb-4">
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">
-                        <MudIcon Icon="@Icons.Material.Filled.DynamicForm" Class="mr-2" />
+                        <MudIcon Icon="@Icons.Material.Filled.DynamicForm" Class="mr-2" Color="Color.Info"/>
                         Structured Learning Path - @_roadmapData.MatchedProfile
                     </MudText>
+                    <MudButton Variant="Variant.Text" Size="Size.Small"
+                               OnClick="@(() => _expandLearningPath = !_expandLearningPath)"
+                               EndIcon="@(_expandLearningPath ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                               Class="mb-3">
+                        @(_expandLearningPath ? "Collapse" : "Expand")
+                    </MudButton>
+
+                    @if (_expandLearningPath)
+                    {
                     
                     <MudGrid Class="mb-4">
-                        <MudItem xs="12" md="3">
+                        <MudItem xs="12" md="6">
                             <MudPaper Class="pa-3" Elevation="0" Style="background: #e3f2fd;">
                                 <MudText Typo="Typo.subtitle2" Style="color: #1565c0;">
                                     <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
@@ -225,7 +245,7 @@
                                 <MudText Typo="Typo.caption">@_roadmapData.EffortPerWeek</MudText>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" md="3">
+                        <MudItem xs="12" md="6">
                             <MudPaper Class="pa-3" Elevation="0" Style="background: #f3e5f5;">
                                 <MudText Typo="Typo.subtitle2" Style="color: #6a1b9a;">
                                     <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
@@ -234,29 +254,12 @@
                                 <MudText Typo="Typo.body2" Class="mt-1">@_roadmapData.CareerPath</MudText>
                             </MudPaper>
                         </MudItem>
-                        <MudItem xs="12" md="3">
-                            <MudPaper Class="pa-3" Elevation="0" Style="background: #f1f8e9;">
-                                <MudText Typo="Typo.subtitle2" Style="color: #33691e;">
-                                    <MudIcon Icon="@Icons.Material.Filled.LocalOffer" Size="Size.Small" />
-                                    Market Demand
-                                </MudText>
-                                <MudText Typo="Typo.body2" Class="mt-1">@_roadmapData.JobMarket</MudText>
-                            </MudPaper>
-                        </MudItem>
-                        <MudItem xs="12" md="3">
-                            <MudPaper Class="pa-3" Elevation="0" Style="background: #fff3e0;">
-                                <MudText Typo="Typo.subtitle2" Style="color: #e65100;">
-                                    <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Size="Size.Small" />
-                                    Salary Range
-                                </MudText>
-                                <MudText Typo="Typo.h6" Class="mt-1">@_roadmapData.SalaryRangeUsd</MudText>
-                            </MudPaper>
-                        </MudItem>
                     </MudGrid>
+                    }
 
                     <!-- Learning Phases Timeline -->
                     <MudText Typo="Typo.subtitle1" Class="mb-3" Style="font-weight: 600;">
-                        <MudIcon Icon="@Icons.Material.Filled.School" Class="mr-2" />
+                        <MudIcon Icon="@Icons.Material.Filled.School" Class="mr-2" Color="Color.Warning"/>
                         Phase-by-Phase Learning Guide
                     </MudText>
                     
@@ -311,9 +314,18 @@
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="mr-2" />
+                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="mr-2" Color="Color.Info"/>
                     Recommended Learning Path (@_recommendedCourses.Count courses)
                 </MudText>
+                <MudButton Variant="Variant.Text" Size="Size.Small"
+                           OnClick="@(() => _expandRecommendedCourses = !_expandRecommendedCourses)"
+                           EndIcon="@(_expandRecommendedCourses ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Class="mb-3">
+                    @(_expandRecommendedCourses ? "Collapse" : "Expand")
+                </MudButton>
+
+                @if (_expandRecommendedCourses)
+                {
                 
                 @if (_recommendedCourses.Any())
                 {
@@ -357,6 +369,7 @@
                         No specific courses found. Try refining your career goal.
                     </MudAlert>
                 }
+                }
             </MudCardContent>
         </MudCard>
 
@@ -364,9 +377,18 @@
         <MudCard Class="mb-4">
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Work" Class="mr-2" />
+                    <MudIcon Icon="@Icons.Material.Filled.Work" Class="mr-2" Color="Color.Info"/>
                     Opportunities Aligned with Your Goal
                 </MudText>
+                <MudButton Variant="Variant.Text" Size="Size.Small"
+                           OnClick="@(() => _expandOpportunities = !_expandOpportunities)"
+                           EndIcon="@(_expandOpportunities ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Class="mb-3">
+                    @(_expandOpportunities ? "Collapse" : "Expand")
+                </MudButton>
+
+                @if (_expandOpportunities)
+                {
                 
                 @if (_matchingJobs.Any())
                 {
@@ -434,63 +456,11 @@
                         </MudText>
                     </MudPaper>
                 }
+                }
             </MudCardContent>
         </MudCard>
 
-        <!-- Timeline Roadmap -->
-        <MudCard Class="mb-4">
-            <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.Timeline" Class="mr-2" />
-                    Your Career Timeline
-                </MudText>
-                
-                <MudTimeline TimelinePosition="TimelinePosition.Start">
-                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
-                        <ItemContent>
-                            <MudText Typo="Typo.subtitle2"><strong>Now</strong></MudText>
-                            <MudText Typo="Typo.body2">
-                                @if (_skillsYouHave.Any())
-                                {
-                                    <span>Current skills: @string.Join(", ", _skillsYouHave.Take(3))</span>
-                                }
-                                else
-                                {
-                                    <span>Starting your career journey</span>
-                                }
-                            </MudText>
-                        </ItemContent>
-                    </MudTimelineItem>
-                    
-                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
-                        <ItemContent>
-                            <MudText Typo="Typo.subtitle2"><strong>3-6 Months</strong></MudText>
-                            <MudText Typo="Typo.body2">
-                                Complete foundational courses
-                                @if (_recommendedCourses.Any())
-                                {
-                                    <span>: @_recommendedCourses.First().Title</span>
-                                }
-                            </MudText>
-                        </ItemContent>
-                    </MudTimelineItem>
-                    
-                    <MudTimelineItem Color="Color.Warning" Size="Size.Small">
-                        <ItemContent>
-                            <MudText Typo="Typo.subtitle2"><strong>6-12 Months</strong></MudText>
-                            <MudText Typo="Typo.body2">Build projects & gain certifications</MudText>
-                        </ItemContent>
-                    </MudTimelineItem>
-                    
-                    <MudTimelineItem Color="Color.Info" Size="Size.Small">
-                        <ItemContent>
-                            <MudText Typo="Typo.subtitle2"><strong>12+ Months</strong></MudText>
-                            <MudText Typo="Typo.body2">Apply for target roles: @_careerGoalPrompt</MudText>
-                        </ItemContent>
-                    </MudTimelineItem>
-                </MudTimeline>
-            </MudCardContent>
-        </MudCard>
+        <!-- Timeline Roadmap removed; using Structured Learning Path above -->
     }
 }
 
@@ -498,6 +468,7 @@
     private Employee? _currentEmployee;
     private List<EmployeeSkill> _mySkills = new();
     private string _careerGoalPrompt = "";
+    private MudTextField<string> _careerGoalInput;
     private bool _isGenerating = false;
     private bool _roadmapGenerated = false;
     private bool _useExternalAI = false;
@@ -511,6 +482,11 @@
     // Roadmap + dynamic skills
     private RoadmapResponse? _roadmapData;
     private List<string> _commonSkills = new();
+    // Expand/collapse controls for UI sections
+    private bool _expandSkillGap = true;
+    private bool _expandLearningPath = true;
+    private bool _expandRecommendedCourses = true;
+    private bool _expandOpportunities = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -530,6 +506,7 @@
             Snackbar.Add($"Error loading profile: {ex.Message}", Severity.Error);
         }
     }
+
 
     private async Task GenerateRoadmap()
     {
@@ -580,26 +557,25 @@
             if (roadmapResp.IsSuccessStatusCode)
             {
                 var roadmap = await roadmapResp.Content.ReadFromJsonAsync<RoadmapResponse>();
-
                 var recommendedSkills = roadmap?.RecommendedSkills ?? new List<string>();
-                var mentionedSkills = roadmap?.Parsed?.Skills ?? new List<string>();
-                var categorySkills = roadmap?.Parsed?.CategorySkills ?? new List<string>();
 
-                var allMentionedSkills = recommendedSkills.Concat(mentionedSkills).Concat(categorySkills).Distinct().ToList();
-
-                Console.WriteLine($"✅ Roadmap API returned {allMentionedSkills.Count} candidate skills");
+                Console.WriteLine($"✅ Roadmap API returned {recommendedSkills.Count} core skills");
 
                 // Analyze current skills
                 _skillsYouHave = _mySkills.Select(s => s.Skill.SkillName).ToList();
 
-                // Find skills gap
-                _skillsToLearn = allMentionedSkills
+                // Find skills gap using only recommended/core skills
+                _skillsToLearn = recommendedSkills
                     .Where(skill => !_skillsYouHave.Any(s => s.Equals(skill, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
 
                 _recommendedCourses = GenerateCourseRecommendations(_skillsToLearn);
-                await LoadMatchingJobsForSkills(allMentionedSkills);
+                
+                // ⭐ NEW: Use enhanced skill-based requirement filtering (70% match threshold)
+                await LoadMatchingJobsBySkillsEnhanced(recommendedSkills);
+                
                 _aiInsights = roadmap?.Notes ?? "";
+                _roadmapData = roadmap;
                 return;
             }
 
@@ -732,75 +708,13 @@
 
     private List<string> AnalyzeSkillsGap(string goal)
     {
-        var goalLower = goal.ToLower();
-        var skillsToLearn = new List<string>();
-
-        // Cloud/DevOps path
-        if (goalLower.Contains("cloud") || goalLower.Contains("aws") || goalLower.Contains("azure") || 
-            goalLower.Contains("devops"))
-        {
-            if (!_skillsYouHave.Any(s => s.Contains("AWS")))
-                skillsToLearn.Add("AWS");
-            if (!_skillsYouHave.Any(s => s.Contains("Docker")))
-                skillsToLearn.Add("Docker");
-            if (!_skillsYouHave.Any(s => s.Contains("Kubernetes")))
-                skillsToLearn.Add("Kubernetes");
-            if (!_skillsYouHave.Any(s => s.Contains("Terraform")))
-                skillsToLearn.Add("Terraform");
-            if (!_skillsYouHave.Any(s => s.Contains("CI/CD")))
-                skillsToLearn.Add("CI/CD");
-        }
-
-        // Full Stack path
-        if (goalLower.Contains("full stack") || goalLower.Contains("fullstack"))
-        {
-            if (!_skillsYouHave.Any(s => s.Contains("React")))
-                skillsToLearn.Add("React");
-            if (!_skillsYouHave.Any(s => s.Contains("Node")))
-                skillsToLearn.Add("Node.js");
-            if (!_skillsYouHave.Any(s => s.Contains("MongoDB")))
-                skillsToLearn.Add("MongoDB");
-            if (!_skillsYouHave.Any(s => s.Contains("TypeScript")))
-                skillsToLearn.Add("TypeScript");
-        }
-
-        // Data Science path
-        if (goalLower.Contains("data") || goalLower.Contains("ml") || goalLower.Contains("ai") ||
-            goalLower.Contains("machine learning"))
-        {
-            if (!_skillsYouHave.Any(s => s.Contains("Python")))
-                skillsToLearn.Add("Python");
-            if (!_skillsYouHave.Any(s => s.Contains("Machine Learning")))
-                skillsToLearn.Add("Machine Learning");
-            if (!_skillsYouHave.Any(s => s.Contains("TensorFlow")))
-                skillsToLearn.Add("TensorFlow");
-            if (!_skillsYouHave.Any(s => s.Contains("SQL")))
-                skillsToLearn.Add("SQL");
-            if (!_skillsYouHave.Any(s => s.Contains("Pandas")))
-                skillsToLearn.Add("Pandas");
-        }
-
-        // Mobile Development path
-        if (goalLower.Contains("mobile") || goalLower.Contains("ios") || goalLower.Contains("android"))
-        {
-            if (!_skillsYouHave.Any(s => s.Contains("React Native")))
-                skillsToLearn.Add("React Native");
-            if (!_skillsYouHave.Any(s => s.Contains("Flutter")))
-                skillsToLearn.Add("Flutter");
-        }
-
-        // Backend path
-        if (goalLower.Contains("backend") || goalLower.Contains("api"))
-        {
-            if (!_skillsYouHave.Any(s => s.Contains("Node.js")))
-                skillsToLearn.Add("Node.js");
-            if (!_skillsYouHave.Any(s => s.Contains("Python")))
-                skillsToLearn.Add("Python");
-            if (!_skillsYouHave.Any(s => s.Contains("PostgreSQL")))
-                skillsToLearn.Add("PostgreSQL");
-        }
-
-        return skillsToLearn.Any() ? skillsToLearn : new List<string> { "Advanced " + (_skillsYouHave.FirstOrDefault() ?? "Programming") };
+        // Use common skills loaded from API, or return empty if not available
+        // This delegates to the Python API to identify relevant skills
+        var skillsToLearn = ExtractSkillsFromGoal(goal);
+        
+        // If no skills found in database, return empty list
+        // User should rely on Python API or update their skills database
+        return skillsToLearn;
     }
 
     private List<CourseRecommendation> GenerateCourseRecommendations(List<string> skills)
@@ -826,39 +740,16 @@
 
     private string GetProviderForSkill(string skill)
     {
-        return skill switch
-        {
-            "AWS" => "AWS Training",
-            "Azure" => "Microsoft Learn",
-            "Docker" or "Kubernetes" => "Linux Foundation",
-            "React" or "Node.js" => "Meta / Coursera",
-            "Python" or "Machine Learning" or "TensorFlow" or "Pandas" => "DeepLearning.AI",
-            "TypeScript" => "Microsoft / Pluralsight",
-            "MongoDB" => "MongoDB University",
-            "PostgreSQL" or "SQL" => "PostgreSQL Tutorial",
-            _ => "Udemy / Coursera"
-        };
+        // Generic provider mapping - prefer Coursera as default
+        // For specific providers, consider fetching from a learning resource API
+        return "Coursera / Udemy";
     }
 
     private string GetCourseUrl(string skill)
     {
-        return skill switch
-        {
-            "AWS" => "https://aws.amazon.com/training/",
-            "Azure" => "https://learn.microsoft.com/en-us/training/azure/",
-            "Docker" => "https://www.docker.com/101-tutorial/",
-            "Kubernetes" => "https://kubernetes.io/training/",
-            "React" => "https://react.dev/learn",
-            "Node.js" => "https://nodejs.org/en/learn",
-            "Python" => "https://www.coursera.org/specializations/python",
-            "Machine Learning" => "https://www.coursera.org/specializations/machine-learning-introduction",
-            "TensorFlow" => "https://www.tensorflow.org/learn",
-            "TypeScript" => "https://www.typescriptlang.org/docs/",
-            "MongoDB" => "https://university.mongodb.com/",
-            "Flutter" => "https://flutter.dev/learn",
-            "React Native" => "https://reactnative.dev/docs/getting-started",
-            _ => "https://www.coursera.org/"
-        };
+        // Generic URL that searches for the skill
+        // Return Coursera search URL - users can search for specific courses
+        return $"https://www.coursera.org/search?query={Uri.EscapeDataString(skill)}";
     }
 
     private async Task LoadMatchingJobsForGoal()
@@ -913,6 +804,71 @@
         }
     }
 
+    /// <summary>
+    /// Enhanced requirement matching using C# backend skill-based filtering.
+    /// Filters requirements that have >= 70% match with core skills from career path.
+    /// </summary>
+    private async Task LoadMatchingJobsBySkillsEnhanced(List<string> coreSkills)
+    {
+        try
+        {
+            if (!coreSkills.Any())
+            {
+                _matchingJobs = new List<JobOpportunity>();
+                Console.WriteLine("⚠️ No core skills provided for requirement matching");
+                return;
+            }
+
+            Console.WriteLine($"🔍 Filtering requirements for {coreSkills.Count} core skills: {string.Join(", ", coreSkills)}");
+
+            // ⭐ Call the enhanced C# backend method that filters by skill match (>= 70%)
+            var matchedRequirements = await RequirementService.FindBySkillsAsync(coreSkills, minimumMatchPercentage: 70);
+
+            Console.WriteLine($"✅ Found {matchedRequirements.Count} requirements matching >= 70% of core skills");
+
+            _matchingJobs = new List<JobOpportunity>();
+
+            foreach (var requirement in matchedRequirements)
+            {
+                try
+                {
+                    var matchResult = await EmployeeService.CalculateMatchScoreAsync(
+                        _currentEmployee!.EmployeeId,
+                        requirement.RequirementId);
+
+                    _matchingJobs.Add(new JobOpportunity
+                    {
+                        RequirementId = requirement.RequirementId,
+                        Title = requirement.Title,
+                        Team = requirement.Team,
+                        Location = requirement.Location,
+                        Duration = requirement.Duration,
+                        RequirementSkills = requirement.RequirementSkills?.ToList() ?? new(),
+                        MatchPercentage = (int)matchResult.MatchPercentage
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error calculating match score for requirement {requirement.RequirementId}: {ex.Message}");
+                }
+            }
+
+            // Sort by match percentage, take top 10
+            _matchingJobs = _matchingJobs
+                .OrderByDescending(j => j.MatchPercentage)
+                .Take(10)
+                .ToList();
+
+            Console.WriteLine($"📋 Displaying {_matchingJobs.Count} job opportunities matching career path skills");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error in enhanced skill-based requirement filtering: {ex}");
+            // Fallback to basic matching
+            await LoadMatchingJobsForSkills(coreSkills);
+        }
+    }
+
     private List<string> ExtractSkillsFromGoal(string goal)
     {
         var found = new List<string>();
@@ -964,19 +920,11 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading skills from API: {ex.Message}");
-            // Fallback to hardcoded skills
-            _commonSkills = new List<string>
-            {
-                "AWS", "Azure", "Docker", "Kubernetes", "Python", "Java", "C#", "JavaScript",
-                "React", "Angular", "Vue.js", "SQL", "MongoDB", "Git", "CI/CD", "Terraform",
-                "CloudFormation", "Jenkins", "GitHub", "Agile", "Scrum", "REST API", "GraphQL",
-                "Microservices", "Machine Learning", "Data Science", "TensorFlow", "PyTorch",
-                "Git", "Linux", "Windows", "DevOps", ".NET", "Node.js", "Go", "Rust"
-            };
+            // If API fails, skills will remain empty - no fallback to hardcoded values
+            // User should configure Python API or the skills endpoint
+            _commonSkills = new List<string>();
         }
     }
-
-    // Models
     public class CourseRecommendation
     {
         public string Title { get; set; } = "";
