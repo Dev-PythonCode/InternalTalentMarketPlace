@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TalentMarketPlace.Models;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace TalentMarketPlace.Data
@@ -27,6 +28,10 @@ namespace TalentMarketPlace.Data
         public DbSet<SearchHistory> SearchHistories { get; set; }
         public DbSet<LearningResource> LearningResources { get; set; }
         public DbSet<LearningRecommendation> LearningRecommendations { get; set; }
+       
+        // New DbSets for email functionality
+        public DbSet<EmailHistory> EmailHistory { get; set; }
+        public DbSet<ScheduledEmail> ScheduledEmails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -216,6 +221,13 @@ namespace TalentMarketPlace.Data
                 .WithMany(r => r.LearningRecommendations)
                 .HasForeignKey(lr => lr.RequirementId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure indexes for better performance
+            modelBuilder.Entity<EmailHistory>()
+                .HasIndex(e => e.SentDate);
+
+            modelBuilder.Entity<ScheduledEmail>()
+                .HasIndex(e => new { e.ScheduledTime, e.Status });
 
             // ============================================
             // SEED DATA

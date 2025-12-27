@@ -1,0 +1,528 @@
+﻿@page "/admin/reminder-email"
+@inject IEmployeeService EmployeeService
+@inject IEmailService EmailService
+@inject IScheduledEmailService ScheduledEmailService
+@inject ISnackbar Snackbar
+@using TalentMarketPlace.Services.Interfaces
+
+<MudText Typo="Typo.h4" Class="mb-2">Send Reminder Emails</MudText>
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Send quarterly reminders to employees to update their skills and certificates
+</MudText>
+
+<MudGrid>
+    <!-- Email Composition Card -->
+    <MudItem xs="12" lg="8">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Email" Class="mr-2" />
+                    Compose Email
+                </MudText>
+
+                <!-- From Address (Read-only, configured in appsettings) -->
+                <MudTextField @bind-Value="_fromAddress" Label="From" Variant="Variant.Outlined"
+                              Class="mb-3" Disabled="true" />
+
+                <!-- CC Address -->
+                <MudTextField @bind-Value="_ccAddress" Label="CC (Optional)" Variant="Variant.Outlined"
+                              Class="mb-3" Placeholder="cc@company.com; manager@company.com"
+                              HelperText="Separate multiple emails with semicolon (;)" />
+
+                <!-- Subject -->
+                <MudTextField @bind-Value="_subject" Label="Subject" Variant="Variant.Outlined"
+                              Class="mb-3" />
+
+                <!-- Email Body -->
+                <MudTextField @bind-Value="_emailBody" Label="Email Body" Variant="Variant.Outlined"
+                              Lines="12" Class="mb-3" />
+
+                <!-- Quick Templates -->
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Quick Templates:</MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" Class="mb-3">
+                    <MudButton OnClick="LoadDefaultTemplate">Default Reminder</MudButton>
+                    <MudButton OnClick="LoadUrgentTemplate">Urgent Reminder</MudButton>
+                    <MudButton OnClick="LoadFriendlyTemplate">Friendly Reminder</MudButton>
+                </MudButtonGroup>
+
+                <!-- Personalization Tags -->
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+                    <strong>Available Tags:</strong> {EmployeeName}, {Email}, {Designation}, {Location}, {Quarter}, {Year}, {DueDate}
+                </MudAlert>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- Recipients & Preview Card -->
+    <MudItem xs="12" lg="4">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-2" />
+                    Recipients
+                </MudText>
+
+                <!-- Recipient Selection -->
+                <MudRadioGroup @bind-Value="_recipientType" Class="mb-3">
+                    <MudRadio Value="RecipientType.AllEmployees" Color="Color.Primary">
+                        All Employees (@_totalEmployees)
+                    </MudRadio>
+                    <MudRadio Value="RecipientType.ByDepartment" Color="Color.Primary">
+                        By Designation
+                    </MudRadio>
+                    <MudRadio Value="RecipientType.Custom" Color="Color.Primary">
+                        Custom Selection
+                    </MudRadio>
+                </MudRadioGroup>
+
+                @if (_recipientType == RecipientType.ByDepartment)
+                {
+                    <MudSelect T="string" @bind-Value="_selectedDepartment" Label="Select Designation"
+                               Variant="Variant.Outlined" Class="mb-3">
+                        @foreach (var dept in _departments)
+                        {
+                            <MudSelectItem T="string" Value="@dept">@dept</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+
+                @if (_recipientType == RecipientType.Custom)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                               OnClick="OpenRecipientDialog" StartIcon="@Icons.Material.Filled.PersonAdd">
+                        Select Employees
+                    </MudButton>
+                    <MudText Typo="Typo.caption" Class="mt-2">
+                        Selected: @_customRecipients.Count employees
+                    </MudText>
+                }
+
+                <MudDivider Class="my-3" />
+
+                <!-- Schedule Options -->
+                <MudText Typo="Typo.h6" Class="mb-3">Schedule</MudText>
+                <MudRadioGroup @bind-Value="_sendType">
+                    <MudRadio Value="SendType.Immediately" Color="Color.Primary">
+                        Send Immediately
+                    </MudRadio>
+                    <MudRadio Value="SendType.Scheduled" Color="Color.Primary">
+                        Schedule for Later
+                    </MudRadio>
+                </MudRadioGroup>
+
+                @if (_sendType == SendType.Scheduled)
+                {
+                    <MudDatePicker @bind-Date="_scheduledDate" Label="Date" Variant="Variant.Outlined"
+                                   Class="mt-3" MinDate="DateTime.Today" />
+                    <MudTimePicker @bind-Time="_scheduledTime" Label="Time" Variant="Variant.Outlined"
+                                   Class="mt-3" />
+                }
+
+                <MudDivider Class="my-3" />
+
+                <!-- Send Button -->
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                           OnClick="SendEmails" Disabled="@_isSending"
+                           StartIcon="@Icons.Material.Filled.Send">
+                    @if (_isSending)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <span class="ml-2">Sending...</span>
+                    }
+                    else
+                    {
+                        <span>@(_sendType == SendType.Immediately ? "Send Now" : "Schedule Email")</span>
+                    }
+                </MudButton>
+
+                <!-- Test Email -->
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                           OnClick="SendTestEmail" Class="mt-2" StartIcon="@Icons.Material.Filled.Preview">
+                    Send Test Email
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Email History -->
+        <MudCard Class="mt-3">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Recent Reminders</MudText>
+                <MudList T="string" Dense="true">
+                    @foreach (var history in _emailHistory.Take(5))
+                    {
+                        <MudListItem T="string">
+                            <MudText Typo="Typo.body2">@history.SentDate.ToString("MMM dd, yyyy")</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Sent to @history.RecipientCount employees
+                            </MudText>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<!-- Custom Recipients Dialog -->
+<MudDialog @bind-Visible="_showRecipientDialog" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Select Recipients</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_employeeSearchTerm" Placeholder="Search employees..."
+                      Variant="Variant.Outlined" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
+
+        <div style="max-height: 400px; overflow-y: auto;">
+            @foreach (var employee in FilteredEmployees)
+            {
+                var employeeId = employee.EmployeeId; // Capture for closure
+                                                      <MudCheckBox T="bool"
+                                                                   Value="@_customRecipients.Contains(employeeId)"
+                                                                   ValueChanged="@((bool isChecked) => ToggleRecipient(employeeId, isChecked))"
+                                                                   Label="@GetEmployeeDisplayName(employee)"
+                                                                   Color="Color.Primary" Dense="true" />
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseRecipientDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CloseRecipientDialog">
+            Done (@_customRecipients.Count selected)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private enum RecipientType { AllEmployees, ByDepartment, Custom }
+    private enum SendType { Immediately, Scheduled }
+
+    private List<Employee> _employees = new();
+    private List<string> _departments = new();
+    private List<EmailHistoryDto> _emailHistory = new();
+    private int _totalEmployees = 0;
+
+    private string _fromAddress = "noreply@company.com"; // Configure in appsettings
+    private string _ccAddress = "";
+    private string _subject = "";
+    private string _emailBody = "";
+
+    private RecipientType _recipientType = RecipientType.AllEmployees;
+    private string _selectedDepartment = "";
+    private List<int> _customRecipients = new();
+    private SendType _sendType = SendType.Immediately;
+    private DateTime? _scheduledDate;
+    private TimeSpan? _scheduledTime;
+
+    private bool _isSending = false;
+    private bool _showRecipientDialog = false;
+    private string _employeeSearchTerm = "";
+
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private IEnumerable<Employee> FilteredEmployees => string.IsNullOrWhiteSpace(_employeeSearchTerm)
+        ? _employees
+        : _employees.Where(e =>
+            GetEmployeeDisplayName(e).Contains(_employeeSearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            (e.Email?.Contains(_employeeSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        LoadDefaultTemplate();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            _employees = await EmployeeService.GetAllAsync();
+            _totalEmployees = _employees.Count;
+
+            // Get unique designations (or teams) for department filtering
+            _departments = _employees
+                .Select(e => e.Designation)
+                .Where(d => !string.IsNullOrWhiteSpace(d))
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            // If you prefer to filter by Team instead, use:
+            // _departments = _employees
+            //     .Where(e => e.Team != null)
+            //     .Select(e => e.Team.TeamName)
+            //     .Distinct()
+            //     .OrderBy(d => d)
+            //     .ToList();
+
+            // Load email history from database/service
+            _emailHistory = await EmailService.GetHistoryAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string GetEmployeeDisplayName(Employee employee)
+    {
+        var name = employee.FullName ?? "Unknown";
+        var email = employee.Email ?? "";
+        return string.IsNullOrWhiteSpace(email) ? name : $"{name} ({email})";
+    }
+
+    private void LoadDefaultTemplate()
+    {
+        var quarter = GetCurrentQuarter();
+        var year = DateTime.Now.Year;
+        var dueDate = GetQuarterEndDate();
+
+        _subject = $"Reminder: Update Your Skills and Certificates - Q{quarter} {year}";
+        _emailBody = $@"Dear {{EmployeeName}},
+
+This is a friendly reminder to update your profile with your latest skills and certificates for Q{quarter} {year}.
+
+Keeping your profile up-to-date helps us:
+• Identify the right talent for upcoming projects
+• Support your career development
+• Maintain accurate team capabilities
+
+Please log in to the Skills Management System and:
+1. Review and update your current skills
+2. Add any new skills you've acquired
+3. Upload recent certificates and training completions
+4. Update your proficiency levels
+
+Deadline: {dueDate:MMMM dd, yyyy}
+
+If you have any questions or need assistance, please don't hesitate to reach out to the HR team.
+
+Thank you for your cooperation!
+
+Best regards,
+HR Team";
+    }
+
+    private void LoadUrgentTemplate()
+    {
+        var quarter = GetCurrentQuarter();
+        var year = DateTime.Now.Year;
+        var dueDate = GetQuarterEndDate();
+
+        _subject = $"URGENT: Skills Profile Update Required - Q{quarter} {year}";
+        _emailBody = $@"Dear {{EmployeeName}},
+
+**ACTION REQUIRED**
+
+We noticed that your skills profile has not been updated for Q{quarter} {year}. Please update your information as soon as possible.
+
+⚠️ Deadline: {dueDate:MMMM dd, yyyy}
+
+This update is mandatory and affects:
+• Project assignments
+• Performance reviews
+• Training opportunities
+
+Please complete your profile update immediately by visiting the Skills Management System.
+
+If you're experiencing any difficulties, contact HR immediately.
+
+Thank you,
+HR Team";
+    }
+
+    private void LoadFriendlyTemplate()
+    {
+        var quarter = GetCurrentQuarter();
+        var year = DateTime.Now.Year;
+
+        _subject = $"Time to Shine! Update Your Skills - Q{quarter} {year}";
+        _emailBody = $@"Hi {{EmployeeName}},
+
+Hope you're doing great! 🌟
+
+It's that time of the quarter again - time to show off all the amazing skills you've been building!
+
+We'd love to see:
+✨ New skills you've mastered
+📜 Certificates you've earned
+🚀 Areas where you've grown
+
+Taking a few minutes to update your profile helps us match you with exciting opportunities that align with your expertise.
+
+Jump in here: [Skills Management System Link]
+
+Questions? We're here to help!
+
+Cheers,
+Your HR Team 😊";
+    }
+
+    private void OpenRecipientDialog()
+    {
+        _showRecipientDialog = true;
+    }
+
+    private void CloseRecipientDialog()
+    {
+        _showRecipientDialog = false;
+    }
+
+    private void ToggleRecipient(int employeeId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!_customRecipients.Contains(employeeId))
+                _customRecipients.Add(employeeId);
+        }
+        else
+        {
+            _customRecipients.Remove(employeeId);
+        }
+        StateHasChanged(); // Force UI update
+    }
+
+    private async Task SendEmails()
+    {
+        if (string.IsNullOrWhiteSpace(_subject) || string.IsNullOrWhiteSpace(_emailBody))
+        {
+            Snackbar.Add("Please fill in subject and email body", Severity.Warning);
+            return;
+        }
+
+        var recipients = GetRecipients();
+        if (!recipients.Any())
+        {
+            Snackbar.Add("No recipients selected", Severity.Warning);
+            return;
+        }
+
+        _isSending = true;
+        try
+        {
+            if (_sendType == SendType.Scheduled)
+            {
+                if (_scheduledDate == null || _scheduledTime == null)
+                {
+                    Snackbar.Add("Please select date and time for scheduled email", Severity.Warning);
+                    _isSending = false;
+                    return;
+                }
+
+                var scheduledDateTime = _scheduledDate.Value.Date + _scheduledTime.Value;
+
+                // Store in local time (no conversion needed)
+                var scheduledEmail = new TalentMarketPlace.Models.ScheduledEmail
+                {
+                    Recipients = string.Join(";", recipients.Select(r => r.Email)),
+                    Subject = _subject,
+                    Body = _emailBody,
+                    CcAddress = _ccAddress,
+                    ScheduledTime = scheduledDateTime, // Store as local time
+                    CreatedBy = "Admin" // Get from authentication context
+                };
+
+                var scheduledId = await ScheduledEmailService.CreateScheduledEmailAsync(scheduledEmail);
+                Snackbar.Add($"Email scheduled for {scheduledDateTime:MMM dd, yyyy hh:mm tt} (ID: {scheduledId})", Severity.Success);
+            }
+            else
+            {
+                var result = await EmailService.SendBulkEmailAsync(recipients, _subject, _emailBody, _ccAddress);
+                Snackbar.Add($"Successfully sent {result.SuccessCount} emails!", Severity.Success);
+
+                if (result.FailedCount > 0)
+                {
+                    Snackbar.Add($"Failed to send {result.FailedCount} emails", Severity.Warning);
+                }
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error sending emails: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    private async Task SendTestEmail()
+    {
+        if (string.IsNullOrWhiteSpace(_subject) || string.IsNullOrWhiteSpace(_emailBody))
+        {
+            Snackbar.Add("Please fill in subject and email body", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            // Get current user's email from authentication or use a test employee
+            var testEmployee = _employees.FirstOrDefault();
+
+            if (testEmployee == null)
+            {
+                Snackbar.Add("No employees found for test", Severity.Warning);
+                return;
+            }
+
+            var personalizedBody = PersonalizeEmail(_emailBody, testEmployee);
+            await EmailService.SendEmailAsync(testEmployee.Email, _subject, personalizedBody, _ccAddress);
+
+            Snackbar.Add($"Test email sent to {testEmployee.Email}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error sending test email: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private List<Employee> GetRecipients()
+    {
+        return _recipientType switch
+        {
+            RecipientType.AllEmployees => _employees,
+            RecipientType.ByDepartment => _employees.Where(e => e.Designation == _selectedDepartment).ToList(),
+            RecipientType.Custom => _employees.Where(e => _customRecipients.Contains(e.EmployeeId)).ToList(),
+            _ => new List<Employee>()
+        };
+    }
+
+    private string PersonalizeEmail(string body, Employee employee)
+    {
+        var employeeName = employee.FullName ?? "Team Member";
+        var designation = employee.Designation ?? "N/A";
+        var location = employee.Location ?? "N/A";
+
+        return body
+            .Replace("{EmployeeName}", employeeName)
+            .Replace("{Email}", employee.Email ?? "")
+            .Replace("{Department}", designation)
+            .Replace("{Designation}", designation)
+            .Replace("{Location}", location)
+            .Replace("{Quarter}", $"Q{GetCurrentQuarter()}")
+            .Replace("{Year}", DateTime.Now.Year.ToString())
+            .Replace("{DueDate}", GetQuarterEndDate().ToString("MMMM dd, yyyy"));
+    }
+
+    private int GetCurrentQuarter()
+    {
+        return (DateTime.Now.Month - 1) / 3 + 1;
+    }
+
+    private DateTime GetQuarterEndDate()
+    {
+        var quarter = GetCurrentQuarter();
+        var year = DateTime.Now.Year;
+        return quarter switch
+        {
+            1 => new DateTime(year, 3, 31),
+            2 => new DateTime(year, 6, 30),
+            3 => new DateTime(year, 9, 30),
+            4 => new DateTime(year, 12, 31),
+            _ => DateTime.Now.AddMonths(1)
+        };
+    }
+}

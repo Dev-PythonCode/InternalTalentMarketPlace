@@ -40,7 +40,12 @@ builder.Services.AddHttpClient("PythonAPI", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
     Console.WriteLine($"🔧 HttpClient 'PythonAPI' configured with BaseAddress: {client.BaseAddress}");
 });
+// Register Email Service
+builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Add these two lines:
+builder.Services.AddScoped<IScheduledEmailService, ScheduledEmailService>();
+builder.Services.AddHostedService<ScheduledEmailBackgroundService>();
 // Add Services
 Console.WriteLine($"🔧 Registering application services...");
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
