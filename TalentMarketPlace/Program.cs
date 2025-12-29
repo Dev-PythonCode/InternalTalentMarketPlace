@@ -58,6 +58,8 @@ builder.Services.AddScoped<IPythonApiService, PythonApiService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<AuthStateProvider>();
 builder.Services.AddScoped<ChatSessionService>();
+builder.Services.AddScoped<IChatRequirementService, ChatRequirementService>();
+builder.Services.AddScoped<IChatRequirementServiceV2, ChatRequirementServiceV2>();
 
 
 // Add Session

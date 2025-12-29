@@ -1,0 +1,450 @@
+@page "/post-requirement-chat"
+@inject IChatRequirementService ChatService
+@inject IRequirementService RequirementService
+@inject ISkillService SkillService
+@inject IAuthService AuthService
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .chat-message-bot {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .chat-message-user {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .sticky {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudText Typo="Typo.h4" Class="mb-1">
+        <MudIcon Icon="@Icons.Material.Filled.SmartToy" Class="mr-2" />
+        AI-Powered Requirement Creator
+    </MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        Let's create your requirement step by step with AI guidance
+    </MudText>
+</MudPaper>
+
+<MudGrid>
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-4" Style="height: 600px; overflow-y: auto; border-radius: 8px; background: linear-gradient(to bottom, #f5f5f5, #ffffff);">
+            <div class="chat-container" @ref="_chatContainer">
+                @foreach (var message in _messages)
+                {
+                    <div class="@(message.IsBot ? "chat-message-bot" : "chat-message-user")">
+                        @if (message.IsBot)
+                        {
+                            <div style="flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Color="Color.Primary" />
+                            </div>
+                            <div style="flex: 1; max-width: 85%;">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">AI Assistant</MudText>
+                                <MudPaper Class="pa-3 mt-1" Elevation="1" Style="background: white;">
+                                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@((MarkupString)FormatMessageContent(message.Content))</MudText>
+                                </MudPaper>
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="flex: 1; max-width: 85%;">
+                                <MudPaper Class="pa-3" Elevation="0" Style="background: #e3f2fd;">
+                                    <MudText Typo="Typo.body2">@message.Content</MudText>
+                                </MudPaper>
+                            </div>
+                            <div style="flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Info" />
+                            </div>
+                        }
+                    </div>
+                }
+                <div @ref="_chatEndRef"></div>
+            </div>
+        </MudPaper>
+
+        @if (_currentMessage?.Step != "completed")
+        {
+            <MudPaper Class="pa-3 mt-3" Elevation="1">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_userInput" 
+                                      Label="Your answer..." 
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      OnKeyDown="@OnInputKeyDown"
+                                      Disabled="@_isLoading"
+                                      FullWidth="true"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Send"
+                                      AdornmentColor="Color.Primary"
+                                      OnAdornmentClick="@SendMessage"
+                                      Lines="3" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex gap-2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                   OnClick="SendMessage" Disabled="@(_isLoading || string.IsNullOrWhiteSpace(_userInput))"
+                                   FullWidth="true" Size="Size.Medium">
+                            <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-2" />
+                            Send
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default" 
+                                   OnClick="ResetChat" FullWidth="true">
+                            Reset
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Class="pa-4 mt-3" Elevation="2" Style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                                   OnClick="SubmitRequirement" Disabled="@_isSubmitting"
+                                   FullWidth="true" Size="Size.Large">
+                            @if (_isSubmitting)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Class="mr-2" />
+                            }
+                            Post Requirement
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Inherit" 
+                                   OnClick="ResetChat" FullWidth="true" Size="Size.Large">
+                            ↻ Start Over
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4 sticky" Style="top: 20px; background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);">
+            <MudText Typo="Typo.subtitle1" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-1" />
+                Progress
+            </MudText>
+
+            @{
+                var progressText = _currentMessage?.Step switch
+                {
+                    "title" => "📝 Requirement Title",
+                    "description" => "📄 Job Description",
+                    "location" => "📍 Location",
+                    "duration" => "⏱️ Duration",
+                    "priority" => "🚩 Priority",
+                    "skills" => "🔧 Required Skills",
+                    "experience" => "📊 Years of Experience",
+                    "proficiency" => "⭐ Proficiency Level",
+                    "mandatory" => "✅ Mandatory Status",
+                    "add_more_skills" => "➕ Add More Skills",
+                    "confirmation" => "✔️ Review & Confirm",
+                    "completed" => "✅ Ready to Post",
+                    _ => "⏳ Initializing..."
+                };
+            }
+
+            <MudAlert Severity="Severity.Info" ContentAlignment="HorizontalAlignment.Center" Class="mb-3">
+                @progressText
+            </MudAlert>
+
+            <MudDivider Class="my-3" />
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2">📋 Requirement Overview</MudText>
+            
+            @if (_currentState != null)
+            {
+                <div style="background: white; padding: 12px; border-radius: 4px; font-size: 13px; border-left: 4px solid #1976d2;">
+                    @if (!string.IsNullOrWhiteSpace(_currentState.Requirement.Title))
+                    {
+                        <div class="mb-2">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Title:</strong></MudText>
+                            <MudText Typo="Typo.caption">@_currentState.Requirement.Title</MudText>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_currentState.Requirement.Location))
+                    {
+                        <div class="mb-2">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Location:</strong></MudText>
+                            <MudText Typo="Typo.caption">@_currentState.Requirement.Location</MudText>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_currentState.Requirement.Duration))
+                    {
+                        <div class="mb-2">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Duration:</strong></MudText>
+                            <MudText Typo="Typo.caption">@_currentState.Requirement.Duration</MudText>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_currentState.Requirement.Priority))
+                    {
+                        <div class="mb-2">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Priority:</strong></MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@GetPriorityColor(_currentState.Requirement.Priority)" 
+                                     Variant="Variant.Text" Class="pa-0">
+                                @_currentState.Requirement.Priority
+                            </MudChip>
+                        </div>
+                    }
+
+                    @if (_currentState.Requirement.RequirementSkills?.Any() == true)
+                    {
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Skills Added: (@_currentState.Requirement.RequirementSkills.Count)</strong></MudText>
+                        @foreach (var skill in _currentState.Requirement.RequirementSkills)
+                        {
+                            <div class="mt-1">
+                                <MudChip T="string" Size="Size.Small" 
+                                         Color="@(skill.IsMandatory ? Color.Error : Color.Info)"
+                                         Variant="Variant.Text" Class="pa-1">
+                                    @skill.Skill?.SkillName (@skill.MinYearsRequired yrs)
+                                    @if (skill.IsMandatory)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Class="ml-1" />
+                                    }
+                                </MudChip>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+
+            <MudDivider Class="my-3" />
+            
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-2">
+                💡 <strong>Tip:</strong> Use comma-separated values for multiple skills.<br/>
+                Example: "Python, Django, PostgreSQL"
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<RequirementChatMessage> _messages = new();
+    private string _userInput = string.Empty;
+    private bool _isLoading = false;
+    private bool _isSubmitting = false;
+    private RequirementChatMessage? _currentMessage;
+    private RequirementChatState? _currentState;
+    private ElementReference _chatContainer;
+    private ElementReference _chatEndRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeChat();
+    }
+
+    private async Task InitializeChat()
+    {
+        _isLoading = true;
+        try
+        {
+            var greeting = await ChatService.GetInitialGreetingAsync();
+            _messages.Add(greeting);
+            _currentMessage = greeting;
+            await UpdateState();
+            await ScrollToBottom();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error initializing chat: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_userInput) || _isLoading)
+            return;
+
+        var userMessage = new RequirementChatMessage
+        {
+            Content = _userInput,
+            IsBot = false,
+            Timestamp = DateTime.UtcNow
+        };
+
+        _messages.Add(userMessage);
+        var userInput = _userInput;
+        _userInput = string.Empty;
+
+        _isLoading = true;
+        try
+        {
+            var response = await ChatService.ProcessUserInputAsync(userInput);
+            _messages.Add(response);
+            _currentMessage = response;
+            await UpdateState();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task UpdateState()
+    {
+        _currentState = await ChatService.GetCurrentStateAsync();
+        StateHasChanged();
+    }
+
+    private async Task ResetChat()
+    {
+        _messages.Clear();
+        _userInput = string.Empty;
+        await InitializeChat();
+    }
+
+    private async Task SubmitRequirement()
+    {
+        _isSubmitting = true;
+        try
+        {
+            var requirement = ChatService.GetCurrentRequirement();
+            var employee = await AuthService.GetCurrentEmployeeAsync();
+
+            if (employee == null)
+            {
+                Snackbar.Add("Not authenticated", Severity.Error);
+                return;
+            }
+
+            requirement.PostedById = employee.EmployeeId;
+            requirement.PostedDate = DateTime.UtcNow;
+            requirement.IsActive = true;
+            requirement.Status = "Open";
+
+            // Ensure RequirementSkills are properly initialized
+            if (requirement.RequirementSkills == null)
+            {
+                requirement.RequirementSkills = new List<RequirementSkill>();
+            }
+
+            var created = await RequirementService.CreateAsync(requirement);
+
+            // Add skills
+            if (requirement.RequirementSkills?.Any() == true)
+            {
+                foreach (var skill in requirement.RequirementSkills)
+                {
+                    skill.RequirementId = created.RequirementId;
+                    skill.ProficiencyLevel = skill.ProficiencyLevel ?? "Intermediate";
+                    
+                    try
+                    {
+                        await RequirementService.AddSkillAsync(skill);
+                    }
+                    catch (Exception skillEx)
+                    {
+                        Snackbar.Add($"Warning: Could not add skill {skill.Skill?.SkillName}: {skillEx.Message}", Severity.Warning);
+                    }
+                }
+            }
+
+            // Notify matching employees
+            try
+            {
+                await NotificationService.NotifyMatchingEmployeesAsync(created.RequirementId);
+            }
+            catch 
+            { 
+                // Silent fail on notification
+            }
+
+            Snackbar.Add("🎉 Requirement posted successfully!", Severity.Success);
+            await Task.Delay(1500);
+            Navigation.NavigateTo("/post-requirement");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error posting requirement: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task OnInputKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && args.CtrlKey)
+        {
+            await SendMessage();
+        }
+    }
+
+    private string FormatMessageContent(string content)
+    {
+        // Basic markdown formatting
+        return content
+            .Replace("**", "<strong>", StringComparison.OrdinalIgnoreCase)
+            .Replace("**", "</strong>", StringComparison.OrdinalIgnoreCase)
+            .Replace("\n", "<br />");
+    }
+
+    private Color GetPriorityColor(string priority)
+    {
+        return priority switch
+        {
+            "High" => Color.Error,
+            "Medium" => Color.Warning,
+            "Low" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Scroll to bottom on render
+        await Task.Delay(100); // Brief delay for rendering
+        StateHasChanged();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            // Scroll implementation would go here
+            // For now, we'll rely on CSS flex-direction: column-reverse or similar
+        }
+        catch 
+        { 
+            // Silent fail on scroll
+        }
+    }
+}

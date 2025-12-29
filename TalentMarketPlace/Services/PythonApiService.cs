@@ -381,4 +381,53 @@ public class PythonApiService : IPythonApiService
             throw;
         }
     }
+
+    public async Task<CareerRoadmapResponse> GetCareerRoadmapAsync(string prompt)
+    {
+        try
+        {
+            _logger.LogInformation("Getting career roadmap for prompt: {Prompt}", prompt);
+
+            var requestBody = new { prompt, include_requirements = true };
+            
+            var response = await _httpClient.PostAsJsonAsync("/career_roadmap", requestBody);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Python API career_roadmap error: {StatusCode} - {Error}",
+                    response.StatusCode, errorContent);
+
+                throw new Exception($"API returned {response.StatusCode}: {errorContent}");
+            }
+
+            var rawJson = await response.Content.ReadAsStringAsync();
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            
+            options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+
+            var result = JsonSerializer.Deserialize<CareerRoadmapResponse>(rawJson, options);
+
+            if (result == null)
+            {
+                _logger.LogWarning("Career roadmap response was null");
+                return new CareerRoadmapResponse();
+            }
+
+            _logger.LogInformation("Career roadmap retrieved successfully");
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception calling Python API career_roadmap endpoint");
+            throw;
+        }
+    }
 }
