@@ -15,4 +15,6 @@ public interface ISkillService
     Task<SkillAlias> AddAliasAsync(int skillId, string aliasName);
     Task<bool> DeleteAliasAsync(int aliasId);
     Task<List<Skill>> SearchAsync(string searchTerm);
+    Task<List<LearningResource>> GetLearningResourcesBySkillIdAsync(int skillId);
+    Task<List<LearningResource>> GetLearningResourcesBySkillNameAsync(string skillName);
 }

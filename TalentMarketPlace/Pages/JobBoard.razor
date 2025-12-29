@@ -3,8 +3,10 @@
 @inject IApplicationService ApplicationService
 @inject IAuthService AuthService
 @inject IEmployeeService EmployeeService
+@inject IPythonApiService PythonApiService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject ILogger<JobBoard> Logger
 
 <MudText Typo="Typo.h4" Class="mb-2">Current Job Openings</MudText>
 <MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
@@ -150,14 +152,16 @@ else if (_filteredRequirements.Any())
                         </MudButton>
                     }
                     
-                    @if (matchScore < 80)
-                    {
-                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                                   OnClick="@(() => ViewLearningPath(req.RequirementId))"
-                                   StartIcon="@Icons.Material.Filled.School">
-                            View Learning Path
-                        </MudButton>
-                    }
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                               OnClick="@(() => ViewLearningPath(req.RequirementId))"
+                               StartIcon="@Icons.Material.Filled.School"
+                               Disabled="@(matchScore >= 80)">
+                        View Learning Path
+                        @if (matchScore >= 80)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="ml-1" />
+                        }
+                    </MudButton>
                 </div>
             </MudCardContent>
         </MudCard>

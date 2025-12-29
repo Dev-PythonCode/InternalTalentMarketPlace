@@ -139,4 +139,22 @@ public class SkillService : ISkillService
             .OrderBy(s => s.SkillName)
             .ToListAsync();
     }
+
+    public async Task<List<LearningResource>> GetLearningResourcesBySkillIdAsync(int skillId)
+    {
+        return await _context.LearningResources
+            .Where(lr => lr.SkillId == skillId && lr.IsActive)
+            .OrderBy(lr => lr.Level)
+            .ThenByDescending(lr => lr.Rating)
+            .ToListAsync();
+    }
+
+    public async Task<List<LearningResource>> GetLearningResourcesBySkillNameAsync(string skillName)
+    {
+        var skill = await GetByNameAsync(skillName);
+        if (skill == null)
+            return new List<LearningResource>();
+
+        return await GetLearningResourcesBySkillIdAsync(skill.SkillId);
+    }
 }

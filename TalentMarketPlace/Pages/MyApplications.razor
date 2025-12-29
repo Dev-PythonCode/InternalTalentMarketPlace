@@ -28,7 +28,6 @@ else if (_applications.Any())
                     <MudTh Style="background-color: #a0c4d0;">Applied Date</MudTh>
                     <MudTh Style="background-color: #a0c4d0;">Application Status</MudTh>
                     <MudTh Style="background-color: #a0c4d0;">Requirement Status</MudTh>
-                    <MudTh Style="background-color: #a0c4d0;">Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Position">
@@ -49,12 +48,6 @@ else if (_applications.Any())
                                  Variant="Variant.Outlined">
                             @context.Requirement.Status
                         </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
-                                   OnClick="@(() => ViewDetails(context.RequirementId))">
-                            View Details
-                        </MudButton>
                     </MudTd>
                 </RowTemplate>
             </MudTable>
