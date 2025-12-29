@@ -15,6 +15,7 @@ public interface IRequirementService
     Task<bool> RemoveSkillAsync(int requirementSkillId);
     Task<List<EmployeeSearchResult>> FindMatchingEmployeesAsync(int requirementId);
     Task<bool> IncrementViewCountAsync(int requirementId);
+    Task<List<Requirement>> FindBySkillsAsync(List<string> coreSkillNames, int minimumMatchPercentage = 70);
 }
 
 public class RequirementListItem

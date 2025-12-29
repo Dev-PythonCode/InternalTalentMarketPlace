@@ -1,57 +1,286 @@
 @page "/learning"
 @inject NavigationManager Navigation
 @inject IRequirementService RequirementService
+@inject IPythonApiService PythonApiService
+@inject IAuthService AuthService
+@inject IEmployeeService EmployeeService
+@inject ISkillService SkillService
+@inject ILogger<LearningPath> Logger
 
-<MudText Typo="Typo.h4" Class="mb-2">Learning Path</MudText>
+<MudText Typo="Typo.h4" Class="mb-2">📚 Learning Path & Career Guide</MudText>
 <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
-    Recommended courses to bridge your skill gaps
+    Personalized learning recommendations to advance your career
 </MudText>
 
 @if (_requirement != null)
 {
-    <MudCard Class="mb-4">
+    <MudCard Class="mb-4" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
         <MudCardContent>
-            <MudText Typo="Typo.h6">For Position: @_requirement.Title</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                @_requirement.Team?.TeamName • @_requirement.Location
+            <MudText Typo="Typo.h6" Style="color: white;">📍 For Position: @_requirement.Title</MudText>
+            <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">
+                @_requirement.Location • @_requirement.Duration
             </MudText>
+            @if (_requirement.RequirementSkills?.Any() == true)
+            {
+                <div class="mt-2">
+                    <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.8);">Required Skills:</MudText>
+                    <div class="d-flex gap-1 flex-wrap mt-1">
+                        @foreach (var skill in _requirement.RequirementSkills.Take(5))
+                        {
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small">
+                                @skill.Skill?.SkillName
+                            </MudChip>
+                        }
+                    </div>
+                </div>
+            }
         </MudCardContent>
     </MudCard>
 }
 
-<MudText Typo="Typo.h6" Class="mb-3">Recommended Courses</MudText>
-
-@foreach (var course in _courses)
+@if (_isLoading)
 {
-    <MudCard Class="mb-3">
-        <MudCardContent>
-            <div class="d-flex justify-space-between align-center">
-                <div>
-                    <MudText Typo="Typo.h6">@course.Title</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">@course.Provider</MudText>
-                    <MudText Typo="Typo.caption">
-                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
-                        @course.Duration •
-                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Small" />
-                        @course.Level
-                    </MudText>
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Align="Align.Center">
+        🤖 Generating personalized learning path...
+    </MudText>
+}
+else if (_roadmap != null)
+{
+    <!-- Missing Skills Section -->
+    @if (_missingSkills.Any())
+    {
+        <MudCard Class="mb-4" Style="border-left: 4px solid #ff9800;">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">⚠️ Missing Skills & Learning Resources</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @foreach (var missingSkill in _missingSkills)
+                {
+                    var learningResources = _skillCourses.GetValueOrDefault(missingSkill.SkillName, new List<LearningResource>());
+                    <MudCard Class="mb-3" Outlined="true" Style="background-color: #fff3e0;">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Color="Color.Warning" />
+                                    <MudText Typo="Typo.subtitle2">@missingSkill.SkillName</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">
+                                        Required: @(_requiredYearsBySkill.GetValueOrDefault(missingSkill.SkillName, 0)) yrs
+                                    </MudChip>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (learningResources.Any())
+                            {
+                                <MudText Typo="Typo.body2" Class="mb-3">
+                                    Found <strong>@learningResources.Count</strong> recommended courses for <strong>@missingSkill.SkillName</strong>:
+                                </MudText>
+                                <div class="d-flex flex-column gap-2">
+                                    @foreach (var course in learningResources.Take(5))
+                                    {
+                                        <MudCard Class="pa-3" Outlined="true">
+                                            <div class="d-flex justify-space-between align-start">
+                                                <div style="flex: 1;">
+                                                    <MudText Typo="Typo.body2" Class="mb-1">
+                                                        <strong>@course.ResourceTitle</strong>
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        📌 @course.Provider
+                                                    </MudText>
+                                                    <MudStack Row="true" Spacing="2" Class="mt-1">
+                                                        @if (!string.IsNullOrEmpty(course.Level))
+                                                        {
+                                                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">
+                                                                @course.Level
+                                                            </MudChip>
+                                                        }
+                                                        @if (course.DurationHours > 0)
+                                                        {
+                                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">
+                                                                ⏱️ @course.DurationHours hrs
+                                                            </MudChip>
+                                                        }
+                                                        @if (course.Rating.HasValue)
+                                                        {
+                                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">
+                                                                ⭐ @course.Rating.Value.ToString("F1")
+                                                            </MudChip>
+                                                        }
+                                                    </MudStack>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(course.ResourceUrl))
+                                                {
+                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                                              Href="@course.ResourceUrl" Target="_blank"
+                                                              Size="Size.Small" Class="ml-2">
+                                                        Start <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" />
+                                                    </MudButton>
+                                                }
+                                            </div>
+                                        </MudCard>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                                    No specific learning resources found for this skill. Check the recommended courses below.
+                                </MudText>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <!-- Career Path Overview -->
+    @if (!string.IsNullOrEmpty(_roadmap.CareerPath))
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">🎯 Career Path</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.h5" Color="Color.Primary">@_roadmap.CareerPath</MudText>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <!-- Recommended Skills -->
+    @if (_roadmap.RecommendedSkills?.Any() == true)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">🔧 Recommended Skills to Learn</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <div class="d-flex gap-2 flex-wrap">
+                    @foreach (var skill in _roadmap.RecommendedSkills)
+                    {
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
+                            @skill
+                        </MudChip>
+                    }
                 </div>
-                <div>
-                    <MudChip T="string" Color="Color.Primary">@course.Skill</MudChip>
-                </div>
-            </div>
-            <MudText Typo="Typo.body2" Class="mt-2">@course.Description</MudText>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                       Href="@course.Url" Target="_blank" Class="mt-2"
-                       StartIcon="@Icons.Material.Filled.OpenInNew">
-                Start Learning
-            </MudButton>
-        </MudCardContent>
-    </MudCard>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <!-- Learning Steps Timeline -->
+    @if (_roadmap.LearningSteps?.Any() == true)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">📖 Learning Steps</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudStepper Linear="false">
+                    @foreach (var step in _roadmap.LearningSteps)
+                    {
+                        <MudStep Title="@step.Title" Completed="false">
+                            <MudText Typo="Typo.body2">@step.Description</MudText>
+                            @if (step.Skills?.Any() == true)
+                            {
+                                <MudText Typo="Typo.caption" Class="mt-2"><strong>Skills:</strong></MudText>
+                                <div class="d-flex gap-1 flex-wrap mt-1">
+                                    @foreach (var skill in step.Skills)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">
+                                            @skill
+                                        </MudChip>
+                                    }
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(step.Duration))
+                            {
+                                <MudText Typo="Typo.caption" Class="mt-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" />
+                                    Duration: @step.Duration
+                                </MudText>
+                            }
+                        </MudStep>
+                    }
+                </MudStepper>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <!-- Timeline -->
+    @if (_roadmap.Timeline != null)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">⏱️ Timeline</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Typo="Typo.body2">
+                    <strong>Total Duration:</strong> @_roadmap.Timeline.TotalDuration
+                    @if (_roadmap.Timeline.EstimatedMonths.HasValue)
+                    {
+                        <span>(@_roadmap.Timeline.EstimatedMonths months)</span>
+                    }
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <!-- Resources & Courses -->
+    @if (_roadmap.Resources?.Courses?.Any() == true)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">📚 Recommended Courses</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @foreach (var course in _roadmap.Resources.Courses.Take(10))
+                {
+                    <MudCard Class="mb-3" Outlined="true">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center">
+                                <div style="flex: 1;">
+                                    <MudText Typo="Typo.subtitle2">@course.Title</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@course.Provider</MudText>
+                                    @if (!string.IsNullOrEmpty(course.Level))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text" Class="mt-1">
+                                            @course.Level
+                                        </MudChip>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(course.Url))
+                                {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                              Href="@course.Url" Target="_blank"
+                                              Size="Size.Small" Class="ml-2">
+                                        Start <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small" />
+                                    </MudButton>
+                                }
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
 }
 
-<MudButton Variant="Variant.Outlined" OnClick="GoBack" Class="mt-3">
-    Back to Current Openings
+<MudButton Variant="Variant.Outlined" OnClick="GoBack" Class="mt-4">
+    ← Back to Job Openings
 </MudButton>
 
 @code {
@@ -60,64 +289,123 @@
     public int? RequirementId { get; set; }
 
     private Requirement? _requirement;
-    private List<CourseRecommendation> _courses = new();
+    private CareerRoadmapResponse? _roadmap;
+    private bool _isLoading = false;
+    private List<SkillGap> _missingSkills = new();
+    private Dictionary<string, List<LearningResource>> _skillCourses = new();
+    private Dictionary<string, List<CourseResource>> _pythonApiCourses = new();
+    private Dictionary<string, decimal> _requiredYearsBySkill = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (RequirementId.HasValue)
+        _isLoading = true;
+        try
         {
-            _requirement = await RequirementService.GetByIdAsync(RequirementId.Value);
-        }
+            // Load requirement if provided
+            if (RequirementId.HasValue)
+            {
+                _requirement = await RequirementService.GetByIdAsync(RequirementId.Value);
+                
+                // Get current employee to calculate missing skills
+                var currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+                if (currentEmployee != null && _requirement != null)
+                {
+                    // Get match score which includes missing skills
+                    var matchResult = await EmployeeService.CalculateMatchScoreAsync(
+                        currentEmployee.EmployeeId, _requirement.RequirementId);
+                    
+                    _missingSkills = matchResult.SkillGaps;
+                    
+                    // Build a map of required years for each skill
+                    foreach (var skillMatch in matchResult.SkillMatches)
+                    {
+                        _requiredYearsBySkill[skillMatch.SkillName] = skillMatch.RequiredYears;
+                    }
+                    
+                    Logger.LogInformation("Found {Count} missing skills for requirement {RequirementId}", 
+                        _missingSkills.Count, RequirementId.Value);
 
-        // Sample courses
-        _courses = new List<CourseRecommendation>
-        {
-            new CourseRecommendation
-            {
-                Title = "AWS Certified Solutions Architect",
-                Provider = "AWS Training",
-                Skill = "AWS",
-                Duration = "40 hours",
-                Level = "Intermediate",
-                Description = "Learn to design and deploy scalable systems on AWS",
-                Url = "https://aws.amazon.com/training/"
-            },
-            new CourseRecommendation
-            {
-                Title = "Python for Everybody",
-                Provider = "Coursera",
-                Skill = "Python",
-                Duration = "8 months",
-                Level = "Beginner",
-                Description = "Complete Python programming course from basics to advanced",
-                Url = "https://www.coursera.org/specializations/python"
-            },
-            new CourseRecommendation
-            {
-                Title = "React - The Complete Guide",
-                Provider = "Udemy",
-                Skill = "React",
-                Duration = "48 hours",
-                Level = "All Levels",
-                Description = "Master React including Hooks, Redux, and Next.js",
-                Url = "https://www.udemy.com/topic/react/"
+                    // Fetch learning resources for each missing skill
+                    await FetchLearningResourcesForMissingSkills();
+                }
             }
-        };
+
+            // Build prompt based on requirement or default
+            string prompt = _requirement != null 
+                ? $"{_requirement.Title} with skills: {string.Join(", ", _requirement.RequirementSkills?.Select(rs => rs.Skill?.SkillName) ?? new List<string?>())}"
+                : "I want to become a software developer and improve my skills in web development";
+
+            Logger.LogInformation("Getting career roadmap for prompt: {Prompt}", prompt);
+
+            // Call Python API to get career roadmap
+            try
+            {
+                _roadmap = await PythonApiService.GetCareerRoadmapAsync(prompt);
+                Logger.LogInformation("Career roadmap retrieved successfully");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error getting career roadmap from Python API");
+                // Fallback to empty roadmap
+                _roadmap = new CareerRoadmapResponse();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing LearningPath page");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task FetchLearningResourcesForMissingSkills()
+    {
+        foreach (var missingSkill in _missingSkills)
+        {
+            try
+            {
+                Logger.LogInformation("Fetching learning resources for missing skill: {SkillName}", missingSkill.SkillName);
+                
+                // First, try to fetch from database
+                var dbResources = await SkillService.GetLearningResourcesBySkillNameAsync(missingSkill.SkillName);
+                
+                if (dbResources.Any())
+                {
+                    _skillCourses[missingSkill.SkillName] = dbResources;
+                    Logger.LogInformation("Found {Count} courses in database for {SkillName}", 
+                        dbResources.Count, missingSkill.SkillName);
+                }
+                else
+                {
+                    // Fallback: Try Python API
+                    Logger.LogWarning("No courses found in database for {SkillName}, trying Python API", missingSkill.SkillName);
+                    
+                    var prompt = $"Best courses and learning resources for {missingSkill.SkillName}";
+                    var roadmap = await PythonApiService.GetCareerRoadmapAsync(prompt);
+                    
+                    if (roadmap?.Resources?.Courses?.Any() == true)
+                    {
+                        _pythonApiCourses[missingSkill.SkillName] = roadmap.Resources.Courses;
+                        Logger.LogInformation("Found {Count} courses from Python API for {SkillName}", 
+                            roadmap.Resources.Courses.Count, missingSkill.SkillName);
+                    }
+                    else
+                    {
+                        Logger.LogWarning("No courses found for {SkillName} from any source", missingSkill.SkillName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error fetching learning resources for skill: {SkillName}", missingSkill.SkillName);
+            }
+        }
     }
 
     private void GoBack()
     {
         Navigation.NavigateTo("/job-board");
-    }
-
-    public class CourseRecommendation
-    {
-        public string Title { get; set; } = "";
-        public string Provider { get; set; } = "";
-        public string Skill { get; set; } = "";
-        public string Duration { get; set; } = "";
-        public string Level { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Url { get; set; } = "";
     }
 }

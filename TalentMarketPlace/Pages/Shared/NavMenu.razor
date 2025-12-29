@@ -9,6 +9,9 @@
         <MudNavLink Href="/post-requirement" Icon="@Icons.Material.Filled.PostAdd" Match="NavLinkMatch.Prefix">
             Post Requirement
         </MudNavLink>
+        @* <MudNavLink Href="/post-requirement-chat" Icon="@Icons.Material.Filled.SmartToy" Match="NavLinkMatch.All">
+            AI Requirement Creator (Coming Soon)
+        </MudNavLink> *@
         <MudNavLink Href="/application-review" Icon="@Icons.Material.Filled.Assignment" Match="NavLinkMatch.Prefix">
             Review Applications
         </MudNavLink>
@@ -51,7 +54,10 @@
     @if (CurrentRole == "HR")
     {
         <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.Settings" Match="NavLinkMatch.Prefix">
-            Admin Panel
+            Manage Skills
+        </MudNavLink>
+        <MudNavLink Href="/admin/reminder-email" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Email">
+            Configure Reminders
         </MudNavLink>
     }
 </MudNavMenu>

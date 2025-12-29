@@ -22,14 +22,14 @@
 
             <MudText Typo="Typo.h3" Class="ai-light-title">
                 One RRD AI
+            </MudText>            
+
+            <MudText Typo="Typo.subtitle1" Class="ai-light-subtitle">
+                Intelligent Internal Talent Marketplace
             </MudText>
 
             <MudText Typo="Typo.caption" Class="ai-typing-text mb-3">
                 @_aiTypingText
-            </MudText>
-
-            <MudText Typo="Typo.subtitle1" Class="ai-light-subtitle">
-                Intelligent Internal Talent Marketplace
             </MudText>
 
             <MudText Typo="Typo.body2" Class="ai-light-desc">
@@ -45,10 +45,10 @@
         <MudPaper Elevation="4" Class="pa-8 ai-light-card">
 
             <MudText Typo="Typo.h5" Class="mb-2">
-                Welcome Back 👋
+                Welcome!
             </MudText>
 
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+            <MudText Typo="Typo.caption" Color="Color.Info" Class="mb-4">
                 Sign in to your AI-powered workspace
             </MudText>
 
@@ -117,7 +117,7 @@
     private bool _isLoading = false;
 
     private string _aiTypingText = "";
-    private readonly string _aiMessage = "AI is analyzing your skills and career preferences...";
+    private readonly string _aiMessage = "Empowering Internal Talents...";
     private int _typingIndex = 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -217,7 +217,7 @@
     .ai-login-btn {
         position: relative;
         overflow: hidden;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        background: linear-gradient(135deg, #a8f163, #066c12);
         color: white;
     }
 
@@ -247,9 +247,12 @@
         color: #7c3aed;
     }
 
-    .manager .ai-light-icon,
+    .manager .ai-light-icon
+    {
+        color: #6082eb;
+    }
     .manager .ai-login-btn {
-        color: #2563eb;
+        color: #ebecef;
     }
 
     .employee .ai-light-icon,
