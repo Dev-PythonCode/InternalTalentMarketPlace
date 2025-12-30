@@ -14,9 +14,7 @@ Console.WriteLine($"🔧 Configuration: Python API URL = {pythonApiUrl}");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<TalentMarketplaceDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+    options.UseSqlServer(connectionString)
 );
 
 // Add Blazor Server
