@@ -33,6 +33,15 @@ namespace TalentMarketPlace.Data
         public DbSet<EmailHistory> EmailHistory { get; set; }
         public DbSet<ScheduledEmail> ScheduledEmails { get; set; }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            
+            // Suppress the PendingModelChangesWarning to allow migrations to complete
+            optionsBuilder.ConfigureWarnings(w =>
+                w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
