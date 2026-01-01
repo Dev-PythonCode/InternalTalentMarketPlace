@@ -257,14 +257,24 @@ namespace TalentMarketPlace.Services
                     .Include(e => e.User)
                     .Include(e => e.EmployeeSkills)
                         .ThenInclude(es => es.Skill)
+                            .ThenInclude(s => s.SkillAliases)
                     .Where(e => e.User.IsActive)
                     .AsQueryable();
 
                 // ⭐ Apply MANDATORY skill filter (employees MUST have at least one mandatory skill)
+                // Case-insensitive matching to handle variations like "SQL Server" vs "sql server"
+                // Also check skill aliases to handle normalized names (e.g., "SQL" matches "SQL Server")
                 if (hasSkills)
                 {
+                    Console.WriteLine($"🔍 DEBUG: Looking for required skills: {string.Join(", ", requiredSkills)}");
+                    
                     employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
-                        requiredSkills.Contains(es.Skill.SkillName)
+                        requiredSkills.Any(rs => 
+                            // Match skill name directly
+                            rs.Equals(es.Skill.SkillName, StringComparison.OrdinalIgnoreCase) ||
+                            // Also match against skill aliases
+                            es.Skill.SkillAliases.Any(sa => rs.Equals(sa.AliasName, StringComparison.OrdinalIgnoreCase))
+                        )
                     ));
                     Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
                 }
@@ -353,8 +363,8 @@ namespace TalentMarketPlace.Services
 
                 _logger.LogInformation("Returning {Count} matching employees", results.Count);
 
-                // Build applied filters
-                var appliedFilters = BuildAppliedFilters(parseResult, experienceContext);
+                // Build applied filters using separated mandatory and optional skills
+                var appliedFilters = BuildAppliedFilters(requiredSkills, categorySkills, minYears, experienceContext, location);
 
                 return new SearchResult
                 {
@@ -390,49 +400,39 @@ namespace TalentMarketPlace.Services
         }
 
         // ⭐ UPDATED: Build applied filters - show mandatory and nice-to-have separately
-        private List<string> BuildAppliedFilters(ParseQueryResult parseResult, ExperienceContext? expContext)
+        private List<string> BuildAppliedFilters(
+            List<string> mandatorySkills,
+            List<string> optionalSkills,
+            decimal? minYears,
+            ExperienceContext? expContext,
+            string? location)
         {
             var filters = new List<string>();
 
-            // Show mandatory skills
-            if (parseResult.Parsed.Skills?.Any() == true)
+            // Show mandatory skills (properly labeled)
+            if (mandatorySkills?.Any() == true)
             {
-                filters.Add($"Mandatory Skills: {string.Join(", ", parseResult.Parsed.Skills)}");
+                filters.Add($"Mandatory Skills: {string.Join(", ", mandatorySkills)}");
             }
 
-            // Show nice-to-have skills
-            if (parseResult.Parsed.CategorySkills?.Any() == true)
+            // Show nice-to-have skills (properly labeled)
+            if (optionalSkills?.Any() == true)
             {
-                filters.Add($"Nice-to-Have Skills: {string.Join(", ", parseResult.Parsed.CategorySkills)}");
+                filters.Add($"Nice-to-Have Skills: {string.Join(", ", optionalSkills)}");
             }
 
-            if (parseResult.Parsed.Categories?.Any() == true)
+            if (minYears.HasValue)
             {
-                filters.Add($"Categories: {string.Join(", ", parseResult.Parsed.Categories)}");
-            }
-
-            if (parseResult.Parsed.MinYearsExperience.HasValue)
-            {
-                var years = parseResult.Parsed.MinYearsExperience.Value;
+                var years = minYears.Value;
                 var expType = expContext?.Type == "skill_specific"
                     ? $"in {expContext.Skill}"
                     : "total experience";
                 filters.Add($"Experience: {years}+ years {expType}");
             }
 
-            if (!string.IsNullOrEmpty(parseResult.Parsed.Location))
+            if (!string.IsNullOrEmpty(location))
             {
-                filters.Add($"Location: {parseResult.Parsed.Location}");
-            }
-
-            if (parseResult.Parsed.SkillLevels?.Any() == true)
-            {
-                filters.Add($"Level: {string.Join(", ", parseResult.Parsed.SkillLevels)}");
-            }
-
-            if (parseResult.Parsed.Roles?.Any() == true)
-            {
-                filters.Add($"Roles: {string.Join(", ", parseResult.Parsed.Roles)}");
+                filters.Add($"Location: {location}");
             }
 
             return filters;
@@ -601,8 +601,11 @@ namespace TalentMarketPlace.Services
             decimal? minYears)
         {
             var skillName = employeeSkill.Skill.SkillName;
-            bool isMandatory = mandatorySkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
-            bool isOptional = optionalSkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
+            // Check both skill name and aliases for matching
+            bool isMandatory = mandatorySkills.Contains(skillName, StringComparer.OrdinalIgnoreCase) ||
+                               mandatorySkills.Any(ms => employeeSkill.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(ms, StringComparison.OrdinalIgnoreCase)));
+            bool isOptional = optionalSkills.Contains(skillName, StringComparer.OrdinalIgnoreCase) ||
+                              optionalSkills.Any(os => employeeSkill.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(os, StringComparison.OrdinalIgnoreCase)));
 
             if (!isMandatory && !isOptional)
                 return "Extra";
@@ -730,8 +733,12 @@ namespace TalentMarketPlace.Services
 
             foreach (var skillName in mandatorySkillNames)
             {
+                // Check both skill name and aliases (case-insensitive)
                 var empSkill = employee.EmployeeSkills
-                    .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(es => 
+                        es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase) ||
+                        es.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(skillName, StringComparison.OrdinalIgnoreCase))
+                    );
 
                 if (empSkill != null)
                 {

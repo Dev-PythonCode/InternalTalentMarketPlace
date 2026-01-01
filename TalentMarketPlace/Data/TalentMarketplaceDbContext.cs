@@ -301,7 +301,9 @@ namespace TalentMarketPlace.Data
                 new SkillAlias { AliasId = 6, SkillId = 11, AliasName = "ReactJS" },
                 new SkillAlias { AliasId = 7, SkillId = 14, AliasName = "NodeJS" },
                 new SkillAlias { AliasId = 8, SkillId = 17, AliasName = "MSSQL" },
-                new SkillAlias { AliasId = 9, SkillId = 17, AliasName = "MS SQL" }
+                new SkillAlias { AliasId = 9, SkillId = 17, AliasName = "MS SQL" },
+                // ⭐ NEW: Add "SQL" alias for SQL Server to match Python API normalization
+                new SkillAlias { AliasId = 10, SkillId = 17, AliasName = "SQL" }
             );
 
             // Seed Users
