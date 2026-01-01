@@ -266,6 +266,8 @@ namespace TalentMarketPlace.Services
                 // Also check skill aliases to handle normalized names (e.g., "SQL" matches "SQL Server")
                 if (hasSkills)
                 {
+                    Console.WriteLine($"🔍 DEBUG: Looking for required skills: {string.Join(", ", requiredSkills)}");
+                    
                     employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
                         requiredSkills.Any(rs => 
                             // Match skill name directly
@@ -361,8 +363,8 @@ namespace TalentMarketPlace.Services
 
                 _logger.LogInformation("Returning {Count} matching employees", results.Count);
 
-                // Build applied filters
-                var appliedFilters = BuildAppliedFilters(parseResult, experienceContext);
+                // Build applied filters using separated mandatory and optional skills
+                var appliedFilters = BuildAppliedFilters(requiredSkills, categorySkills, minYears, experienceContext, location);
 
                 return new SearchResult
                 {
@@ -398,49 +400,39 @@ namespace TalentMarketPlace.Services
         }
 
         // ⭐ UPDATED: Build applied filters - show mandatory and nice-to-have separately
-        private List<string> BuildAppliedFilters(ParseQueryResult parseResult, ExperienceContext? expContext)
+        private List<string> BuildAppliedFilters(
+            List<string> mandatorySkills,
+            List<string> optionalSkills,
+            decimal? minYears,
+            ExperienceContext? expContext,
+            string? location)
         {
             var filters = new List<string>();
 
-            // Show mandatory skills
-            if (parseResult.Parsed.Skills?.Any() == true)
+            // Show mandatory skills (properly labeled)
+            if (mandatorySkills?.Any() == true)
             {
-                filters.Add($"Mandatory Skills: {string.Join(", ", parseResult.Parsed.Skills)}");
+                filters.Add($"Mandatory Skills: {string.Join(", ", mandatorySkills)}");
             }
 
-            // Show nice-to-have skills
-            if (parseResult.Parsed.CategorySkills?.Any() == true)
+            // Show nice-to-have skills (properly labeled)
+            if (optionalSkills?.Any() == true)
             {
-                filters.Add($"Nice-to-Have Skills: {string.Join(", ", parseResult.Parsed.CategorySkills)}");
+                filters.Add($"Nice-to-Have Skills: {string.Join(", ", optionalSkills)}");
             }
 
-            if (parseResult.Parsed.Categories?.Any() == true)
+            if (minYears.HasValue)
             {
-                filters.Add($"Categories: {string.Join(", ", parseResult.Parsed.Categories)}");
-            }
-
-            if (parseResult.Parsed.MinYearsExperience.HasValue)
-            {
-                var years = parseResult.Parsed.MinYearsExperience.Value;
+                var years = minYears.Value;
                 var expType = expContext?.Type == "skill_specific"
                     ? $"in {expContext.Skill}"
                     : "total experience";
                 filters.Add($"Experience: {years}+ years {expType}");
             }
 
-            if (!string.IsNullOrEmpty(parseResult.Parsed.Location))
+            if (!string.IsNullOrEmpty(location))
             {
-                filters.Add($"Location: {parseResult.Parsed.Location}");
-            }
-
-            if (parseResult.Parsed.SkillLevels?.Any() == true)
-            {
-                filters.Add($"Level: {string.Join(", ", parseResult.Parsed.SkillLevels)}");
-            }
-
-            if (parseResult.Parsed.Roles?.Any() == true)
-            {
-                filters.Add($"Roles: {string.Join(", ", parseResult.Parsed.Roles)}");
+                filters.Add($"Location: {location}");
             }
 
             return filters;

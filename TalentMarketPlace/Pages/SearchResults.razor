@@ -145,10 +145,23 @@ else if (_searchResult != null && _searchResult.Employees.Any())
         <MudCard Class="mb-2" Elevation="1">
             <MudCardContent Class="py-2">
                 <MudGrid>
-                    <MudItem xs="12" md="1" Class="d-flex align-center justify-center">
+                    <MudItem xs="12" md="1" Class="d-flex flex-column align-center justify-center">
                         <MudAvatar Color="Color.Primary" Size="Size.Large">
                             @employee.FullName[0]
                         </MudAvatar>
+                        <!-- ⭐ NEW: Show availability status below avatar -->
+                        @if (!string.IsNullOrEmpty(employee.AvailabilityStatus))
+                        {
+                            var availColor = employee.AvailabilityStatus switch
+                            {
+                                "Available" => Color.Success,
+                                "Limited" => Color.Warning,
+                                _ => Color.Default
+                            };
+                            <MudChip T="string" Size="Size.Small" Color="@availColor" Variant="Variant.Filled" Class="mt-1" Style="width: 100%; justify-content: center;">
+                                @employee.AvailabilityStatus
+                            </MudChip>
+                        }
                     </MudItem>
                     
                     <MudItem xs="12" md="7">
