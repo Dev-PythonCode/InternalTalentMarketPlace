@@ -2,6 +2,7 @@
 using TalentMarketPlace.Data;
 using TalentMarketPlace.Services.Interfaces;
 
+
 namespace TalentMarketPlace.Services;
 
 public class ApplicationService : IApplicationService
@@ -163,6 +164,45 @@ public class ApplicationService : IApplicationService
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error in GetByManagerAsync: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get applications for HR user - includes all open applications from within the organization.
+    /// This ensures HR only sees employee records from their organization, not all employees in the system.
+    /// </summary>
+    public async Task<List<Application>> GetByHRAsync()
+    {
+        try
+        {
+            Console.WriteLine($"📊 Loading all applications for HR review");
+            
+            // Get all active applications from employees within the organization
+            var applications = await _context.Applications
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e.Team)
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e.EmployeeSkills)
+                        .ThenInclude(es => es.Skill)
+                .Include(a => a.Requirement)
+                    .ThenInclude(r => r.Team)
+                .Include(a => a.Requirement)
+                    .ThenInclude(r => r.RequirementSkills)
+                        .ThenInclude(rs => rs.Skill)
+                .ToListAsync();
+            
+            Console.WriteLine($"✅ Loaded {applications.Count} applications for HR");
+            
+            // Order in memory (client-side)
+            return applications
+                .OrderByDescending(a => a.MatchPercentage ?? 0)
+                .ThenByDescending(a => a.AppliedDate)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error in GetByHRAsync: {ex.Message}");
             throw;
         }
     }

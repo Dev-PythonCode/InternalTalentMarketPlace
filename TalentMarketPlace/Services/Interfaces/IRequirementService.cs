@@ -12,6 +12,7 @@ public interface IRequirementService
     Task<bool> DeleteAsync(int requirementId);
     Task<List<RequirementSkill>> GetRequirementSkillsAsync(int requirementId);
     Task<RequirementSkill> AddSkillAsync(RequirementSkill requirementSkill);
+    Task<RequirementSkill> UpdateSkillAsync(RequirementSkill requirementSkill);
     Task<bool> RemoveSkillAsync(int requirementSkillId);
     Task<List<EmployeeSearchResult>> FindMatchingEmployeesAsync(int requirementId);
     Task<bool> IncrementViewCountAsync(int requirementId);

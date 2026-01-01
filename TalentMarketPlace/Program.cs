@@ -14,9 +14,7 @@ Console.WriteLine($"🔧 Configuration: Python API URL = {pythonApiUrl}");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<TalentMarketplaceDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+    options.UseSqlServer(connectionString)
 );
 
 // Add Blazor Server
@@ -118,15 +116,23 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<TalentMarketplaceDbContext>();
-        await context.Database.MigrateAsync();
+        // ⭐ Comment out migrations and just create/update the database
+        if (context.Database.IsRelational())
+        {
+            await context.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            await context.Database.MigrateAsync();
+        }
         await SeedAdditionalData(context);
         
-        Console.WriteLine($"✅ Database migrations completed successfully");
+        Console.WriteLine($"✅ Database setup completed successfully");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        logger.LogError(ex, "An error occurred while setting up the database.");
     }
 }
 
@@ -167,25 +173,25 @@ async Task SeedAdditionalData(TalentMarketplaceDbContext context)
     {
         var employeeSkills = new List<EmployeeSkill>
         {
-            new EmployeeSkill { EmployeeId = 1, SkillId = 1, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 1, SkillId = 6, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now.AddMonths(-2), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 1, SkillId = 8, YearsOfExperience = 2.5m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now.AddMonths(-1), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 1, SkillId = 17, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now, Source = "Manual" },
-            new EmployeeSkill { EmployeeId = 2, SkillId = 2, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 2, SkillId = 9, YearsOfExperience = 2.0m, ProficiencyLevel = "Intermediate", LastUsedDate = DateTime.Now.AddMonths(-1), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 2, SkillId = 10, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 2, SkillId = 8, YearsOfExperience = 3.5m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Manual" },
-            new EmployeeSkill { EmployeeId = 3, SkillId = 11, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 3, SkillId = 14, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 3, SkillId = 19, YearsOfExperience = 2.5m, ProficiencyLevel = "Intermediate", LastUsedDate = DateTime.Now.AddMonths(-3), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 3, SkillId = 4, YearsOfExperience = 3.5m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Manual" },
-            new EmployeeSkill { EmployeeId = 4, SkillId = 1, YearsOfExperience = 2.0m, ProficiencyLevel = "Intermediate", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 4, SkillId = 17, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 4, SkillId = 6, YearsOfExperience = 1.0m, ProficiencyLevel = "Beginner", LastUsedDate = DateTime.Now.AddMonths(-6), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 5, SkillId = 12, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now.AddMonths(-4), Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 5, SkillId = 2, YearsOfExperience = 8.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Auto" },
-            new EmployeeSkill { EmployeeId = 5, SkillId = 17, YearsOfExperience = 6.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Manual" },
-            new EmployeeSkill { EmployeeId = 5, SkillId = 16, YearsOfExperience = 7.0m, ProficiencyLevel = "Expert", LastUsedDate = DateTime.Now, Source = "Manual" }
+            new EmployeeSkill { EmployeeId = 1, SkillId = 1, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 1, SkillId = 6, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 10, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 1, SkillId = 8, YearsOfExperience = 2.5m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 11, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 1, SkillId = 17, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 12, 30), Source = "Manual" },
+            new EmployeeSkill { EmployeeId = 2, SkillId = 2, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 2, SkillId = 9, YearsOfExperience = 2.0m, ProficiencyLevel = "Intermediate", LastUsedDate = new DateTime(2025, 11, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 2, SkillId = 10, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 2, SkillId = 8, YearsOfExperience = 3.5m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Manual" },
+            new EmployeeSkill { EmployeeId = 3, SkillId = 11, YearsOfExperience = 3.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 3, SkillId = 14, YearsOfExperience = 4.0m, ProficiencyLevel = "Advanced", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 3, SkillId = 19, YearsOfExperience = 2.5m, ProficiencyLevel = "Intermediate", LastUsedDate = new DateTime(2025, 9, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 3, SkillId = 4, YearsOfExperience = 3.5m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Manual" },
+            new EmployeeSkill { EmployeeId = 4, SkillId = 1, YearsOfExperience = 2.0m, ProficiencyLevel = "Intermediate", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 4, SkillId = 17, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 4, SkillId = 6, YearsOfExperience = 1.0m, ProficiencyLevel = "Beginner", LastUsedDate = new DateTime(2025, 6, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 5, SkillId = 12, YearsOfExperience = 5.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 8, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 5, SkillId = 2, YearsOfExperience = 8.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Auto" },
+            new EmployeeSkill { EmployeeId = 5, SkillId = 17, YearsOfExperience = 6.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Manual" },
+            new EmployeeSkill { EmployeeId = 5, SkillId = 16, YearsOfExperience = 7.0m, ProficiencyLevel = "Expert", LastUsedDate = new DateTime(2025, 12, 30), Source = "Manual" }
         };
 
         await context.EmployeeSkills.AddRangeAsync(employeeSkills);

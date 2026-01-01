@@ -11,6 +11,7 @@ public interface IApplicationService
     Task<bool> HasAppliedAsync(int employeeId, int requirementId);
     Task<int> GetApplicationCountAsync(int requirementId);
     Task<List<Application>> GetByManagerAsync(int managerId);
+    Task<List<Application>> GetByHRAsync();
     Task<List<Application>> GetAllAsync();
     Task<ApplicationValidation> ValidateApplicationAsync(int employeeId, int requirementId);
 }

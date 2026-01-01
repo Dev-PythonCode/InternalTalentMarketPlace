@@ -135,7 +135,7 @@ namespace TalentMarketPlace.Services
             };
         }
 
-       // ⭐ COMPLETE FIXED: NaturalLanguageSearchAsync method
+        // ⭐ COMPLETE FIXED: NaturalLanguageSearchAsync method
         // Fixes: Location filtering, No-experience searches, Better user guidance
 
         public async Task<SearchResult> NaturalLanguageSearchAsync(string chatQuery)
@@ -172,6 +172,7 @@ namespace TalentMarketPlace.Services
                 if (parseResult.Parsed != null)
                 {
                     Console.WriteLine($"   Skills: {string.Join(", ", parseResult.Parsed.Skills ?? new List<string>())}");
+                    Console.WriteLine($"   CategorySkills: {string.Join(", ", parseResult.Parsed.CategorySkills ?? new List<string>())}");
                     Console.WriteLine($"   Location: {parseResult.Parsed.Location ?? "none"}");
                     Console.WriteLine($"   MinYearsExperience: {parseResult.Parsed.MinYearsExperience?.ToString() ?? "none"}");
                     Console.WriteLine($"   ExperienceContext: {parseResult.Parsed.ExperienceContext?.Type ?? "none"}");
@@ -185,7 +186,8 @@ namespace TalentMarketPlace.Services
 
                 Console.WriteLine("🔍 Step 4: Extracting values from parse result...");
 
-                // ⭐ Extract all criteria
+                // ⭐ Extract all criteria - ONLY mandatory skills go to requiredSkills
+                // Nice-to-have skills should be in categorySkills
                 var requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
                 var categorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
                 var minYears = parseResult.Parsed.MinYearsExperience;
@@ -193,15 +195,23 @@ namespace TalentMarketPlace.Services
                 var experienceContext = parseResult.Parsed.ExperienceContext;
                 var location = parseResult.Parsed.Location;
 
-                Console.WriteLine($"   requiredSkills: {string.Join(", ", requiredSkills)}");
+                // ⭐ NEW: Parse the original query to separate mandatory from nice-to-have skills
+                (requiredSkills, categorySkills) = SeparateMandatoryAndNiceToHaveSkills(
+                    chatQuery,
+                    requiredSkills,
+                    categorySkills
+                );
+
+                Console.WriteLine($"   requiredSkills (Mandatory): {string.Join(", ", requiredSkills)}");
+                Console.WriteLine($"   categorySkills (Nice-to-Have): {string.Join(", ", categorySkills)}");
                 Console.WriteLine($"   location: {location ?? "none"}");
                 Console.WriteLine($"   minYears: {minYears?.ToString() ?? "none"}");
                 Console.WriteLine($"   expOperator: {expOperator}");
                 Console.WriteLine($"   experienceContext: {experienceContext?.Type ?? "none"}");
                 Console.WriteLine("");
 
-                // ⭐ FIX 3: Check what criteria we have
-                var hasSkills = requiredSkills.Any() || categorySkills.Any();
+                // ⭐ FIX: Check what criteria we have
+                var hasSkills = requiredSkills.Any();
                 var hasLocation = !string.IsNullOrEmpty(location);
                 var hasExperience = minYears.HasValue && minYears.Value > 0;
 
@@ -219,15 +229,16 @@ namespace TalentMarketPlace.Services
                 Console.WriteLine($"   SkillsAreOr: {skillsAreOr}");
 
                 Console.WriteLine($"🔍 Search criteria:");
-                Console.WriteLine($"   Has skills: {hasSkills}");
+                Console.WriteLine($"   Has mandatory skills: {hasSkills}");
+                Console.WriteLine($"   Has nice-to-have skills: {categorySkills.Any()}");
                 Console.WriteLine($"   Has location: {hasLocation}");
                 Console.WriteLine($"   Has experience: {hasExperience}");
                 Console.WriteLine("");
 
-                // ⭐ FIX 3: Better empty query handling
+                // ⭐ FIX: Better empty query handling
                 if (!hasSkills && !hasLocation)
                 {
-                    _logger.LogWarning("No skills or location found in query");
+                    _logger.LogWarning("No mandatory skills or location found in query");
                     return new SearchResult
                     {
                         Employees = new List<EmployeeSearchResult>(),
@@ -249,17 +260,16 @@ namespace TalentMarketPlace.Services
                     .Where(e => e.User.IsActive)
                     .AsQueryable();
 
-                // ⭐ Apply skill filter (if skills specified)
+                // ⭐ Apply MANDATORY skill filter (employees MUST have at least one mandatory skill)
                 if (hasSkills)
                 {
-                    var allTargetSkills = requiredSkills.Concat(categorySkills).Distinct().ToList();
                     employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
-                        allTargetSkills.Contains(es.Skill.SkillName)
+                        requiredSkills.Contains(es.Skill.SkillName)
                     ));
-                    Console.WriteLine($"🔍 Skill filter applied: {string.Join(", ", allTargetSkills)}");
+                    Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
                 }
 
-                // ⭐ FIX 1: Apply location filter with case-insensitive comparison
+                // ⭐ Apply location filter with case-insensitive comparison
                 if (hasLocation)
                 {
                     var searchLocation = location!.Trim();
@@ -270,7 +280,7 @@ namespace TalentMarketPlace.Services
                     Console.WriteLine($"🔍 Location filter applied: {searchLocation}");
                 }
 
-                // ⭐ Apply availability filter (now supports structured availability_status)
+                // ⭐ Apply availability filter
                 var avail = parseResult.Parsed.AvailabilityStatus?.Status;
                 if (!string.IsNullOrEmpty(avail))
                 {
@@ -283,13 +293,12 @@ namespace TalentMarketPlace.Services
                 Console.WriteLine($"🔍 Found {employees.Count} employees after applying filters");
                 Console.WriteLine("");
 
-                // ⭐ FIX 2: Don't pre-filter by experience - let scoring handle it
                 // Build results with scoring
                 var results = new List<EmployeeSearchResult>();
-                
+
                 foreach (var employee in employees)
                 {
-                    // Calculate match score (handles experience requirements internally)
+                    // Calculate match score (ONLY based on mandatory skills)
                     var matchResult = CalculateAdvancedMatchWithContext(
                         employee,
                         requiredSkills,
@@ -300,9 +309,7 @@ namespace TalentMarketPlace.Services
                         skillsAreOr
                     );
 
-                    // ⭐ Include employee if:
-                    // 1. They have a match > 0 when skills are required, OR
-                    // 2. No skills required (location-only search)
+                    // Include employee if they have at least one mandatory skill match
                     bool shouldInclude = hasSkills ? (matchResult.MatchPercentage > 0) : true;
 
                     if (shouldInclude)
@@ -312,7 +319,7 @@ namespace TalentMarketPlace.Services
                             SkillName = es.Skill.SkillName,
                             YearsOfExperience = es.YearsOfExperience,
                             ProficiencyLevel = es.ProficiencyLevel ?? "Unknown",
-                            MatchStatus = hasSkills 
+                            MatchStatus = hasSkills
                                 ? GetAdvancedSkillMatchStatus(es, requiredSkills, categorySkills, minYears, experienceContext)
                                 : "Available",
                             LastUsedDate = es.LastUsedDate
@@ -341,7 +348,7 @@ namespace TalentMarketPlace.Services
                 }
 
                 // Sort by match percentage (or name if no skills)
-                results = hasSkills 
+                results = hasSkills
                     ? results.OrderByDescending(r => r.MatchPercentage).ToList()
                     : results.OrderBy(r => r.FullName).ToList();
 
@@ -368,6 +375,7 @@ namespace TalentMarketPlace.Services
                 return await FallbackSearchAsync(chatQuery);
             }
         }
+
         // ⭐ NEW: Helper method to check experience operator
         private bool CheckExperienceOperator(decimal actualYears, decimal requiredYears, string operatorStr)
         {
@@ -382,14 +390,21 @@ namespace TalentMarketPlace.Services
             };
         }
 
-        // ⭐ NEW: Build applied filters with experience context
+        // ⭐ UPDATED: Build applied filters - show mandatory and nice-to-have separately
         private List<string> BuildAppliedFilters(ParseQueryResult parseResult, ExperienceContext? expContext)
         {
             var filters = new List<string>();
 
+            // Show mandatory skills
             if (parseResult.Parsed.Skills?.Any() == true)
             {
-                filters.Add($"Skills: {string.Join(", ", parseResult.Parsed.Skills)}");
+                filters.Add($"Mandatory Skills: {string.Join(", ", parseResult.Parsed.Skills)}");
+            }
+
+            // Show nice-to-have skills
+            if (parseResult.Parsed.CategorySkills?.Any() == true)
+            {
+                filters.Add($"Nice-to-Have Skills: {string.Join(", ", parseResult.Parsed.CategorySkills)}");
             }
 
             if (parseResult.Parsed.Categories?.Any() == true)
@@ -434,446 +449,148 @@ namespace TalentMarketPlace.Services
             ExperienceContext? experienceContext,
             bool skillsAreOr)
         {
-            // Debug logging
             Console.WriteLine($"");
             Console.WriteLine($"🔍 === CALCULATING MATCH FOR {employee.FullName} ===");
-            Console.WriteLine($"   Required Skills: {string.Join(", ", requiredSkills)}");
+            Console.WriteLine($"   Required Skills (Mandatory): {string.Join(", ", requiredSkills)}");
+            Console.WriteLine($"   Nice-to-Have Skills (Category): {string.Join(", ", categorySkills)}");
             Console.WriteLine($"   Min Years: {minYears?.ToString() ?? ""}");
             Console.WriteLine($"   Experience Context: {experienceContext?.Type ?? "none"}");
             Console.WriteLine($"   Operator: {experienceOperator}");
 
-            if (!requiredSkills.Any() && !categorySkills.Any())
+            if (!requiredSkills.Any())
             {
-                Console.WriteLine($"   ⚠️ No skills required, returning 0%");
+                Console.WriteLine($"   ⚠️ No mandatory skills required, returning 0%");
                 return (0, true);
             }
+
             decimal totalScore = 0;
             decimal maxScore = 0;
             bool meetsAllRequirements = true;
 
-            if (skillsAreOr)
+            // ⭐ REFINED: Only consider MANDATORY skills for scoring
+            // Category/Nice-to-have skills are IGNORED in scoring calculation
+
+            Console.WriteLine($"   ⚖️ Scoring ONLY mandatory skills (nice-to-have skills ignored)");
+
+            foreach (var skillName in requiredSkills)
             {
-                // OR semantics: best single-skill match wins (max of per-skill scores)
-                Console.WriteLine($"   ⚖️ Applying OR semantics for skills (best match wins)");
-                decimal bestSkillScore = 0;
-                foreach (var skillName in requiredSkills)
-                {
-                    Console.WriteLine($"   📊 Checking skill (OR): {skillName}");
-                    var employeeSkill = employee.EmployeeSkills
-                        .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
-
-                    decimal skillScore = 0;
-
-                    if (employeeSkill != null)
-                    {
-                        Console.WriteLine($"      ✅ Employee has {skillName}: {employeeSkill.YearsOfExperience} years");
-
-                        if (minYears.HasValue && minYears.Value > 0)
-                        {
-                            decimal yearsToCheck = experienceContext?.Type == "skill_specific"
-                                ? employeeSkill.YearsOfExperience
-                                : employee.YearsOfExperience;
-
-                            Console.WriteLine($"      📌 Using {(experienceContext?.Type == "skill_specific" ? "SKILL-SPECIFIC" : "TOTAL")} experience: {yearsToCheck} years");
-
-                            bool meetsExperience = CheckExperienceOperator(yearsToCheck, minYears.Value, experienceOperator);
-                            if (meetsExperience)
-                            {
-                                skillScore = 100;
-                                Console.WriteLine($"      ✅ MEETS requirement ({yearsToCheck} >= {minYears}) → 100 points");
-                            }
-                            else
-                            {
-                                var ratio = yearsToCheck / minYears.Value;
-                                if (experienceContext?.Type == "skill_specific")
-                                {
-                                    if (ratio >= 0.8m) skillScore = 70;
-                                    else if (ratio >= 0.6m) skillScore = 50;
-                                    else if (ratio >= 0.4m) skillScore = 30;
-                                    else skillScore = 10;
-                                }
-                                else
-                                {
-                                    if (ratio >= 0.7m) skillScore = 60;
-                                    else if (ratio >= 0.5m) skillScore = 40;
-                                    else skillScore = 20;
-                                }
-                                Console.WriteLine($"      ⚠️ Partial experience → {skillScore} points (ratio {ratio:P1})");
-                            }
-                        }
-                        else
-                        {
-                            skillScore = 100;
-                            Console.WriteLine($"      ✅ No experience requirement → 100 points");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"      ❌ Employee does NOT have {skillName} → 0 points");
-                    }
-
-                    if (skillScore > bestSkillScore) bestSkillScore = skillScore;
-                }
-
-                totalScore += bestSkillScore;
                 maxScore += 100;
+                Console.WriteLine($"   📊 Checking MANDATORY skill: {skillName}");
 
-                // Category skills can still add value; treat them separately and combine by taking max
-                if (categorySkills.Any())
+                var employeeSkill = employee.EmployeeSkills
+                    .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+
+                if (employeeSkill != null)
                 {
-                    Console.WriteLine($"   📊 Checking category skills: {string.Join(", ", categorySkills)}");
-                    var matchedCategorySkills = employee.EmployeeSkills
-                        .Where(es => categorySkills.Contains(es.Skill.SkillName, StringComparer.OrdinalIgnoreCase))
-                        .ToList();
+                    Console.WriteLine($"      ✅ Employee has {skillName}: {employeeSkill.YearsOfExperience} years");
 
-                    if (matchedCategorySkills.Any())
+                    if (minYears.HasValue && minYears.Value > 0)
                     {
-                        Console.WriteLine($"      ✅ Has category skills: {string.Join(", ", matchedCategorySkills.Select(s => s.Skill.SkillName))}");
+                        decimal yearsToCheck;
 
-                        // ⭐ FIX: Check experience requirement for category skills too
-                        decimal categoryScore = 0;
-                        if (minYears.HasValue && minYears.Value > 0)
+                        if (experienceContext?.Type == "skill_specific")
                         {
-                            decimal yearsToCheck;
-
-                            if (experienceContext?.Type == "skill_specific")
-                            {
-                                yearsToCheck = matchedCategorySkills.Max(cs => cs.YearsOfExperience);
-                                Console.WriteLine($"      📌 Using SKILL-SPECIFIC experience: {yearsToCheck} years (max from category skills)");
-                            }
-                            else
-                            {
-                                yearsToCheck = employee.YearsOfExperience;
-                                Console.WriteLine($"      📌 Using TOTAL experience: {yearsToCheck} years");
-                            }
-
-                            bool meetsExperience = CheckExperienceOperator(
-                                yearsToCheck,
-                                minYears.Value,
-                                experienceOperator
-                            );
-
-                            if (meetsExperience)
-                            {
-                                categoryScore = 100;
-                                Console.WriteLine($"      ✅ MEETS experience requirement ({yearsToCheck} >= {minYears}) → 100 points");
-                            }
-                            else
-                            {
-                                var ratio = yearsToCheck / minYears.Value;
-
-                                if (experienceContext?.Type == "skill_specific")
-                                {
-                                    if (ratio >= 0.8m) categoryScore = 70;
-                                    else if (ratio >= 0.6m) categoryScore = 50;
-                                    else if (ratio >= 0.4m) categoryScore = 30;
-                                    else categoryScore = 10;
-                                }
-                                else
-                                {
-                                    if (ratio >= 0.7m) categoryScore = 60;
-                                    else if (ratio >= 0.5m) categoryScore = 40;
-                                    else categoryScore = 20;
-                                }
-
-                                Console.WriteLine($"      ⚠️ Partial experience → {categoryScore} points (ratio {ratio:P1})");
-                            }
+                            yearsToCheck = employeeSkill.YearsOfExperience;
+                            Console.WriteLine($"      📌 Using SKILL-SPECIFIC experience: {yearsToCheck} years");
                         }
                         else
                         {
-                            categoryScore = 100;
-                            Console.WriteLine($"      ✅ No experience requirement → 100 points");
+                            yearsToCheck = employee.YearsOfExperience;
+                            Console.WriteLine($"      📌 Using TOTAL experience: {yearsToCheck} years");
                         }
 
-                        // Take the better of skill match vs category match
-                        totalScore = Math.Max(totalScore, categoryScore);
-                        Console.WriteLine($"      📊 Combined score (max): {totalScore}");
+                        bool meetsExperience = CheckExperienceOperator(
+                            yearsToCheck,
+                            minYears.Value,
+                            experienceOperator
+                        );
+
+                        if (meetsExperience)
+                        {
+                            totalScore += 100;
+                            Console.WriteLine($"      ✅ MEETS requirement ({yearsToCheck} >= {minYears}) → +100 points");
+                        }
+                        else
+                        {
+                            var ratio = yearsToCheck / minYears.Value;
+                            decimal points = 0;
+
+                            Console.WriteLine($"      ⚠️ Does NOT meet requirement ({yearsToCheck} < {minYears})");
+                            Console.WriteLine($"      📊 Ratio: {ratio:P1} ({yearsToCheck}/{minYears})");
+
+                            if (experienceContext?.Type == "skill_specific")
+                            {
+                                Console.WriteLine($"      🎯 Applying STRICT skill-specific penalties:");
+
+                                if (ratio >= 0.8m)
+                                {
+                                    points = 70;
+                                    Console.WriteLine($"         80-99% of required → 70 points");
+                                }
+                                else if (ratio >= 0.6m)
+                                {
+                                    points = 50;
+                                    Console.WriteLine($"         60-79% of required → 50 points");
+                                }
+                                else if (ratio >= 0.4m)
+                                {
+                                    points = 30;
+                                    Console.WriteLine($"         40-59% of required → 30 points");
+                                }
+                                else
+                                {
+                                    points = 10;
+                                    Console.WriteLine($"         <40% of required → 10 points");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"      🎯 Applying LENIENT total experience scoring:");
+
+                                if (ratio >= 0.7m)
+                                {
+                                    points = 60;
+                                    Console.WriteLine($"         70%+ of required → 60 points");
+                                }
+                                else if (ratio >= 0.5m)
+                                {
+                                    points = 40;
+                                    Console.WriteLine($"         50-69% of required → 40 points");
+                                }
+                                else
+                                {
+                                    points = 20;
+                                    Console.WriteLine($"         <50% of required → 20 points");
+                                }
+                            }
+
+                            totalScore += points;
+                            Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
+                            meetsAllRequirements = false;
+                        }
                     }
                     else
                     {
-                        Console.WriteLine($"      ❌ No category skills → +0 points");
+                        totalScore += 100;
+                        Console.WriteLine($"      ✅ No experience requirement → +100 points");
                     }
+                }
+                else
+                {
+                    Console.WriteLine($"      ❌ Employee does NOT have {skillName} → +0 points");
+                    meetsAllRequirements = false;
                 }
             }
-            else
-            {
-                // AND semantics (original behavior): sum across skills
-                // Score for required skills
-                foreach (var skillName in requiredSkills)
-                {
-                    maxScore += 100;
-                    Console.WriteLine($"   📊 Checking skill: {skillName}");
 
-                    var employeeSkill = employee.EmployeeSkills
-                        .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
-
-                    if (employeeSkill != null)
-                    {
-                        Console.WriteLine($"      ✅ Employee has {skillName}: {employeeSkill.YearsOfExperience} years");
-
-                        // Check experience requirement based on context
-                        if (minYears.HasValue && minYears.Value > 0)
-                        {
-                            decimal yearsToCheck;
-
-                            // ⭐ Use context to determine which experience to check
-                            if (experienceContext?.Type == "skill_specific")
-                            {
-                                // Check skill-specific experience
-                                yearsToCheck = employeeSkill.YearsOfExperience;
-                                Console.WriteLine($"      📌 Using SKILL-SPECIFIC experience: {yearsToCheck} years");
-                            }
-                            else
-                            {
-                                // Check total experience
-                                yearsToCheck = employee.YearsOfExperience;
-                                Console.WriteLine($"      📌 Using TOTAL experience: {yearsToCheck} years");
-                            }
-
-                            bool meetsExperience = CheckExperienceOperator(
-                                yearsToCheck,
-                                minYears.Value,
-                                experienceOperator
-                            );
-
-                            if (meetsExperience)
-                            {
-                                // Perfect match - meets or exceeds requirement
-                                totalScore += 100;
-                                Console.WriteLine($"      ✅ MEETS requirement ({yearsToCheck} >= {minYears}) → +100 points");
-                            }
-                            else
-                            {
-                                // ⭐ STRICTER partial scoring based on experience gap
-                                var ratio = yearsToCheck / minYears.Value;
-                                decimal points = 0;
-
-                                Console.WriteLine($"      ⚠️ Does NOT meet requirement ({yearsToCheck} < {minYears})");
-                                Console.WriteLine($"      📊 Ratio: {ratio:P1} ({yearsToCheck}/{minYears})");
-
-                                if (experienceContext?.Type == "skill_specific")
-                                {
-                                    Console.WriteLine($"      🎯 Applying STRICT skill-specific penalties:");
-
-                                    // For skill-specific: MUCH stricter penalties
-                                    if (ratio >= 0.8m) // 80-99% (e.g., 4 out of 5 years)
-                                    {
-                                        points = 70;
-                                        Console.WriteLine($"         80-99% of required → 70 points");
-                                    }
-                                    else if (ratio >= 0.6m) // 60-79% (e.g., 3 out of 5 years)
-                                    {
-                                        points = 50;
-                                        Console.WriteLine($"         60-79% of required → 50 points");
-                                    }
-                                    else if (ratio >= 0.4m) // 40-59% (e.g., 2 out of 5 years)
-                                    {
-                                        points = 30;
-                                        Console.WriteLine($"         40-59% of required → 30 points");
-                                    }
-                                    else // < 40% (e.g., 1 out of 5 years)
-                                    {
-                                        points = 10;
-                                        Console.WriteLine($"         <40% of required → 10 points");
-                                    }
-
-                                    totalScore += points;
-                                    Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"      🎯 Applying LENIENT total experience scoring:");
-
-                                    // For total experience: slightly more lenient
-                                    if (ratio >= 0.7m)
-                                    {
-                                        points = 60;
-                                        Console.WriteLine($"         70%+ of required → 60 points");
-                                    }
-                                    else if (ratio >= 0.5m)
-                                    {
-                                        points = 40;
-                                        Console.WriteLine($"         50-69% of required → 40 points");
-                                    }
-                                    else
-                                    {
-                                        points = 20;
-                                        Console.WriteLine($"         <50% of required → 20 points");
-                                    }
-
-                                    totalScore += points;
-                                    Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
-                                }
-
-                                meetsAllRequirements = false;
-                            }
-                        }
-                        else
-                        {
-                            // No experience requirement - just having the skill is 100%
-                            totalScore += 100;
-                            Console.WriteLine($"      ✅ No experience requirement → +100 points");
-                        }
-                    }
-                    else
-                    {
-                        // Doesn't have the skill at all - 0 points
-                        Console.WriteLine($"      ❌ Employee does NOT have {skillName} → +0 points");
-                        meetsAllRequirements = false;
-                    }
-                }
-
-                // Score for category skills
-                // ⭐ FIX: Only score category skills if:
-                //   1. No required skills were specified, OR
-                //   2. At least one required skill was found
-                bool shouldScoreCategorySkills = !requiredSkills.Any() || (totalScore > 0);
-                
-                if (categorySkills.Any() && shouldScoreCategorySkills)
-                {
-                    maxScore += 100;
-                    Console.WriteLine($"   📊 Checking category skills: {string.Join(", ", categorySkills)}");
-                }
-                else if (categorySkills.Any() && !shouldScoreCategorySkills)
-                {
-                    // ⭐ Skip category skills if required skills were specified but not found
-                    Console.WriteLine($"   ⚠️ Skipping category skills: required skill(s) not found (requiredSkills: {string.Join(", ", requiredSkills)})");
-                }
-
-                if (categorySkills.Any() && shouldScoreCategorySkills)
-                {
-                    var matchedCategorySkills = employee.EmployeeSkills
-                        .Where(es => categorySkills.Contains(es.Skill.SkillName, StringComparer.OrdinalIgnoreCase))
-                        .ToList();
-
-                    if (matchedCategorySkills.Any())
-                    {
-                        Console.WriteLine($"      ✅ Has category skills: {string.Join(", ", matchedCategorySkills.Select(s => s.Skill.SkillName))}");
-
-                        // ⭐ FIX: Check experience requirement for category skills too
-                        if (minYears.HasValue && minYears.Value > 0)
-                        {
-                            decimal yearsToCheck;
-
-                            // Use context to determine which experience to check
-                            if (experienceContext?.Type == "skill_specific")
-                            {
-                                // For category skills, use the max years from any matching skill
-                                yearsToCheck = matchedCategorySkills.Max(cs => cs.YearsOfExperience);
-                                Console.WriteLine($"      📌 Using SKILL-SPECIFIC experience: {yearsToCheck} years (max from category skills)");
-                            }
-                            else
-                            {
-                                // Check total experience
-                                yearsToCheck = employee.YearsOfExperience;
-                                Console.WriteLine($"      📌 Using TOTAL experience: {yearsToCheck} years");
-                            }
-
-                            bool meetsExperience = CheckExperienceOperator(
-                                yearsToCheck,
-                                minYears.Value,
-                                experienceOperator
-                            );
-
-                            if (meetsExperience)
-                            {
-                                // Perfect match - meets or exceeds requirement
-                                totalScore += 100;
-                                Console.WriteLine($"      ✅ MEETS experience requirement ({yearsToCheck} >= {minYears}) → +100 points");
-                            }
-                            else
-                            {
-                                // ⭐ Apply partial scoring based on experience gap
-                                var ratio = yearsToCheck / minYears.Value;
-                                decimal points = 0;
-
-                                Console.WriteLine($"      ⚠️ Does NOT meet experience requirement ({yearsToCheck} < {minYears})");
-                                Console.WriteLine($"      📊 Ratio: {ratio:P1} ({yearsToCheck}/{minYears})");
-
-                                if (experienceContext?.Type == "skill_specific")
-                                {
-                                    Console.WriteLine($"      🎯 Applying STRICT skill-specific penalties:");
-
-                                    if (ratio >= 0.8m)
-                                    {
-                                        points = 70;
-                                        Console.WriteLine($"         80-99% of required → 70 points");
-                                    }
-                                    else if (ratio >= 0.6m)
-                                    {
-                                        points = 50;
-                                        Console.WriteLine($"         60-79% of required → 50 points");
-                                    }
-                                    else if (ratio >= 0.4m)
-                                    {
-                                        points = 30;
-                                        Console.WriteLine($"         40-59% of required → 30 points");
-                                    }
-                                    else
-                                    {
-                                        points = 10;
-                                        Console.WriteLine($"         <40% of required → 10 points");
-                                    }
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"      🎯 Applying LENIENT total experience scoring:");
-
-                                    if (ratio >= 0.7m)
-                                    {
-                                        points = 60;
-                                        Console.WriteLine($"         70%+ of required → 60 points");
-                                    }
-                                    else if (ratio >= 0.5m)
-                                    {
-                                        points = 40;
-                                        Console.WriteLine($"         50-69% of required → 40 points");
-                                    }
-                                    else
-                                    {
-                                        points = 20;
-                                        Console.WriteLine($"         <50% of required → 20 points");
-                                    }
-                                }
-
-                                totalScore += points;
-                                Console.WriteLine($"      ➕ Added {points} points (total so far: {totalScore}/{maxScore})");
-                                meetsAllRequirements = false;
-                            }
-                        }
-                        else
-                        {
-                            // No experience requirement - just having the skill is 100%
-                            totalScore += 100;
-                            Console.WriteLine($"      ✅ No experience requirement → +100 points");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"      ❌ No category skills → +0 points");
-                        meetsAllRequirements = false;
-                    }
-                }
-
-                var matchPercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
-
-                Console.WriteLine($"   ");
-                Console.WriteLine($"   📊 FINAL SCORE: {totalScore}/{maxScore} = {matchPercentage:F1}%");
-                Console.WriteLine($"   ✅ Meets all requirements: {meetsAllRequirements}");
-                Console.WriteLine($"===========================================");
-
-                return (matchPercentage, meetsAllRequirements);
-            }
-
-            // For OR branch, compute final percentage
-            var finalMatchPercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+            var matchPercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
 
             Console.WriteLine($"   ");
-            Console.WriteLine($"   📊 FINAL SCORE: {totalScore}/{maxScore} = {finalMatchPercentage:F1}%");
-            Console.WriteLine($"   ✅ Meets all requirements: {meetsAllRequirements}");
+            Console.WriteLine($"   📊 FINAL SCORE (Mandatory Skills Only): {totalScore}/{maxScore} = {matchPercentage:F1}%");
+            Console.WriteLine($"   ℹ️  Nice-to-have skills IGNORED in scoring");
+            Console.WriteLine($"   ✅ Meets all mandatory requirements: {meetsAllRequirements}");
             Console.WriteLine($"===========================================");
 
-            return (finalMatchPercentage, meetsAllRequirements);
+            return (matchPercentage, meetsAllRequirements);
         }
 
         // ⭐ UPDATED: Get skill match status with experience context
@@ -1009,6 +726,73 @@ namespace TalentMarketPlace.Services
             }
 
             return "Match";
+        }
+
+        // ⭐ NEW: Separate mandatory and nice-to-have skills based on the original query text
+        private (List<string> mandatory, List<string> niceToHave) SeparateMandatoryAndNiceToHaveSkills(
+            string originalQuery,
+            List<string> requiredSkills,
+            List<string> categorySkills)
+        {
+            var mandatorySkills = new List<string>();
+            var niceToHaveSkills = new List<string>();
+
+            var queryLower = originalQuery.ToLower();
+            var hasNiceToHaveMarker = queryLower.Contains("nice to have") || queryLower.Contains("good to have");
+
+            if (hasNiceToHaveMarker)
+            {
+                // Parse based on explicit markers in the query
+                var parts = System.Text.RegularExpressions.Regex.Split(
+                    originalQuery,
+                    @"\b(mandatory|nice to have|good to have)\b",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+
+                string currentContext = "mandatory";
+
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    var part = parts[i].Trim();
+
+                    if (part.Equals("mandatory", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentContext = "mandatory";
+                        continue;
+                    }
+                    else if (part.Equals("nice to have", StringComparison.OrdinalIgnoreCase) ||
+                             part.Equals("good to have", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentContext = "nice_to_have";
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(part)) continue;
+
+                    foreach (var skill in requiredSkills)
+                    {
+                        if (part.Contains(skill, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (currentContext == "mandatory" && !mandatorySkills.Contains(skill))
+                            {
+                                mandatorySkills.Add(skill);
+                            }
+                            else if (currentContext == "nice_to_have" && !niceToHaveSkills.Contains(skill))
+                            {
+                                niceToHaveSkills.Add(skill);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // No explicit markers, all are mandatory
+                mandatorySkills = requiredSkills.ToList();
+                niceToHaveSkills = categorySkills.ToList();
+            }
+
+            return (mandatorySkills, niceToHaveSkills);
         }
 
         // Keep existing search history methods...

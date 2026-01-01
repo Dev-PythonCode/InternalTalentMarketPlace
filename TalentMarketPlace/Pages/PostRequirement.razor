@@ -434,6 +434,61 @@ else
             existingRequirement.Status = updatedRequirement.Status;
 
             await RequirementService.UpdateAsync(existingRequirement);
+
+            // ⭐ NEW: Handle skill updates
+            if (updatedRequirement.RequirementSkills?.Any() == true)
+            {
+                // Get existing skills for this requirement
+                var existingSkills = await RequirementService.GetRequirementSkillsAsync(updatedRequirement.RequirementId);
+                
+                // Remove skills that are no longer in the updated list
+                foreach (var existingSkill in existingSkills)
+                {
+                    if (!updatedRequirement.RequirementSkills.Any(s => s.SkillId == existingSkill.SkillId))
+                    {
+                        await RequirementService.RemoveSkillAsync(existingSkill.RequirementSkillId);
+                    }
+                }
+                
+                // Add or update skills
+                foreach (var updatedSkill in updatedRequirement.RequirementSkills)
+                {
+                    var existingSkill = existingSkills.FirstOrDefault(s => s.SkillId == updatedSkill.SkillId);
+                    
+                    if (existingSkill != null)
+                    {
+                        // Update existing skill
+                        existingSkill.MinYearsRequired = updatedSkill.MinYearsRequired;
+                        existingSkill.IsMandatory = updatedSkill.IsMandatory;
+                        existingSkill.ProficiencyLevel = updatedSkill.ProficiencyLevel ?? "Intermediate";
+                        existingSkill.Weightage = updatedSkill.Weightage > 0 ? updatedSkill.Weightage : 1;
+                        await RequirementService.UpdateSkillAsync(existingSkill);
+                    }
+                    else
+                    {
+                        // Add new skill
+                        var newSkill = new RequirementSkill
+                        {
+                            RequirementId = updatedRequirement.RequirementId,
+                            SkillId = updatedSkill.SkillId,
+                            MinYearsRequired = updatedSkill.MinYearsRequired,
+                            IsMandatory = updatedSkill.IsMandatory,
+                            ProficiencyLevel = updatedSkill.ProficiencyLevel ?? "Intermediate",
+                            Weightage = updatedSkill.Weightage > 0 ? updatedSkill.Weightage : 1
+                        };
+                        await RequirementService.AddSkillAsync(newSkill);
+                    }
+                }
+            }
+            else
+            {
+                // If no skills provided, remove all existing skills
+                var existingSkills = await RequirementService.GetRequirementSkillsAsync(updatedRequirement.RequirementId);
+                foreach (var skill in existingSkills)
+                {
+                    await RequirementService.RemoveSkillAsync(skill.RequirementSkillId);
+                }
+            }
             
             Snackbar.Add("Requirement updated successfully!", Severity.Success);
             await LoadData();
@@ -447,22 +502,82 @@ else
 
     private void SearchMatchingEmployees(Requirement requirement)
     {
-        var skillIds = string.Join(",", requirement.RequirementSkills?.Select(rs => rs.SkillId) ?? new List<int>());
-        var minExp = requirement.RequirementSkills?.Min(rs => rs.MinYearsRequired) ?? 0;
-        var location = requirement.Location ?? "";
+        // ⭐ NEW: Construct natural language prompt from requirement skills
+        var prompt = ConstructNaturalLanguagePrompt(requirement);
         
-        var queryString = $"?Skills={skillIds}";
-        if (minExp > 0)
+        // ⭐ NEW: Pass the constructed prompt as query parameter
+        Navigation.NavigateTo($"/search-results?Q={Uri.EscapeDataString(prompt)}");
+    }
+
+    // ⭐ NEW: Helper method to construct natural language prompt from requirement
+    private string ConstructNaturalLanguagePrompt(Requirement requirement)
+    {
+        if (!requirement.RequirementSkills?.Any() == true)
         {
-            queryString += $"&Exp={minExp}";
+            // Fallback: location-only search if no skills specified
+            return !string.IsNullOrEmpty(requirement.Location)
+                ? $"Employees located in {requirement.Location}"
+                : "All employees";
         }
-        if (!string.IsNullOrEmpty(location) && location != "Any")
+
+        var mandatorySkills = requirement.RequirementSkills
+            .Where(rs => rs.IsMandatory)
+            .OrderByDescending(rs => rs.MinYearsRequired)
+            .ToList();
+
+        var niceToHaveSkills = requirement.RequirementSkills
+            .Where(rs => !rs.IsMandatory)
+            .OrderByDescending(rs => rs.MinYearsRequired)
+            .ToList();
+
+        var promptParts = new List<string>();
+
+        // Build mandatory skills section with clear labeling
+        if (mandatorySkills.Any())
         {
-            queryString += $"&Loc={Uri.EscapeDataString(location)}";
+            var skillDescriptions = mandatorySkills
+                .Select(rs => FormatSkillDescription(rs))
+                .ToList();
+
+            var skillsSection = string.Join(", ", skillDescriptions);
+            promptParts.Add($"Search employee with {skillsSection} mandatory");
         }
-        queryString += "&Avail=Available";
-        
-        Navigation.NavigateTo($"/search-results{queryString}");
+
+        // Build nice-to-have skills section with explicit labeling
+        if (niceToHaveSkills.Any())
+        {
+            var skillDescriptions = niceToHaveSkills
+                .Select(rs => FormatSkillDescription(rs))
+                .ToList();
+
+            var skillsSection = string.Join(", ", skillDescriptions);
+            promptParts.Add($"and {skillsSection} nice to have");
+        }
+
+        // Add location
+        if (!string.IsNullOrEmpty(requirement.Location) && requirement.Location != "Any")
+        {
+            promptParts.Add($"and located in {requirement.Location}");
+        }
+
+        var naturalLanguageQuery = string.Join(" ", promptParts);
+        Console.WriteLine($"Constructed Natural Language Query: {naturalLanguageQuery}");
+        return naturalLanguageQuery;
+    }
+
+    // ⭐ UPDATED: Helper method to format individual skill with experience only (no type here)
+    private string FormatSkillDescription(RequirementSkill rs)
+    {
+        var skillName = rs.Skill.SkillName;
+        var years = rs.MinYearsRequired;
+
+        if (years > 0)
+        {
+            var yearText = years == 1 ? "year" : "years";
+            return $"{skillName} {years} {yearText}";
+        }
+
+        return skillName;
     }
 
     private Color GetPriorityColor(string priority)

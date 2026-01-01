@@ -466,6 +466,15 @@ else
 
         try
         {
+            var currentEmployee = await AuthService.GetCurrentEmployeeAsync();
+            var currentUser = await AuthService.GetCurrentUserAsync();
+            
+            if (currentEmployee == null || currentUser == null)
+            {
+                Snackbar.Add("Authentication required", Severity.Error);
+                return;
+            }
+
             if (_selectedRequirementId.HasValue)
             {
                 // Load specific requirement and its applications
@@ -475,11 +484,22 @@ else
             }
             else
             {
-                // Load ALL applications across ALL requirements
+                // Load ALL applications based on user role
                 _selectedRequirement = null;
-                var currentEmployee = await AuthService.GetCurrentEmployeeAsync();
-                _applications = await ApplicationService.GetByManagerAsync(currentEmployee!.EmployeeId);
-                Console.WriteLine($"📋 Loaded {_applications.Count} applications across all requirements");
+                
+                // HR users see all applications from the organization
+                // Managers see only applications for their posted requirements
+                if (currentUser.Role == "HR")
+                {
+                    _applications = await ApplicationService.GetByHRAsync();
+                    Console.WriteLine($"📋 HR User: Loaded {_applications.Count} applications across organization");
+                }
+                else
+                {
+                    // Manager - only their posted requirements
+                    _applications = await ApplicationService.GetByManagerAsync(currentEmployee.EmployeeId);
+                    Console.WriteLine($"📋 Manager User: Loaded {_applications.Count} applications for their requirements");
+                }
             }
             
             _filteredApplications = _applications;

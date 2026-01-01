@@ -7,20 +7,24 @@ namespace TalentMarketPlace.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly TalentMarketplaceDbContext _context;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ProtectedSessionStorage _sessionStorage;
     private User? _currentUser;
     private Employee? _currentEmployee;
 
-    public AuthService(TalentMarketplaceDbContext context, ProtectedSessionStorage sessionStorage)
+    public AuthService(IServiceProvider serviceProvider, ProtectedSessionStorage sessionStorage)
     {
-        _context = context;
+        _serviceProvider = serviceProvider;
         _sessionStorage = sessionStorage;
     }
 
     public async Task<LoginResult> LoginAsync(string email, string password)
     {
-        var user = await _context.Users
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TalentMarketplaceDbContext>();
+
+        var user = await context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
 
         if (user == null)
@@ -43,7 +47,8 @@ public class AuthService : IAuthService
             };
         }
 
-        var employee = await _context.Employees
+        var employee = await context.Employees
+            .AsNoTracking()
             .Include(e => e.Team)
             .FirstOrDefaultAsync(e => e.UserId == user.UserId);
 
@@ -79,7 +84,9 @@ public class AuthService : IAuthService
             var result = await _sessionStorage.GetAsync<int>("UserId");
             if (result.Success)
             {
-                _currentUser = await _context.Users.FindAsync(result.Value);
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<TalentMarketplaceDbContext>();
+                _currentUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == result.Value);
             }
         }
         catch
@@ -97,7 +104,11 @@ public class AuthService : IAuthService
         var user = await GetCurrentUserAsync();
         if (user == null) return null;
 
-        _currentEmployee = await _context.Employees
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<TalentMarketplaceDbContext>();
+        
+        _currentEmployee = await context.Employees
+            .AsNoTracking()
             .Include(e => e.Team)
             .FirstOrDefaultAsync(e => e.UserId == user.UserId);
 

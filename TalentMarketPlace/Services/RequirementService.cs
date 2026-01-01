@@ -137,6 +137,14 @@ public class RequirementService : IRequirementService
         return requirementSkill;
     }
 
+    // ⭐ NEW: Update an existing requirement skill
+    public async Task<RequirementSkill> UpdateSkillAsync(RequirementSkill requirementSkill)
+    {
+        _context.RequirementSkills.Update(requirementSkill);
+        await _context.SaveChangesAsync();
+        return requirementSkill;
+    }
+
     public async Task<bool> RemoveSkillAsync(int requirementSkillId)
     {
         var skill = await _context.RequirementSkills.FindAsync(requirementSkillId);
@@ -175,22 +183,16 @@ public class RequirementService : IRequirementService
         return true;
     }
 
-    /// <summary>
-    /// Find open requirements that match the given core skills.
-    /// Returns requirements where the core skills match at least the specified percentage of required skills.
-    /// </summary>
     public async Task<List<Requirement>> FindBySkillsAsync(List<string> coreSkillNames, int minimumMatchPercentage = 70)
     {
         if (!coreSkillNames.Any())
             return new List<Requirement>();
 
-        // Normalize skill names
         var normalizedSkillNames = coreSkillNames
             .Select(s => s.ToLower().Trim())
             .Distinct()
             .ToList();
 
-        // Get all open requirements with their skills
         var openRequirements = await _context.Requirements
             .Include(r => r.RequirementSkills)
                 .ThenInclude(rs => rs.Skill)
@@ -199,7 +201,6 @@ public class RequirementService : IRequirementService
             .Where(r => r.Status == "Open" && r.IsActive)
             .ToListAsync();
 
-        // Filter requirements where at least minimumMatchPercentage of required skills are in coreSkillNames
         var matchedRequirements = new List<Requirement>();
 
         foreach (var requirement in openRequirements)
@@ -211,7 +212,6 @@ public class RequirementService : IRequirementService
                 .Select(rs => rs.Skill.SkillName.ToLower().Trim())
                 .ToList();
 
-            // Calculate match percentage: how many required skills are in core skills
             var matchedCount = requiredSkillNames
                 .Count(rSkill => normalizedSkillNames.Any(cSkill => 
                     rSkill.Contains(cSkill) || cSkill.Contains(rSkill)))
@@ -227,7 +227,6 @@ public class RequirementService : IRequirementService
             }
         }
 
-        // Sort by match percentage (highest first)
         return matchedRequirements
             .OrderByDescending(r => r.RequirementSkills.Count)
             .ToList();
