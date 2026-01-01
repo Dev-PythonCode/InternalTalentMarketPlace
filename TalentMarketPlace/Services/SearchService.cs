@@ -190,18 +190,33 @@ namespace TalentMarketPlace.Services
                 var requiredSkills = parseResult.Parsed.MandatorySkills?.ToList() ?? new List<string>();
                 var categorySkills = parseResult.Parsed.OptionalSkills?.ToList() ?? new List<string>();
                 
+                // ⭐ NEW: Check if there are mandatory categories (e.g., "database expert")
+                // If so, category_skills should be treated as mandatory, not optional
+                var hasMandatoryCategories = parseResult.Parsed.MandatoryCategories?.Any() == true;
+                
                 // If Python API didn't return separated skills, fall back to old behavior
                 if (!requiredSkills.Any() && !categorySkills.Any())
                 {
                     requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
-                    categorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
+                    var expandedCategorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
                     
-                    // ⭐ Parse the original query to separate mandatory from nice-to-have skills (fallback)
-                    (requiredSkills, categorySkills) = SeparateMandatoryAndNiceToHaveSkills(
-                        chatQuery,
-                        requiredSkills,
-                        categorySkills
-                    );
+                    // ⭐ If there are mandatory categories, category_skills are mandatory (not optional)
+                    if (hasMandatoryCategories && expandedCategorySkills.Any())
+                    {
+                        requiredSkills.AddRange(expandedCategorySkills);
+                        Console.WriteLine($"🔍 Category expansion: Added {expandedCategorySkills.Count} skills from mandatory categories: {string.Join(", ", parseResult.Parsed.MandatoryCategories ?? new List<string>())}");
+                    }
+                    else
+                    {
+                        categorySkills = expandedCategorySkills;
+                        
+                        // ⭐ Parse the original query to separate mandatory from nice-to-have skills (fallback)
+                        (requiredSkills, categorySkills) = SeparateMandatoryAndNiceToHaveSkills(
+                            chatQuery,
+                            requiredSkills,
+                            categorySkills
+                        );
+                    }
                 }
                 
                 var minYears = parseResult.Parsed.MinYearsExperience;
