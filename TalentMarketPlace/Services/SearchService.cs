@@ -257,14 +257,22 @@ namespace TalentMarketPlace.Services
                     .Include(e => e.User)
                     .Include(e => e.EmployeeSkills)
                         .ThenInclude(es => es.Skill)
+                            .ThenInclude(s => s.SkillAliases)
                     .Where(e => e.User.IsActive)
                     .AsQueryable();
 
                 // ⭐ Apply MANDATORY skill filter (employees MUST have at least one mandatory skill)
+                // Case-insensitive matching to handle variations like "SQL Server" vs "sql server"
+                // Also check skill aliases to handle normalized names (e.g., "SQL" matches "SQL Server")
                 if (hasSkills)
                 {
                     employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
-                        requiredSkills.Contains(es.Skill.SkillName)
+                        requiredSkills.Any(rs => 
+                            // Match skill name directly
+                            rs.Equals(es.Skill.SkillName, StringComparison.OrdinalIgnoreCase) ||
+                            // Also match against skill aliases
+                            es.Skill.SkillAliases.Any(sa => rs.Equals(sa.AliasName, StringComparison.OrdinalIgnoreCase))
+                        )
                     ));
                     Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
                 }
@@ -601,8 +609,11 @@ namespace TalentMarketPlace.Services
             decimal? minYears)
         {
             var skillName = employeeSkill.Skill.SkillName;
-            bool isMandatory = mandatorySkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
-            bool isOptional = optionalSkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
+            // Check both skill name and aliases for matching
+            bool isMandatory = mandatorySkills.Contains(skillName, StringComparer.OrdinalIgnoreCase) ||
+                               mandatorySkills.Any(ms => employeeSkill.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(ms, StringComparison.OrdinalIgnoreCase)));
+            bool isOptional = optionalSkills.Contains(skillName, StringComparer.OrdinalIgnoreCase) ||
+                              optionalSkills.Any(os => employeeSkill.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(os, StringComparison.OrdinalIgnoreCase)));
 
             if (!isMandatory && !isOptional)
                 return "Extra";
@@ -730,8 +741,12 @@ namespace TalentMarketPlace.Services
 
             foreach (var skillName in mandatorySkillNames)
             {
+                // Check both skill name and aliases (case-insensitive)
                 var empSkill = employee.EmployeeSkills
-                    .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(es => 
+                        es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase) ||
+                        es.Skill.SkillAliases.Any(sa => sa.AliasName.Equals(skillName, StringComparison.OrdinalIgnoreCase))
+                    );
 
                 if (empSkill != null)
                 {
