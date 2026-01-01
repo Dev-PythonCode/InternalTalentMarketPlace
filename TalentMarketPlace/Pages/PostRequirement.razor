@@ -502,8 +502,22 @@ else
 
     private void SearchMatchingEmployees(Requirement requirement)
     {
+        // ⭐ Validate that the requirement has skills
+        if (!requirement.RequirementSkills?.Any() == true)
+        {
+            Snackbar.Add("⚠️ Cannot search: Please add at least one skill to the requirement", Severity.Warning);
+            return;
+        }
+        
         // ⭐ NEW: Construct natural language prompt from requirement skills
         var prompt = ConstructNaturalLanguagePrompt(requirement);
+        
+        // ⭐ Validate prompt is not empty
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            Snackbar.Add("⚠️ Cannot search: No skills specified for this requirement", Severity.Warning);
+            return;
+        }
         
         // ⭐ NEW: Pass the constructed prompt as query parameter
         Navigation.NavigateTo($"/search-results?Q={Uri.EscapeDataString(prompt)}");
@@ -514,10 +528,9 @@ else
     {
         if (!requirement.RequirementSkills?.Any() == true)
         {
-            // Fallback: location-only search if no skills specified
-            return !string.IsNullOrEmpty(requirement.Location)
-                ? $"Employees located in {requirement.Location}"
-                : "All employees";
+            // If there are no skills, we cannot perform a meaningful search
+            // Return empty string which will be handled by the search service
+            return "";
         }
 
         var mandatorySkills = requirement.RequirementSkills
@@ -532,6 +545,9 @@ else
 
         var promptParts = new List<string>();
 
+        // Start with "Search employee with"
+        promptParts.Add("Search employee with");
+
         // Build mandatory skills section with clear labeling
         if (mandatorySkills.Any())
         {
@@ -540,7 +556,8 @@ else
                 .ToList();
 
             var skillsSection = string.Join(", ", skillDescriptions);
-            promptParts.Add($"Search employee with {skillsSection} mandatory");
+            promptParts.Add(skillsSection);
+            promptParts.Add("mandatory");
         }
 
         // Build nice-to-have skills section with explicit labeling
@@ -551,13 +568,16 @@ else
                 .ToList();
 
             var skillsSection = string.Join(", ", skillDescriptions);
-            promptParts.Add($"and {skillsSection} nice to have");
+            promptParts.Add("and");
+            promptParts.Add(skillsSection);
+            promptParts.Add("nice to have");
         }
 
-        // Add location
+        // Add location at the end
         if (!string.IsNullOrEmpty(requirement.Location) && requirement.Location != "Any")
         {
-            promptParts.Add($"and located in {requirement.Location}");
+            promptParts.Add("and located in");
+            promptParts.Add(requirement.Location);
         }
 
         var naturalLanguageQuery = string.Join(" ", promptParts);

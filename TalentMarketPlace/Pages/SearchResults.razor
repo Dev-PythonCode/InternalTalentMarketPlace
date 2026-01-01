@@ -258,13 +258,14 @@ else if (_hasSearched && _searchResult != null && !string.IsNullOrEmpty(_searchR
         </MudButton>
     </MudPaper>
 }
-else if (_hasSearched)
+else if (_hasSearched && (_searchResult == null || !_searchResult.Employees.Any()))
 {
+    <!-- No employees found with the search criteria -->
     <MudPaper Class="pa-6 text-center">
         <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
-        <MudText Typo="Typo.h6" Class="mt-3">No employees found</MudText>
+        <MudText Typo="Typo.h6" Class="mt-3">No employees found with search criteria</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Try adjusting your filters or using different keywords
+            Try adjusting your search criteria or using different keywords
         </MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
             Tip: Try "Python developer with 5 years" or "Cloud expert in Bangalore"
