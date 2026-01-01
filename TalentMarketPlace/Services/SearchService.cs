@@ -326,7 +326,12 @@ namespace TalentMarketPlace.Services
                     );
 
                     // Include employee if they have at least one mandatory skill match
-                    bool shouldInclude = hasSkills ? (matchResult.MatchPercentage > 0) : true;
+                    // If no skills were specified but location/availability filters were applied, include employees that match those
+                    bool shouldInclude = hasSkills 
+                        ? (matchResult.MatchPercentage > 0)  // Must have skill match if skills were specified
+                        : (hasLocation || hasExperience || !string.IsNullOrEmpty(location) || !string.IsNullOrEmpty(avail));  // Otherwise just check if other filters were applied
+                    
+                    Console.WriteLine($"   {employee.FullName}: MatchScore={matchResult.MatchPercentage}%, ShouldInclude={shouldInclude}");
 
                     if (shouldInclude)
                     {
