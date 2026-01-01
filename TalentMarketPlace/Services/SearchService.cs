@@ -222,17 +222,11 @@ namespace TalentMarketPlace.Services
                 var hasLocation = !string.IsNullOrEmpty(location);
                 var hasExperience = minYears.HasValue && minYears.Value > 0;
 
-                // Determine whether skills should be treated as OR (either) or AND (all)
-                var skillsAreOr = false;
-                if (!string.IsNullOrEmpty(parseResult.OriginalQuery))
-                {
-                    var oq = parseResult.OriginalQuery;
-                    if (oq.IndexOf(" or ", StringComparison.OrdinalIgnoreCase) >= 0 || oq.IndexOf(" either ", StringComparison.OrdinalIgnoreCase) >= 0 || oq.Contains("/"))
-                    {
-                        skillsAreOr = true;
-                    }
-                }
+                // ⭐ Use skill_operator from Python API (defaults to "AND" if not provided)
+                var skillOperator = parseResult.Parsed.SkillOperator ?? "AND";
+                var skillsAreOr = skillOperator.Equals("OR", StringComparison.OrdinalIgnoreCase);
 
+                Console.WriteLine($"   SkillOperator: {skillOperator}");
                 Console.WriteLine($"   SkillsAreOr: {skillsAreOr}");
 
                 Console.WriteLine($"🔍 Search criteria:");
@@ -322,7 +316,8 @@ namespace TalentMarketPlace.Services
                         requiredSkills,
                         categorySkills,
                         minYears,
-                        expOperator
+                        expOperator,
+                        skillsAreOr  // ⭐ NEW: Pass OR operator flag
                     );
 
                     // Include employee if they have at least one mandatory skill match
@@ -708,7 +703,8 @@ namespace TalentMarketPlace.Services
             List<string> mandatorySkillNames,
             List<string> optionalSkillNames,
             decimal? minYears,
-            string experienceOperator)
+            string experienceOperator,
+            bool skillsAreOr = false)
         {
             if (!mandatorySkillNames.Any())
                 return (0, true);
@@ -717,10 +713,12 @@ namespace TalentMarketPlace.Services
             Console.WriteLine($"   Mandatory: {string.Join(", ", mandatorySkillNames)}");
             Console.WriteLine($"   Optional: {string.Join(", ", optionalSkillNames)}");
             Console.WriteLine($"   Min Years: {minYears}");
+            Console.WriteLine($"   Skill Operator: {(skillsAreOr ? "OR" : "AND")}");
 
             decimal totalMandatoryWeight = mandatorySkillNames.Count; // Each skill has weight 1
             decimal earnedMandatoryWeight = 0;
             bool meetsAllRequirements = true;
+            bool hasAnySkill = false; // Track if employee has at least one skill (for OR logic)
 
             foreach (var skillName in mandatorySkillNames)
             {
@@ -734,6 +732,8 @@ namespace TalentMarketPlace.Services
 
                 if (empSkill != null)
                 {
+                    hasAnySkill = true; // Employee has at least one skill
+                    
                     if (minYears.HasValue && minYears.Value > 0)
                     {
                         if (empSkill.YearsOfExperience >= minYears.Value)
@@ -767,9 +767,20 @@ namespace TalentMarketPlace.Services
                 }
             }
 
-            var matchPercentage = totalMandatoryWeight > 0 
-                ? Math.Round((earnedMandatoryWeight / totalMandatoryWeight) * 100, 2) 
-                : 0;
+            // ⭐ OR LOGIC: If operator is OR and employee has ANY skill, score is 100%
+            decimal matchPercentage;
+            if (skillsAreOr)
+            {
+                matchPercentage = hasAnySkill ? 100 : 0;
+                Console.WriteLine($"   🔀 OR OPERATOR: Employee has {(hasAnySkill ? "at least one" : "none")} of the required skills → {matchPercentage}%");
+            }
+            else
+            {
+                // AND LOGIC: Score based on percentage of matched skills
+                matchPercentage = totalMandatoryWeight > 0 
+                    ? Math.Round((earnedMandatoryWeight / totalMandatoryWeight) * 100, 2) 
+                    : 0;
+            }
 
             Console.WriteLine($"   SCORE: {earnedMandatoryWeight}/{totalMandatoryWeight} = {matchPercentage}%");
             Console.WriteLine($"   Optional skills ({string.Join(", ", optionalSkillNames)}) IGNORED in scoring");
