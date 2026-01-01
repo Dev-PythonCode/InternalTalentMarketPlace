@@ -242,9 +242,18 @@ public class EmployeeService : IEmployeeService
             SkillGaps = new List<SkillGap>()
         };
 
-        decimal totalWeightage = 0;
-        decimal matchedWeightage = 0;
+        // ⭐ FIX: Calculate score based on MANDATORY SKILLS ONLY
+        decimal totalMandatoryWeight = 0;
+        decimal earnedMandatoryWeight = 0;
+        var mandatorySkills = requirement.RequirementSkills.Where(rs => rs.IsMandatory).ToList();
 
+        // First pass: calculate total weight of mandatory skills
+        foreach (var reqSkill in mandatorySkills)
+        {
+            totalMandatoryWeight += reqSkill.Weightage;
+        }
+
+        // Second pass: process all skills, but only mandatory ones affect the score
         foreach (var reqSkill in requirement.RequirementSkills)
         {
             var empSkill = employee.EmployeeSkills
@@ -254,11 +263,9 @@ public class EmployeeService : IEmployeeService
             {
                 SkillName = reqSkill.Skill.SkillName,
                 RequiredYears = reqSkill.MinYearsRequired,
-                IsMandatory = reqSkill.IsMandatory
+                IsMandatory = reqSkill.IsMandatory,
+                Weightage = reqSkill.Weightage
             };
-
-            var weightage = reqSkill.IsMandatory ? reqSkill.Weightage * 2 : reqSkill.Weightage;
-            totalWeightage += weightage;
 
             if (empSkill != null)
             {
@@ -267,25 +274,42 @@ public class EmployeeService : IEmployeeService
                 if (empSkill.YearsOfExperience >= reqSkill.MinYearsRequired)
                 {
                     matchDetail.MatchStatus = "Full";
-                    matchedWeightage += weightage;
+                    
+                    // Only mandatory skills contribute to score
+                    if (reqSkill.IsMandatory)
+                    {
+                        matchDetail.ScoreContribution = reqSkill.Weightage;
+                        earnedMandatoryWeight += reqSkill.Weightage;
+                    }
                 }
                 else if (empSkill.YearsOfExperience >= reqSkill.MinYearsRequired * 0.8m)
                 {
                     matchDetail.MatchStatus = "Partial";
-                    matchedWeightage += weightage * 0.7m;
+                    
+                    if (reqSkill.IsMandatory)
+                    {
+                        matchDetail.ScoreContribution = reqSkill.Weightage * 0.7m;
+                        earnedMandatoryWeight += reqSkill.Weightage * 0.7m;
+                    }
                 }
                 else
                 {
                     matchDetail.MatchStatus = "Partial";
                     var ratio = empSkill.YearsOfExperience / reqSkill.MinYearsRequired;
-                    matchedWeightage += weightage * ratio * 0.5m;
-
-                    // Add to skill gaps
-                    result.SkillGaps.Add(new SkillGap
+                    
+                    if (reqSkill.IsMandatory)
                     {
-                        SkillName = reqSkill.Skill.SkillName,
-                        GapYears = reqSkill.MinYearsRequired - empSkill.YearsOfExperience
-                    });
+                        matchDetail.ScoreContribution = reqSkill.Weightage * ratio * 0.5m;
+                        earnedMandatoryWeight += reqSkill.Weightage * ratio * 0.5m;
+
+                        // Add to skill gaps (mandatory only)
+                        result.SkillGaps.Add(new SkillGap
+                        {
+                            SkillName = reqSkill.Skill.SkillName,
+                            GapYears = reqSkill.MinYearsRequired - empSkill.YearsOfExperience,
+                            IsMandatory = true
+                        });
+                    }
                 }
             }
             else
@@ -293,18 +317,24 @@ public class EmployeeService : IEmployeeService
                 matchDetail.MatchStatus = "Missing";
                 matchDetail.EmployeeYears = 0;
 
-                result.SkillGaps.Add(new SkillGap
+                // Only add gap if it's a mandatory skill
+                if (reqSkill.IsMandatory)
                 {
-                    SkillName = reqSkill.Skill.SkillName,
-                    GapYears = reqSkill.MinYearsRequired
-                });
+                    result.SkillGaps.Add(new SkillGap
+                    {
+                        SkillName = reqSkill.Skill.SkillName,
+                        GapYears = reqSkill.MinYearsRequired,
+                        IsMandatory = true
+                    });
+                }
             }
 
             result.SkillMatches.Add(matchDetail);
         }
 
-        result.MatchPercentage = totalWeightage > 0
-            ? Math.Round((matchedWeightage / totalWeightage) * 100, 2)
+        // Calculate percentage based on mandatory skills only
+        result.MatchPercentage = totalMandatoryWeight > 0
+            ? Math.Round((earnedMandatoryWeight / totalMandatoryWeight) * 100, 2)
             : 0;
 
         return result;

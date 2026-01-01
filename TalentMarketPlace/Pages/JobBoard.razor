@@ -105,34 +105,83 @@ else if (_filteredRequirements.Any())
                     </div>
                 </MudPaper>
 
+                <!-- Scoring Explanation -->
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3 pa-2" Icon="@Icons.Material.Filled.Info" Variant="Variant.Text">
+                    <MudText Typo="Typo.caption">
+                        Score based on <strong>mandatory skills only</strong> vs. your experience level
+                    </MudText>
+                </MudAlert>
+
                 <!-- Required Skills -->
                 <div class="mb-3">
-                    <strong>Required Skills:</strong>
-                    @foreach (var skill in req.RequirementSkills)
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Class="mr-1" style="color: #ff6b6b;" />
+                        Mandatory Skills (Scored)
+                    </MudText>
+                    @if (!req.RequirementSkills.Where(s => s.IsMandatory).Any())
                     {
-                        var hasSkill = _mySkillIds.Contains(skill.SkillId);
-                        var mySkillYears = _mySkillYears.GetValueOrDefault(skill.SkillId, 0);
-                        
-                        <MudChip T="string" Size="Size.Small" Class="mr-1 mb-1"
-                                 Color="@(hasSkill && mySkillYears >= skill.MinYearsRequired ? Color.Success : 
-                                         hasSkill ? Color.Warning : Color.Error)"
-                                 Variant="Variant.Filled">
-                            @skill.Skill.SkillName - @skill.MinYearsRequired yrs
-                            @if (hasSkill && mySkillYears >= skill.MinYearsRequired)
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">No mandatory skills specified</MudText>
+                    }
+                    else
+                    {
+                        <div>
+                            @foreach (var skill in req.RequirementSkills.Where(s => s.IsMandatory))
                             {
-                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="ml-1" />
+                                var hasSkill = _mySkillIds.Contains(skill.SkillId);
+                                var mySkillYears = _mySkillYears.GetValueOrDefault(skill.SkillId, 0);
+                                var meetsRequirement = hasSkill && mySkillYears >= skill.MinYearsRequired;
+                                
+                                <MudChip T="string" Size="Size.Small" Class="mr-1 mb-1"
+                                         Color="@(meetsRequirement ? Color.Success : 
+                                                 hasSkill ? Color.Warning : Color.Error)"
+                                         Variant="Variant.Filled">
+                                    @skill.Skill.SkillName - @skill.MinYearsRequired yrs
+                                    @if (meetsRequirement)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="ml-1" />
+                                    }
+                                    else if (hasSkill)
+                                    {
+                                        <span class="ml-1">(you: @mySkillYears yrs)</span>
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="ml-1" />
+                                    }
+                                </MudChip>
                             }
-                            else if (hasSkill)
-                            {
-                                <span class="ml-1">(you: @mySkillYears)</span>
-                            }
-                            else
-                            {
-                                <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="ml-1" />
-                            }
-                        </MudChip>
+                        </div>
                     }
                 </div>
+
+                <!-- Optional Skills -->
+                @if (req.RequirementSkills.Where(s => !s.IsMandatory).Any())
+                {
+                    <div class="mb-3">
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.ChecklistRtl" Size="Size.Small" Class="mr-1" />
+                            Optional Skills (Bonus)
+                        </MudText>
+                        <div>
+                            @foreach (var skill in req.RequirementSkills.Where(s => !s.IsMandatory))
+                            {
+                                var hasSkill = _mySkillIds.Contains(skill.SkillId);
+                                var mySkillYears = _mySkillYears.GetValueOrDefault(skill.SkillId, 0);
+                                var meetsRequirement = hasSkill && mySkillYears >= skill.MinYearsRequired;
+                                
+                                <MudChip T="string" Size="Size.Small" Class="mr-1 mb-1"
+                                         Color="@(hasSkill ? Color.Success : Color.Default)"
+                                         Variant="Variant.Text">
+                                    @skill.Skill.SkillName
+                                    @if (hasSkill)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="ml-1" />
+                                    }
+                                </MudChip>
+                            }
+                        </div>
+                    </div>
+                }
 
                 <!-- Actions -->
                 <div class="d-flex gap-2">

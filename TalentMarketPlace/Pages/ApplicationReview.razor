@@ -234,32 +234,75 @@ else
                         var missingSkills = _selectedRequirement.RequirementSkills?
                             .Where(rs => !app.Employee.EmployeeSkills.Any(es => es.SkillId == rs.SkillId))
                             .ToList() ?? new List<RequirementSkill>();
+
+                        var missingMandatorySkills = missingSkills
+                            .Where(s => s.IsMandatory)
+                            .ToList();
                         
-                        <!-- Missing Skills Summary -->
-                        if (missingSkills.Any())
+                        <!-- Missing Mandatory Skills Warning -->
+                        if (missingMandatorySkills.Any())
                         {
-                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Warning">
-                                <strong>Missing:</strong> @string.Join(", ", missingSkills.Select(s => s.Skill.SkillName))
+                            <MudAlert Severity="Severity.Error" Dense="false" Class="mb-3" Icon="@Icons.Material.Filled.WarningAmber">
+                                <div>
+                                    <strong>⭐ Missing Mandatory Skills:</strong>
+                                </div>
+                                <div class="mt-2">
+                                    @foreach (var skill in missingMandatorySkills)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ma-1">
+                                            @skill.Skill.SkillName (@skill.MinYearsRequired years required)
+                                        </MudChip>
+                                    }
+                                </div>
                             </MudAlert>
                         }
 
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Skill Comparison</MudText>
+                        <!-- Scoring Breakdown Explanation -->
+                        <MudAlert Severity="Severity.Info" Dense="false" Class="mb-3" Icon="@Icons.Material.Filled.Info" Variant="Variant.Outlined">
+                            <div>
+                                <strong>📊 Scoring Logic:</strong>
+                            </div>
+                            <MudText Typo="Typo.caption" Class="mt-2">
+                                Match % = (Earned mandatory skill weight / Total mandatory skill weight) × 100
+                            </MudText>
+                            <MudText Typo="Typo.caption">
+                                ✓ Only <strong>MANDATORY skills</strong> are counted in the score
+                            </MudText>
+                            <MudText Typo="Typo.caption">
+                                ○ Optional/Nice-to-have skills are shown for reference but <u>NOT</u> included in scoring
+                            </MudText>
+                            <MudText Typo="Typo.caption" Class="mt-2">
+                                For each mandatory skill:
+                                <ul>
+                                    <li><strong>Full Match:</strong> Employee years ≥ Required years → 100% weight earned</li>
+                                    <li><strong>Partial Match:</strong> Employee years ≥ 80% of required → 70% weight earned</li>
+                                    <li><strong>Partial Match:</strong> Employee years < 80% → (emp years / req years) × 50% weight</li>
+                                    <li><strong>Missing:</strong> 0% weight earned</li>
+                                </ul>
+                            </MudText>
+                        </MudAlert>
+
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Assessment" Size="Size.Small" Class="mr-1" />
+                            Mandatory Skills (Scored)
+                        </MudText>
                         <MudGrid>
-                            @foreach (var reqSkill in _selectedRequirement.RequirementSkills)
+                            @foreach (var reqSkill in _selectedRequirement.RequirementSkills.Where(rs => rs.IsMandatory))
                             {
                                 var empSkill = app.Employee.EmployeeSkills.FirstOrDefault(es => es.SkillId == reqSkill.SkillId);
                                 var hasSkill = empSkill != null;
                                 var meetsRequirement = hasSkill && empSkill!.YearsOfExperience >= reqSkill.MinYearsRequired;
+                                var isPartial = hasSkill && !meetsRequirement;
                                 
                                 <MudItem xs="6" md="3">
-                                    <MudPaper Class="pa-2" Elevation="0" Style="background: #f9f9f9;">
-                                        <div class="d-flex justify-space-between">
-                                            <span>@reqSkill.Skill.SkillName</span>
+                                    <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid @(meetsRequirement ? "#4caf50" : isPartial ? "#ff9800" : "#f44336");">
+                                        <div class="d-flex justify-space-between align-center mb-2">
+                                            <strong>@reqSkill.Skill.SkillName</strong>
                                             @if (meetsRequirement)
                                             {
                                                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
                                             }
-                                            else if (hasSkill)
+                                            else if (isPartial)
                                             {
                                                 <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
                                             }
@@ -268,24 +311,72 @@ else
                                                 <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Small" />
                                             }
                                         </div>
-                                        <MudText Typo="Typo.caption" Color="@(meetsRequirement ? Color.Success : hasSkill ? Color.Warning : Color.Error)">
-                                            @(hasSkill ? $"{empSkill!.YearsOfExperience} yrs" : "0 yrs") / @reqSkill.MinYearsRequired yrs required
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @(hasSkill ? $"{empSkill!.YearsOfExperience}" : "0") / @reqSkill.MinYearsRequired years
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @(meetsRequirement ? "Full Match" : isPartial ? "Partial Match" : "Missing")
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" style="font-size: 11px; color: #666;">
+                                            Proficiency: @(hasSkill ? empSkill!.ProficiencyLevel : "-")
                                         </MudText>
                                     </MudPaper>
                                 </MudItem>
                             }
                         </MudGrid>
 
+                        <!-- Optional Skills Section -->
+                        @if (_selectedRequirement.RequirementSkills.Where(rs => !rs.IsMandatory).Any())
+                        {
+                            <MudText Typo="Typo.subtitle2" Class="mb-2 mt-4">
+                                <MudIcon Icon="@Icons.Material.Filled.ChecklistRtl" Size="Size.Small" Class="mr-1" />
+                                Optional Skills (Not Scored)
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                                These skills are nice-to-have and do not affect the match score
+                            </MudText>
+                            <MudGrid>
+                                @foreach (var reqSkill in _selectedRequirement.RequirementSkills.Where(rs => !rs.IsMandatory))
+                                {
+                                    var empSkill = app.Employee.EmployeeSkills.FirstOrDefault(es => es.SkillId == reqSkill.SkillId);
+                                    var hasSkill = empSkill != null;
+                                    var meetsRequirement = hasSkill && empSkill!.YearsOfExperience >= reqSkill.MinYearsRequired;
+                                    
+                                    <MudItem xs="6" md="3">
+                                        <MudPaper Class="pa-3" Elevation="0" Style="background: #f5f5f5; border: 1px dashed #bbb;">
+                                            <div class="d-flex justify-space-between align-center mb-2">
+                                                <strong>@reqSkill.Skill.SkillName</strong>
+                                                @if (hasSkill)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Default" Size="Size.Small" />
+                                                }
+                                            </div>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @(hasSkill ? $"{empSkill!.YearsOfExperience}" : "0") / @reqSkill.MinYearsRequired years
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @(hasSkill ? "Bonus" : "Not listed")
+                                            </MudText>
+                                        </MudPaper>
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        }
+
                         <!-- Learning Suggestions (if needed) -->
-                        if (app.MatchPercentage < 80 && missingSkills.Any())
+                        if (app.MatchPercentage < 80 && missingMandatorySkills.Any())
                         {
                             <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background: #fef3c7;">
                                 <MudText Typo="Typo.subtitle2" Style="color: #92400e;">
                                     <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
-                                    Missing Skills to Learn:
+                                    Mandatory Skills to Learn:
                                 </MudText>
                                 <MudList T="string" Dense="true">
-                                    @foreach (var skill in missingSkills.Take(3))
+                                    @foreach (var skill in missingMandatorySkills.Take(3))
                                     {
                                         <MudListItem T="string" Dense="true" Style="color: #92400e; font-size: 13px;">
                                             @skill.Skill.SkillName (@skill.MinYearsRequired years required)

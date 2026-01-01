@@ -256,44 +256,32 @@ public class ApplicationService : IApplicationService
             GapAnalysis = matchResult.SkillGaps
         };
 
-        // Calculate AI Score (weighted formula)
-        var mandatoryMatches = matchResult.SkillMatches
-            .Where(sm => sm.IsMandatory && sm.MatchStatus != "Missing")
-            .Count();
-        var totalMandatory = matchResult.SkillMatches.Count(sm => sm.IsMandatory);
+        // ⭐ FIX: AIScore is now the same as MatchPercentage since both use mandatory skills only
+        validation.AIScore = validation.MatchPercentage;
 
-        if (totalMandatory > 0)
-        {
-            var mandatoryScore = (decimal)mandatoryMatches / totalMandatory * 100;
-            validation.AIScore = Math.Round((validation.MatchPercentage * 0.6m) + (mandatoryScore * 0.4m), 2);
-        }
-        else
-        {
-            validation.AIScore = validation.MatchPercentage;
-        }
-
-        // Generate recommendation
+        // Generate recommendation based on score
         if (validation.AIScore >= 80)
         {
             validation.Recommendation = "Good fit";
-            validation.RecommendationReason = "Candidate meets or exceeds most skill requirements.";
+            validation.RecommendationReason = "Candidate meets or exceeds all mandatory skill requirements with sufficient experience.";
         }
         else if (validation.AIScore >= 60)
         {
             validation.Recommendation = "Needs training";
-            validation.RecommendationReason = "Candidate has foundational skills but would benefit from upskilling.";
+            validation.RecommendationReason = "Candidate has foundational mandatory skills but needs to improve in some areas.";
         }
         else
         {
             validation.Recommendation = "Not recommended";
-            validation.RecommendationReason = "Significant skill gaps exist for this role.";
+            validation.RecommendationReason = "Significant gaps exist in mandatory skill requirements for this role.";
         }
 
-        // Get learning suggestions for gaps
-        if (matchResult.SkillGaps.Any())
+        // Get learning suggestions for mandatory gap skills only
+        if (matchResult.SkillGaps.Where(g => g.IsMandatory).Any())
         {
+            var gapSkillNames = matchResult.SkillGaps.Where(g => g.IsMandatory).Select(g => g.SkillName).ToList();
             var skillIds = await _context.Skills
-                .Where(s => matchResult.SkillGaps.Select(g => g.SkillName).Contains(s.SkillName))
+                .Where(s => gapSkillNames.Contains(s.SkillName))
                 .Select(s => s.SkillId)
                 .ToListAsync();
 

@@ -18,13 +18,29 @@ public interface IApplicationService
 
 public class ApplicationValidation
 {
+    /// <summary>Match percentage based on MANDATORY skills only</summary>
     public decimal MatchPercentage { get; set; }
+
+    /// <summary>AI recommendation score (same as MatchPercentage since scoring is now consistent)</summary>
     public decimal AIScore { get; set; }
-    public string Recommendation { get; set; } = string.Empty; // Good fit, Needs training, Not recommended
+
+    /// <summary>Recommendation category: "Good fit", "Needs training", or "Not recommended"</summary>
+    public string Recommendation { get; set; } = string.Empty;
+
+    /// <summary>Detailed reason for the recommendation</summary>
     public string RecommendationReason { get; set; } = string.Empty;
+
+    /// <summary>All skill matches (both mandatory and optional) with match status</summary>
     public List<SkillMatchDetail> SkillAnalysis { get; set; } = new();
+
+    /// <summary>Skill gaps - only MANDATORY skills that are missing or below threshold</summary>
     public List<SkillGap> GapAnalysis { get; set; } = new();
+
+    /// <summary>Suggested learning resources for gap skills</summary>
     public List<LearningResource> SuggestedLearning { get; set; } = new();
+
+    /// <summary>Detailed scoring breakdown for transparency</summary>
+    public ScoringBreakdown? ScoringBreakdown { get; set; }
 }
 
 public class ApplicationListItem
