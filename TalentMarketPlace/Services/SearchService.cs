@@ -298,15 +298,14 @@ namespace TalentMarketPlace.Services
 
                 foreach (var employee in employees)
                 {
-                    // Calculate match score (ONLY based on mandatory skills)
-                    var matchResult = CalculateAdvancedMatchWithContext(
+                    // ⭐ UNIFIED: Calculate match score using the same logic as EmployeeService
+                    // Only mandatory skills count toward the score
+                    var matchResult = CalculateUnifiedMatchScore(
                         employee,
                         requiredSkills,
                         categorySkills,
                         minYears,
-                        expOperator,
-                        experienceContext,
-                        skillsAreOr
+                        expOperator
                     );
 
                     // Include employee if they have at least one mandatory skill match
@@ -320,7 +319,7 @@ namespace TalentMarketPlace.Services
                             YearsOfExperience = es.YearsOfExperience,
                             ProficiencyLevel = es.ProficiencyLevel ?? "Unknown",
                             MatchStatus = hasSkills
-                                ? GetAdvancedSkillMatchStatus(es, requiredSkills, categorySkills, minYears, experienceContext)
+                                ? GetUnifiedSkillMatchStatus(es, requiredSkills, categorySkills, minYears)
                                 : "Available",
                             LastUsedDate = es.LastUsedDate
                         }).ToList();
@@ -594,6 +593,35 @@ namespace TalentMarketPlace.Services
         }
 
         // ⭐ UPDATED: Get skill match status with experience context
+        // ⭐ NEW: Unified skill match status (simpler, consistent with EmployeeService)
+        private string GetUnifiedSkillMatchStatus(
+            EmployeeSkill employeeSkill,
+            List<string> mandatorySkills,
+            List<string> optionalSkills,
+            decimal? minYears)
+        {
+            var skillName = employeeSkill.Skill.SkillName;
+            bool isMandatory = mandatorySkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
+            bool isOptional = optionalSkills.Contains(skillName, StringComparer.OrdinalIgnoreCase);
+
+            if (!isMandatory && !isOptional)
+                return "Extra";
+
+            if (!isMandatory && isOptional)
+                return "Optional";
+
+            // For mandatory skills, check experience
+            if (minYears.HasValue && minYears.Value > 0)
+            {
+                if (employeeSkill.YearsOfExperience >= minYears.Value)
+                    return "Match";
+                else
+                    return "Partial";
+            }
+
+            return "Match";
+        }
+
         private string GetAdvancedSkillMatchStatus(
             EmployeeSkill employeeSkill,
             List<string> requiredSkills,
@@ -677,6 +705,77 @@ namespace TalentMarketPlace.Services
             result.ParsedQuery = query;
 
             return result;
+        }
+
+        // ⭐ NEW: Unified scoring method matching EmployeeService logic
+        // Only mandatory skills count toward the score
+        private (decimal MatchPercentage, bool MeetsRequirements) CalculateUnifiedMatchScore(
+            Employee employee,
+            List<string> mandatorySkillNames,
+            List<string> optionalSkillNames,
+            decimal? minYears,
+            string experienceOperator)
+        {
+            if (!mandatorySkillNames.Any())
+                return (0, true);
+
+            Console.WriteLine($"🔍 UNIFIED SCORE CALC: {employee.FullName}");
+            Console.WriteLine($"   Mandatory: {string.Join(", ", mandatorySkillNames)}");
+            Console.WriteLine($"   Optional: {string.Join(", ", optionalSkillNames)}");
+            Console.WriteLine($"   Min Years: {minYears}");
+
+            decimal totalMandatoryWeight = mandatorySkillNames.Count; // Each skill has weight 1
+            decimal earnedMandatoryWeight = 0;
+            bool meetsAllRequirements = true;
+
+            foreach (var skillName in mandatorySkillNames)
+            {
+                var empSkill = employee.EmployeeSkills
+                    .FirstOrDefault(es => es.Skill.SkillName.Equals(skillName, StringComparison.OrdinalIgnoreCase));
+
+                if (empSkill != null)
+                {
+                    if (minYears.HasValue && minYears.Value > 0)
+                    {
+                        if (empSkill.YearsOfExperience >= minYears.Value)
+                        {
+                            earnedMandatoryWeight += 1; // Full match = 100% weight
+                            Console.WriteLine($"   ✅ {skillName}: {empSkill.YearsOfExperience} >= {minYears} → +1");
+                        }
+                        else if (empSkill.YearsOfExperience >= minYears.Value * 0.8m)
+                        {
+                            earnedMandatoryWeight += 0.7m; // Good match = 70% weight
+                            Console.WriteLine($"   ⚠️  {skillName}: {empSkill.YearsOfExperience} >= 80% of {minYears} → +0.7");
+                        }
+                        else
+                        {
+                            var ratio = empSkill.YearsOfExperience / minYears.Value;
+                            var points = ratio * 0.5m; // Partial match
+                            earnedMandatoryWeight += points;
+                            Console.WriteLine($"   ⚠️  {skillName}: {empSkill.YearsOfExperience}/{minYears} = {ratio:P0} → +{points:F2}");
+                        }
+                    }
+                    else
+                    {
+                        earnedMandatoryWeight += 1; // No requirement = full match
+                        Console.WriteLine($"   ✅ {skillName}: no requirement → +1");
+                    }
+                }
+                else
+                {
+                    meetsAllRequirements = false;
+                    Console.WriteLine($"   ❌ {skillName}: missing → +0");
+                }
+            }
+
+            var matchPercentage = totalMandatoryWeight > 0 
+                ? Math.Round((earnedMandatoryWeight / totalMandatoryWeight) * 100, 2) 
+                : 0;
+
+            Console.WriteLine($"   SCORE: {earnedMandatoryWeight}/{totalMandatoryWeight} = {matchPercentage}%");
+            Console.WriteLine($"   Optional skills ({string.Join(", ", optionalSkillNames)}) IGNORED in scoring");
+
+            return (matchPercentage, meetsAllRequirements);
         }
 
         private decimal CalculateMatchPercentage(Employee employee, SearchQuery query)
