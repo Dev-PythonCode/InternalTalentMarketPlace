@@ -668,46 +668,23 @@ namespace TalentMarketPlace.Services
 
         private async Task<SearchResult> FallbackSearchAsync(string query)
         {
-            var queryLower = query.ToLower();
-            var searchQuery = new SearchQuery();
+            // ⭐ DO NOT RETURN INCORRECT DATA
+            // Instead, show a user-friendly message about AI service being down
+            
+            _logger.LogWarning("Fallback search triggered - returning error message instead of incorrect results");
+            Console.WriteLine("⚠️ FALLBACK SEARCH: Returning service unavailable message");
 
-            var allSkills = await _context.Skills.ToListAsync();
-            var matchedSkillIds = allSkills
-                .Where(s => queryLower.Contains(s.SkillName.ToLower()))
-                .Select(s => s.SkillId)
-                .ToList();
-
-            if (matchedSkillIds.Any())
+            return new SearchResult
             {
-                searchQuery.SkillIds = matchedSkillIds;
-            }
-
-            var yearsMatch = System.Text.RegularExpressions.Regex.Match(queryLower, @"(\d+)\s*(?:years?|yrs?)");
-            if (yearsMatch.Success)
-            {
-                searchQuery.MinYearsExperience = decimal.Parse(yearsMatch.Groups[1].Value);
-            }
-
-            var locations = new[] { "bangalore", "chennai", "mumbai", "hyderabad", "delhi", "pune" };
-            foreach (var loc in locations)
-            {
-                if (queryLower.Contains(loc))
-                {
-                    searchQuery.Location = char.ToUpper(loc[0]) + loc.Substring(1);
-                    break;
-                }
-            }
-
-            if (queryLower.Contains("available") || queryLower.Contains("full time"))
-            {
-                searchQuery.AvailabilityStatus = "Available";
-            }
-
-            var result = await SearchEmployeesAsync(searchQuery);
-            result.AppliedFilters = new List<string> { "Fallback search used (Python API unavailable)" };
-            result.ParsedQuery = query;
-
-            return result;
+                Employees = new List<EmployeeSearchResult>(),
+                TotalCount = 0,
+                PageNumber = 1,
+                PageSize = 50,
+                AppliedFilters = new List<string>(),
+                ExtractedSkills = new List<string>(),
+                ParsedQuery = query,
+                Message = "🔧 AI Service Unavailable - The Python API is temporarily down. Please try again in a few moments. We recommend using the basic search filters while the service is being restored."
+            };
         }
 
         // ⭐ NEW: Unified scoring method matching EmployeeService logic
