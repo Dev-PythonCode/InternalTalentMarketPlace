@@ -247,10 +247,10 @@ else if (_hasSearched && _searchResult != null && !string.IsNullOrEmpty(_searchR
 {
     <!-- Display error/info message from API -->
     <MudPaper Class="pa-6 text-center" Style="background-color: #fff3cd; border: 1px solid #ffc107;">
-        <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="Size.Large" Color="Color.Warning" />
-        <MudText Typo="Typo.h6" Class="mt-3">Service Temporarily Unavailable</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Default">
-            @_searchResult.Message
+        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Warning" />
+        <MudText Typo="Typo.h6" Class="mt-3">@_searchResult.Message</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-2">
+            Try adjusting your search criteria or using different keywords
         </MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="mt-3"
                    OnClick="@(() => { _searchResult = null; _chatQuery = string.Empty; })">
