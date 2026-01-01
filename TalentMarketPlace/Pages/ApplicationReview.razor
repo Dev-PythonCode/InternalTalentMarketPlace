@@ -295,7 +295,8 @@ else
                                 var isPartial = hasSkill && !meetsRequirement;
                                 
                                 <MudItem xs="6" md="3">
-                                    <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid @(meetsRequirement ? "#4caf50" : isPartial ? "#ff9800" : "#f44336");">
+                                    <MudPaper Class="pa-3" Elevation="1" 
+                                             Style="@($"border-left: 4px solid {(meetsRequirement ? "#4caf50" : isPartial ? "#ff9800" : "#f44336")}")">
                                         <div class="d-flex justify-space-between align-center mb-2">
                                             <strong>@reqSkill.Skill.SkillName</strong>
                                             @if (meetsRequirement)
@@ -317,7 +318,7 @@ else
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                                             @(meetsRequirement ? "Full Match" : isPartial ? "Partial Match" : "Missing")
                                         </MudText>
-                                        <MudText Typo="Typo.caption" style="font-size: 11px; color: #666;">
+                                        <MudText Typo="Typo.caption" Style="font-size: 11px; color: #666;">
                                             Proficiency: @(hasSkill ? empSkill!.ProficiencyLevel : "-")
                                         </MudText>
                                     </MudPaper>
