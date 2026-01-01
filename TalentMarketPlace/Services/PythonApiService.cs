@@ -28,7 +28,8 @@ public class PythonApiService : IPythonApiService
         _logger.LogInformation("PythonApiService initialized with base URL: {BaseUrl}", _baseUrl);
 
         _httpClient.BaseAddress = new Uri(_baseUrl);
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        // ✅ INCREASED: 60 second timeout for initial API calls (spaCy model loading)
+        _httpClient.Timeout = TimeSpan.FromSeconds(60);
     }
 
     public async Task<bool> IsHealthyAsync()
@@ -36,17 +37,31 @@ public class PythonApiService : IPythonApiService
         try
         {
             _logger.LogDebug("Checking Python API health at {BaseUrl}/health", _baseUrl);
+            Console.WriteLine($"🏥 Health Check: Attempting to reach {_baseUrl}/health");
             
-            var response = await _httpClient.GetAsync("/health");
-            var isHealthy = response.IsSuccessStatusCode;
-            
-            _logger.LogInformation("Python API health check result: {IsHealthy}", isHealthy);
-            
-            return isHealthy;
+            // Create a cancellation token with extended timeout for health check
+            using (var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(45)))
+            {
+                var response = await _httpClient.GetAsync("/health", HttpCompletionOption.ResponseContentRead, cts.Token);
+                var isHealthy = response.IsSuccessStatusCode;
+                
+                _logger.LogInformation("Python API health check result: {IsHealthy} (Status: {StatusCode})", 
+                    isHealthy, response.StatusCode);
+                Console.WriteLine($"🏥 Health Check Result: {(isHealthy ? "✅ HEALTHY" : "❌ UNHEALTHY")} (Status: {response.StatusCode})");
+                
+                return isHealthy;
+            }
+        }
+        catch (System.Threading.Tasks.TaskCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Python API health check timed out after 45 seconds");
+            Console.WriteLine($"🏥 Health Check: ⏱️ TIMEOUT - Python API took too long to respond");
+            return false;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Python API health check failed");
+            _logger.LogWarning(ex, "Python API health check failed with error: {ErrorMessage}", ex.Message);
+            Console.WriteLine($"🏥 Health Check: ❌ ERROR - {ex.Message}");
             return false;
         }
     }

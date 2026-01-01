@@ -233,14 +233,6 @@ else if (_searchResult != null && _searchResult.Employees.Any())
                             </MudText>
                         </div>
                         
-                        <!-- Availability badge -->
-                        @{
-                            var (badgeColor, badgeText) = GetAvailabilityBadge(employee.AvailabilityStatus);
-                        }
-                        <MudChip T="string" Size="Size.Small" Color="@badgeColor" Class="mb-2">
-                            @badgeText
-                        </MudChip>
-                        
                         <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                                    OnClick="@(() => ViewProfile(employee.EmployeeId))">
                             View Full Profile
@@ -491,17 +483,6 @@ else
             >= 80 => Color.Success,
             >= 50 => Color.Warning,
             _ => Color.Error
-        };
-    }
-
-    private (Color, string) GetAvailabilityBadge(string status)
-    {
-        return status switch
-        {
-            "Available" => (Color.Success, "Available"),
-            "Limited" => (Color.Warning, "Limited"),
-            "Not Available" => (Color.Error, "Not Available"),
-            _ => (Color.Default, status)
         };
     }
 
