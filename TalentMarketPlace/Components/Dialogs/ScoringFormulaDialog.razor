@@ -1,0 +1,94 @@
+@using MudBlazor
+@using MudBlazor.Services
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+            Scoring Formula
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle2" Class="mb-3">
+            <strong>How Is Candidate Match Score Calculated?</strong>
+        </MudText>
+
+        <MudPaper Elevation="0" Class="bg-light pa-3 mb-3" Style="background-color: #f5f5f5; border-left: 4px solid #2196F3;">
+            <MudText Typo="Typo.body2">
+                <strong>Formula:</strong> Match % = (Earned mandatory skill weight / Total mandatory skill weight) × 100
+            </MudText>
+        </MudPaper>
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Key Points:</MudText>
+
+        <div class="mb-3">
+            <MudText Typo="Typo.body2" Class="d-flex align-center mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2" Style="font-size: 1.2rem;" />
+                <span>Only <strong>MANDATORY skills</strong> count toward the match score</span>
+            </MudText>
+            <MudText Typo="Typo.body2" Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.HighlightOff" Color="Color.Secondary" Class="mr-2" Style="font-size: 1.2rem;" />
+                <span>Optional/Nice-to-have skills are <strong>NOT</strong> included in scoring (shown for reference)</span>
+            </MudText>
+        </div>
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">For Each Mandatory Skill:</MudText>
+
+        <MudList T="string" Dense="true" Class="mb-3">
+            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckBox">
+                <MudText Typo="Typo.body2">
+                    <strong>Full Match:</strong> Candidate years &ge; Required years → <span style="color: #10b981; font-weight: bold;">100%</span> weight earned
+                </MudText>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckBox">
+                <MudText Typo="Typo.body2">
+                    <strong>Good Match:</strong> Candidate years &ge; 80% of required → <span style="color: #f59e0b; font-weight: bold;">70%</span> weight earned
+                </MudText>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckBox">
+                <MudText Typo="Typo.body2">
+                    <strong>Partial Match:</strong> Candidate years &lt; 80% of required → <span style="color: #ef4444; font-weight: bold;">(emp years / req years) × 50%</span> weight
+                </MudText>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckBox">
+                <MudText Typo="Typo.body2">
+                    <strong>No Match:</strong> Candidate has no experience → <span style="color: #ef4444; font-weight: bold;">0%</span> weight earned
+                </MudText>
+            </MudListItem>
+        </MudList>
+
+        <MudDivider Class="my-3" />
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Example:</MudText>
+        <MudPaper Elevation="0" Class="pa-3" Style="background-color: #f0f4ff; border-left: 4px solid #3f51b5;">
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Requirement:</strong> JavaScript (2 yrs), TypeScript (2 yrs), SQL (2 yrs), Node.js (2 yrs)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Candidate:</strong> JavaScript (1 yr), others not listed
+            </MudText>
+            <MudText Typo="Typo.body2">
+                <strong>Calculation:</strong>
+                <ul>
+                    <li>Total mandatory weight = 1 + 1 + 1 + 1 = 4</li>
+                    <li>JavaScript: 1 yr / 2 yrs = 50% (less than 80%) → (0.5) × 50% = 0.25</li>
+                    <li>TypeScript: 0 years → 0</li>
+                    <li>SQL: 0 years → 0</li>
+                    <li>Node.js: 0 years → 0</li>
+                    <li><strong>Match Score = (0.25 / 4) × 100 = 6.25%</strong></li>
+                </ul>
+            </MudText>
+        </MudPaper>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    private MudBlazor.IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private void Cancel() => MudDialog.Cancel();
+}

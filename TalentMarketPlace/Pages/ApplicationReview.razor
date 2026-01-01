@@ -6,6 +6,7 @@
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" Class="mb-2">Application Review</MudText>
 <MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">
@@ -257,30 +258,11 @@ else
                             </MudAlert>
                         }
 
-                        <!-- Scoring Breakdown Explanation -->
-                        <MudAlert Severity="Severity.Info" Dense="false" Class="mb-3" Icon="@Icons.Material.Filled.Info" Variant="Variant.Outlined">
-                            <div>
-                                <strong>📊 Scoring Logic:</strong>
-                            </div>
-                            <MudText Typo="Typo.caption" Class="mt-2">
-                                Match % = (Earned mandatory skill weight / Total mandatory skill weight) × 100
-                            </MudText>
-                            <MudText Typo="Typo.caption">
-                                ✓ Only <strong>MANDATORY skills</strong> are counted in the score
-                            </MudText>
-                            <MudText Typo="Typo.caption">
-                                ○ Optional/Nice-to-have skills are shown for reference but <u>NOT</u> included in scoring
-                            </MudText>
-                            <MudText Typo="Typo.caption" Class="mt-2">
-                                For each mandatory skill:
-                                <ul>
-                                    <li><strong>Full Match:</strong> Employee years &ge; Required years → 100% weight earned</li>
-                                    <li><strong>Partial Match:</strong> Employee years &ge; 80% of required → 70% weight earned</li>
-                                    <li><strong>Partial Match:</strong> Employee years &lt; 80% → (emp years / req years) × 50% weight</li>
-                                    <li><strong>Missing:</strong> 0% weight earned</li>
-                                </ul>
-                            </MudText>
-                        </MudAlert>
+                        <div class="d-flex justify-space-between align-center mb-3">
+                            <MudText Typo="Typo.subtitle2">Skill Match Details</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small"
+                                          OnClick="@(() => ShowScoringInfo())" Title="Show Scoring Formula" />
+                        </div>
 
                         <MudText Typo="Typo.subtitle2" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.Assessment" Size="Size.Small" Class="mr-1" />
@@ -594,6 +576,22 @@ else
                 }
             }
             
+            // 🔄 RECALCULATE MATCH SCORES FOR CONSISTENCY
+            // This ensures that all applications show the latest score based on current requirement and employee skills
+            foreach (var app in _applications)
+            {
+                try
+                {
+                    var validation = await ApplicationService.ValidateApplicationAsync(app.EmployeeId, app.RequirementId);
+                    app.MatchPercentage = validation.MatchPercentage;
+                    Console.WriteLine($"🔄 Recalculated score for {app.Employee?.FullName}: {app.MatchPercentage}%");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Failed to recalculate score for application {app.ApplicationId}: {ex.Message}");
+                }
+            }
+            
             _filteredApplications = _applications;
             _selectedCategory = null;
             _selectedStatus = null;
@@ -789,5 +787,12 @@ else
         if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} hours ago";
         if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
         return date.ToString("MMM dd");
+    }
+
+    private async Task ShowScoringInfo()
+    {
+        var parameters = new DialogParameters<ScoringFormulaDialog>();
+        var dialog = await DialogService.ShowAsync<ScoringFormulaDialog>("Scoring Formula", parameters);
+        await dialog.Result;
     }
 }

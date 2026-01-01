@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 @inject ILogger<JobBoard> Logger
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" Class="mb-2">Current Job Openings</MudText>
 <MudText Typo="Typo.body1" Color="Color.Primary" Class="mb-4">Browse internal opportunities that match your skills</MudText>
@@ -105,12 +106,12 @@ else if (_filteredRequirements.Any())
                     </div>
                 </MudPaper>
 
-                <!-- Scoring Explanation -->
-                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3 pa-2" Icon="@Icons.Material.Filled.Info" Variant="Variant.Text">
-                    <MudText Typo="Typo.caption">
-                        Score based on <strong>mandatory skills only</strong> vs. your experience level
-                    </MudText>
-                </MudAlert>
+                <!-- Scoring Information -->
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <MudText Typo="Typo.subtitle2">Scoring Based On Mandatory Skills Only</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small"
+                                  OnClick="@(() => ShowScoringInfo())" Title="Show Scoring Formula" />
+                </div>
 
                 <!-- Required Skills -->
                 <div class="mb-3">
@@ -487,5 +488,12 @@ else
         if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
         if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)} weeks ago";
         return date.ToString("MMM dd");
+    }
+
+    private async Task ShowScoringInfo()
+    {
+        var parameters = new DialogParameters<ScoringFormulaDialog>();
+        var dialog = await DialogService.ShowAsync<ScoringFormulaDialog>("Scoring Formula", parameters);
+        await dialog.Result;
     }
 }
