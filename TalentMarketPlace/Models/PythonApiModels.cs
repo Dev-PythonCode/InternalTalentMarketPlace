@@ -31,6 +31,12 @@ public class ParsedQuery
     [JsonPropertyName("skills")]
     public List<string> Skills { get; set; } = new();
 
+    [JsonPropertyName("mandatory_skills")]
+    public List<string> MandatorySkills { get; set; } = new();
+
+    [JsonPropertyName("optional_skills")]
+    public List<string> OptionalSkills { get; set; } = new();
+
     [JsonPropertyName("categories")]
     public List<string> Categories { get; set; } = new();
 

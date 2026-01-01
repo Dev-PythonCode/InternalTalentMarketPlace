@@ -186,21 +186,28 @@ namespace TalentMarketPlace.Services
 
                 Console.WriteLine("🔍 Step 4: Extracting values from parse result...");
 
-                // ⭐ Extract all criteria - ONLY mandatory skills go to requiredSkills
-                // Nice-to-have skills should be in categorySkills
-                var requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
-                var categorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
+                // ⭐ Use skill classifications directly from Python API (now correctly separating mandatory/optional)
+                var requiredSkills = parseResult.Parsed.MandatorySkills?.ToList() ?? new List<string>();
+                var categorySkills = parseResult.Parsed.OptionalSkills?.ToList() ?? new List<string>();
+                
+                // If Python API didn't return separated skills, fall back to old behavior
+                if (!requiredSkills.Any() && !categorySkills.Any())
+                {
+                    requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
+                    categorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
+                    
+                    // ⭐ Parse the original query to separate mandatory from nice-to-have skills (fallback)
+                    (requiredSkills, categorySkills) = SeparateMandatoryAndNiceToHaveSkills(
+                        chatQuery,
+                        requiredSkills,
+                        categorySkills
+                    );
+                }
+                
                 var minYears = parseResult.Parsed.MinYearsExperience;
                 var expOperator = parseResult.Parsed.ExperienceOperator ?? "gte";
                 var experienceContext = parseResult.Parsed.ExperienceContext;
                 var location = parseResult.Parsed.Location;
-
-                // ⭐ NEW: Parse the original query to separate mandatory from nice-to-have skills
-                (requiredSkills, categorySkills) = SeparateMandatoryAndNiceToHaveSkills(
-                    chatQuery,
-                    requiredSkills,
-                    categorySkills
-                );
 
                 Console.WriteLine($"   requiredSkills (Mandatory): {string.Join(", ", requiredSkills)}");
                 Console.WriteLine($"   categorySkills (Nice-to-Have): {string.Join(", ", categorySkills)}");
