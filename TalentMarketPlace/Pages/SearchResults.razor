@@ -233,6 +233,12 @@ else if (_searchResult != null && _searchResult.Employees.Any())
                             </MudText>
                         </div>
                         
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small" Class="mb-2"
+                                   OnClick="@(() => ShowSkillMatchDetails(employee))"
+                                   StartIcon="@Icons.Material.Filled.Assessment">
+                            Skill Match Details
+                        </MudButton>
+                        
                         <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                                    OnClick="@(() => ViewProfile(employee.EmployeeId))">
                             View Full Profile
@@ -519,5 +525,32 @@ else
             ),
             _ => (Color.Default, "", "")
         };
+    }
+
+    // ⭐ NEW: Show skill match details dialog
+    private async Task ShowSkillMatchDetails(EmployeeSearchResult employee)
+    {
+        var parameters = new DialogParameters
+        {
+            { "EmployeeId", employee.EmployeeId },
+            { "EmployeeName", employee.FullName },
+            { "MatchPercentage", employee.MatchPercentage },
+            { "EmployeeSkills", employee.Skills },
+            { "AppliedFilters", _searchResult?.AppliedFilters ?? new List<string>() }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        await DialogService.ShowAsync<Components.Dialogs.SkillMatchDetailsDialog>(
+            "Skill Match Details", 
+            parameters, 
+            options
+        );
     }
 }
