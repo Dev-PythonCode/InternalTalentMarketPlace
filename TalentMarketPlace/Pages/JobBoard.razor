@@ -193,6 +193,17 @@ else if (_filteredRequirements.Any())
                             Applied
                         </MudButton>
                     }
+                    else if (matchScore < 30)
+                    {
+                        <!-- ⭐ NEW: Show disabled Apply button with message when match score is < 30% -->
+                        <MudTooltip Text="Your matching score is below 30%. Please improve your skills through learning courses to apply for this position.">
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Disabled="true"
+                                       StartIcon="@Icons.Material.Filled.Block"
+                                       OnClick="@(() => ShowLowScoreMessage(req.RequirementId))">
+                                Apply Now
+                            </MudButton>
+                        </MudTooltip>
+                    }
                     else
                     {
                         <MudButton Variant="Variant.Filled" Color="Color.Primary"
@@ -425,6 +436,22 @@ else
         {
             Snackbar.Add($"Error applying: {ex.Message}", Severity.Error);
         }
+    }
+
+    // ⭐ NEW: Show message when match score is too low to apply
+    private void ShowLowScoreMessage(int requirementId)
+    {
+        var matchScore = _matchScores.GetValueOrDefault(requirementId, 0);
+        Snackbar.Add(
+            $"Sorry, your matching score ({matchScore:0.#}%) is below the minimum threshold (30%) to apply for this position. " +
+            "We suggest taking the respective learning courses to upgrade your skills before applying.",
+            Severity.Warning,
+            config => 
+            {
+                config.VisibleStateDuration = 8000; // Show for 8 seconds
+                config.ShowCloseIcon = true;
+            }
+        );
     }
 
     private void ViewLearningPath(int requirementId)

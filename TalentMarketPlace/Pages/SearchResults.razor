@@ -536,7 +536,8 @@ else
             { "EmployeeName", employee.FullName },
             { "MatchPercentage", employee.MatchPercentage },
             { "EmployeeSkills", employee.Skills },
-            { "AppliedFilters", _searchResult?.AppliedFilters ?? new List<string>() }
+            { "AppliedFilters", _searchResult?.AppliedFilters ?? new List<string>() },
+            { "CategorySkills", _searchResult?.CategorySkills ?? new Dictionary<string, List<string>>() } // ⭐ NEW: Pass category skills
         };
 
         var options = new DialogOptions 

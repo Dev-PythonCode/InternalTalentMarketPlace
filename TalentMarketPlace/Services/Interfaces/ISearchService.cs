@@ -39,6 +39,8 @@ public class SearchResult
     public List<string>? ExtractedSkills { get; set; }
     public List<string>? AppliedFilters { get; set; }
     public string? Message { get; set; }
+    // ⭐ NEW: Category skills for highlighting in results and dialog
+    public Dictionary<string, List<string>>? CategorySkills { get; set; }
 }
 
 public class EmployeeSearchResult

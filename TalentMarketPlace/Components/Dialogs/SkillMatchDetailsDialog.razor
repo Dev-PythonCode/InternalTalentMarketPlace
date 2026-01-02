@@ -258,6 +258,9 @@
     [Parameter]
     public List<string> AppliedFilters { get; set; } = new();
 
+    [Parameter]
+    public Dictionary<string, List<string>> CategorySkills { get; set; } = new(); // ⭐ NEW: Category skills from search
+
     private bool _isLoading = true;
     private Employee? _employee;
     private List<string> _appliedFilters = new();
@@ -289,11 +292,20 @@
                 _matchedSkills = EmployeeSkills.Where(s => s.MatchStatus == "Match").ToList();
                 _partiallyMatchedSkills = EmployeeSkills.Where(s => s.MatchStatus == "Partial").ToList();
                 
-                // Find missing skills from applied filters
+                // ⭐ Find missing skills from applied filters AND category skills
                 var searchedSkillNames = _appliedFilters
                     .Where(f => f.StartsWith("Mandatory Skills:") || f.StartsWith("Skills:"))
                     .SelectMany(f => f.Split(':')[1].Split(',').Select(s => s.Trim()))
                     .ToList();
+
+                // ⭐ Add all category skills to searched skills (these are the skills employee should have)
+                if (CategorySkills?.Any() == true)
+                {
+                    foreach (var categoryEntry in CategorySkills)
+                    {
+                        searchedSkillNames.AddRange(categoryEntry.Value);
+                    }
+                }
 
                 var employeeSkillNames = EmployeeSkills.Select(s => s.SkillName.ToLower()).ToHashSet();
                 _missingSkills = searchedSkillNames
@@ -301,7 +313,7 @@
                     .Distinct()
                     .ToList();
 
-                // Find additional skills (not in the search criteria)
+                // ⭐ Find additional skills (not in the search criteria or categories)
                 var searchedSkillNamesLower = searchedSkillNames.Select(s => s.ToLower()).ToHashSet();
                 _additionalSkills = EmployeeSkills
                     .Where(s => !searchedSkillNamesLower.Contains(s.SkillName.ToLower()) && 

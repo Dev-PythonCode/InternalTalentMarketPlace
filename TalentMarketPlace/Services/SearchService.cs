@@ -383,15 +383,35 @@ namespace TalentMarketPlace.Services
 
                     if (shouldInclude)
                     {
-                        var skillTags = employee.EmployeeSkills.Select(es => new SkillTag
+                        var skillTags = employee.EmployeeSkills.Select(es =>
                         {
-                            SkillName = es.Skill.SkillName,
-                            YearsOfExperience = es.YearsOfExperience,
-                            ProficiencyLevel = es.ProficiencyLevel ?? "Unknown",
-                            MatchStatus = hasSkills
+                            var matchStatus = hasSkills
                                 ? GetUnifiedSkillMatchStatus(es, requiredSkills, categorySkills, minYears)
-                                : "Available",
-                            LastUsedDate = es.LastUsedDate
+                                : "Available";
+                            
+                            // ⭐ If "Extra", check if skill is in any category
+                            if (matchStatus == "Extra" && categorySkillsByCategory.Any())
+                            {
+                                var skillNameUpper = es.Skill.SkillName.ToUpper();
+                                foreach (var categoryEntry in categorySkillsByCategory)
+                                {
+                                    if (categoryEntry.Value.Any(cs => cs.ToUpper() == skillNameUpper || 
+                                        es.Skill.SkillAliases.Any(sa => sa.AliasName.ToUpper() == cs.ToUpper())))
+                                    {
+                                        matchStatus = "Match"; // Skill is in category, mark as Match
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            return new SkillTag
+                            {
+                                SkillName = es.Skill.SkillName,
+                                YearsOfExperience = es.YearsOfExperience,
+                                ProficiencyLevel = es.ProficiencyLevel ?? "Unknown",
+                                MatchStatus = matchStatus,
+                                LastUsedDate = es.LastUsedDate
+                            };
                         }).ToList();
 
                         results.Add(new EmployeeSearchResult
@@ -443,6 +463,7 @@ namespace TalentMarketPlace.Services
                     AppliedFilters = appliedFilters,
                     ExtractedSkills = parseResult.Parsed.Skills,
                     ParsedQuery = chatQuery,
+                    CategorySkills = categorySkillsByCategory.Any() ? categorySkillsByCategory : null, // ⭐ NEW: Pass category skills to UI
                     Message = results.Any() ? null : "No employees found matching your criteria. Try adjusting your search."
                 };
             }
@@ -748,6 +769,7 @@ namespace TalentMarketPlace.Services
             bool isOptional = optionalSkills.Any(os => os.ToUpper() == skillNameUpper) ||
                               optionalSkills.Any(os => employeeSkill.Skill.SkillAliases.Any(sa => sa.AliasName.ToUpper() == os.ToUpper()));
 
+            // ⭐ If not in explicit lists, it's extra (will be checked by caller if in category)
             if (!isMandatory && !isOptional)
                 return "Extra";
 
