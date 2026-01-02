@@ -20,8 +20,8 @@
                      Size="Size.Large"
                      Class="ai-light-icon" />
 
-            <MudText Typo="Typo.h3" Class="ai-light-title">
-                One RRD AI
+            <MudText Typo="Typo.h1" Class="ai-light-title">
+                OneRRD
             </MudText>            
 
             <MudText Typo="Typo.subtitle1" Class="ai-light-subtitle">
@@ -58,11 +58,11 @@
                            OnClick="@(() => SelectRole("HR"))">
                     HR
                 </MudButton>
-                <MudButton Style="flex:1"
+                @* <MudButton Style="flex:1"
                            Variant="@(_selectedRole=="Manager" ? Variant.Filled : Variant.Outlined)"
                            OnClick="@(() => SelectRole("Manager"))">
                     Manager
-                </MudButton>
+                </MudButton> *@
                 <MudButton Style="flex:1"
                            Variant="@(_selectedRole=="Employee" ? Variant.Filled : Variant.Outlined)"
                            OnClick="@(() => SelectRole("Employee"))">
@@ -110,9 +110,9 @@
 
 
 @code {
-    private string _email = "tech.manager@company.com"; // Default to Manager
+    private string _email = "hr.manager@company.com"; // Default to Manager
     private string _password = "";
-    private string _selectedRole = "Manager"; // Default to Manager
+    private string _selectedRole = "HR"; // Default to Manager
     private string _errorMessage = "";
     private bool _isLoading = false;
 
@@ -244,7 +244,7 @@
     /* Role-based AI accent */
     .hr .ai-light-icon,
     .hr .ai-login-btn {
-        color: #7c3aed;
+        color: #130453;
     }
 
     .manager .ai-light-icon
