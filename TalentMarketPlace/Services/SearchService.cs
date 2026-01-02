@@ -448,8 +448,22 @@ namespace TalentMarketPlace.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in natural language search");
-                return await FallbackSearchAsync(chatQuery);
+                _logger.LogError(ex, "Error in natural language search: {Message}", ex.Message);
+                Console.WriteLine($"❌ EXCEPTION in NaturalLanguageSearchAsync: {ex.Message}");
+                Console.WriteLine($"   Stack trace: {ex.StackTrace}");
+                
+                // Return a more appropriate error message instead of "API unavailable"
+                return new SearchResult
+                {
+                    Employees = new List<EmployeeSearchResult>(),
+                    TotalCount = 0,
+                    PageNumber = 1,
+                    PageSize = 50,
+                    AppliedFilters = new List<string>(),
+                    ExtractedSkills = new List<string>(),
+                    ParsedQuery = chatQuery,
+                    Message = $"An error occurred while processing your search: {ex.Message}. Please try again or use different keywords."
+                };
             }
         }
 
