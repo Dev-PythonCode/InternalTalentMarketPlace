@@ -190,21 +190,28 @@ namespace TalentMarketPlace.Services
                 var requiredSkills = parseResult.Parsed.MandatorySkills?.ToList() ?? new List<string>();
                 var categorySkills = parseResult.Parsed.OptionalSkills?.ToList() ?? new List<string>();
                 
-                // ⭐ NEW: Check if there are mandatory categories (e.g., "database expert")
-                // If so, category_skills should be treated as mandatory, not optional
-                var hasMandatoryCategories = parseResult.Parsed.MandatoryCategories?.Any() == true;
+                // ⭐ NEW: Handle mandatory categories - employee needs ANY skill from the category (not ALL)
+                var mandatoryCategories = parseResult.Parsed.MandatoryCategories?.ToList() ?? new List<string>();
                 var expandedCategorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
                 
-                // ⭐ ALWAYS add mandatory category skills when mandatory categories exist
-                // This handles cases like "any database with Java" where both exist
-                if (hasMandatoryCategories && expandedCategorySkills.Any())
+                // Store category skills separately - don't add them all to requiredSkills
+                // They will be handled specially in filtering and scoring
+                var categorySkillsByCategory = new Dictionary<string, List<string>>();
+                if (mandatoryCategories.Any() && expandedCategorySkills.Any())
                 {
-                    requiredSkills.AddRange(expandedCategorySkills);
-                    Console.WriteLine($"🔍 Category expansion: Added {expandedCategorySkills.Count} skills from mandatory categories: {string.Join(", ", parseResult.Parsed.MandatoryCategories ?? new List<string>())}");
+                    Console.WriteLine($"🔍 Mandatory categories detected: {string.Join(", ", mandatoryCategories)}");
+                    Console.WriteLine($"🔍 Category skills: {string.Join(", ", expandedCategorySkills)}");
+                    
+                    // For now, store all category skills together
+                    // In a more sophisticated version, we'd map each category to its specific skills
+                    foreach (var category in mandatoryCategories)
+                    {
+                        categorySkillsByCategory[category] = expandedCategorySkills.ToList();
+                    }
                 }
                 
                 // If Python API didn't return separated skills, fall back to old behavior
-                if (!requiredSkills.Any() && !categorySkills.Any())
+                if (!requiredSkills.Any() && !categorySkills.Any() && !mandatoryCategories.Any())
                 {
                     requiredSkills = parseResult.Parsed.Skills?.ToList() ?? new List<string>();
                     categorySkills = expandedCategorySkills;
@@ -223,6 +230,7 @@ namespace TalentMarketPlace.Services
                 var location = parseResult.Parsed.Location;
 
                 Console.WriteLine($"   requiredSkills (Mandatory): {string.Join(", ", requiredSkills)}");
+                Console.WriteLine($"   mandatoryCategories: {string.Join(", ", mandatoryCategories)}");
                 Console.WriteLine($"   categorySkills (Nice-to-Have): {string.Join(", ", categorySkills)}");
                 Console.WriteLine($"   location: {location ?? "none"}");
                 Console.WriteLine($"   minYears: {minYears?.ToString() ?? "none"}");
@@ -230,8 +238,8 @@ namespace TalentMarketPlace.Services
                 Console.WriteLine($"   experienceContext: {experienceContext?.Type ?? "none"}");
                 Console.WriteLine("");
 
-                // ⭐ FIX: Check what criteria we have
-                var hasSkills = requiredSkills.Any();
+                // ⭐ FIX: Check what criteria we have (include categories)
+                var hasSkills = requiredSkills.Any() || categorySkillsByCategory.Any();
                 var hasLocation = !string.IsNullOrEmpty(location);
                 var hasExperience = minYears.HasValue && minYears.Value > 0;
 
@@ -275,7 +283,8 @@ namespace TalentMarketPlace.Services
                     .Where(e => e.User.IsActive)
                     .AsQueryable();
 
-                // ⭐ Apply MANDATORY skill filter (employees MUST have at least one mandatory skill)
+                // ⭐ Apply MANDATORY skill filter (employees MUST have ALL mandatory skills)
+                // For category skills, employees MUST have AT LEAST ONE skill from EACH category
                 // Case-insensitive matching to handle variations like "SQL Server" vs "sql server"
                 // Also check skill aliases to handle normalized names (e.g., "SQL" matches "SQL Server")
                 if (hasSkills)
@@ -291,6 +300,27 @@ namespace TalentMarketPlace.Services
                         )
                     ));
                     Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
+                }
+                
+                // ⭐ Apply MANDATORY CATEGORY filter (employees MUST have at least ONE skill from category)
+                if (categorySkillsByCategory.Any())
+                {
+                    foreach (var categoryEntry in categorySkillsByCategory)
+                    {
+                        var categoryName = categoryEntry.Key;
+                        var categorySkillList = categoryEntry.Value;
+                        
+                        Console.WriteLine($"🔍 DEBUG: Looking for at least one skill from category '{categoryName}': {string.Join(", ", categorySkillList)}");
+                        
+                        employeesQuery = employeesQuery.Where(e => e.EmployeeSkills.Any(es =>
+                            categorySkillList.Any(cs => 
+                                cs.ToUpper() == es.Skill.SkillName.ToUpper() ||
+                                es.Skill.SkillAliases.Any(sa => cs.ToUpper() == sa.AliasName.ToUpper())
+                            )
+                        ));
+                        
+                        Console.WriteLine($"🔍 Category filter applied: {categoryName} (any of {categorySkillList.Count} skills)");
+                    }
                 }
 
                 // ⭐ Apply location filter with case-insensitive comparison
@@ -323,10 +353,11 @@ namespace TalentMarketPlace.Services
                 foreach (var employee in employees)
                 {
                     // ⭐ UNIFIED: Calculate match score using the same logic as EmployeeService
-                    // Only mandatory skills count toward the score
-                    var matchResult = CalculateUnifiedMatchScore(
+                    // Mandatory skills AND category matches count toward the score
+                    var matchResult = CalculateUnifiedMatchScoreWithCategories(
                         employee,
                         requiredSkills,
+                        categorySkillsByCategory,
                         categorySkills,
                         minYears,
                         expOperator,
@@ -383,8 +414,16 @@ namespace TalentMarketPlace.Services
 
                 _logger.LogInformation("Returning {Count} matching employees", results.Count);
 
-                // Build applied filters using separated mandatory and optional skills
-                var appliedFilters = BuildAppliedFilters(requiredSkills, categorySkills, minYears, experienceContext, location);
+                // Build applied filters showing categories and explicit skills separately
+                var appliedFilters = BuildAppliedFiltersWithCategories(
+                    requiredSkills, 
+                    mandatoryCategories,
+                    expandedCategorySkills,
+                    categorySkills, 
+                    minYears, 
+                    experienceContext, 
+                    location
+                );
 
                 return new SearchResult
                 {
@@ -417,6 +456,63 @@ namespace TalentMarketPlace.Services
                 "eq" => actualYears == requiredYears,
                 _ => actualYears >= requiredYears
             };
+        }
+
+        // ⭐ NEW: Build applied filters showing categories separately from explicit skills
+        private List<string> BuildAppliedFiltersWithCategories(
+            List<string> mandatorySkills,
+            List<string> mandatoryCategories,
+            List<string> expandedCategorySkills,
+            List<string> optionalSkills,
+            decimal? minYears,
+            ExperienceContext? expContext,
+            string? location)
+        {
+            var filters = new List<string>();
+
+            // Show mandatory explicit skills
+            if (mandatorySkills?.Any() == true)
+            {
+                filters.Add($"Mandatory Skills: {string.Join(", ", mandatorySkills)}");
+            }
+
+            // Show mandatory categories with expanded skills
+            if (mandatoryCategories?.Any() == true)
+            {
+                foreach (var category in mandatoryCategories)
+                {
+                    // Show category with some example skills (limit to first 3-4 for readability)
+                    var exampleSkills = expandedCategorySkills.Take(4).ToList();
+                    var skillsText = string.Join(", ", exampleSkills);
+                    if (expandedCategorySkills.Count > 4)
+                    {
+                        skillsText += $" (any {category} skill)";
+                    }
+                    filters.Add($"{category}: {skillsText}");
+                }
+            }
+
+            // Show nice-to-have skills
+            if (optionalSkills?.Any() == true)
+            {
+                filters.Add($"Nice-to-Have Skills: {string.Join(", ", optionalSkills)}");
+            }
+
+            if (minYears.HasValue)
+            {
+                var years = minYears.Value;
+                var expType = expContext?.Type == "skill_specific"
+                    ? $"in {expContext.Skill}"
+                    : "total experience";
+                filters.Add($"Experience: {years}+ years {expType}");
+            }
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                filters.Add($"Location: {location}");
+            }
+
+            return filters;
         }
 
         // ⭐ UPDATED: Build applied filters - show mandatory and nice-to-have separately
@@ -707,6 +803,156 @@ namespace TalentMarketPlace.Services
                 ParsedQuery = query,
                 Message = "🔧 AI Service Unavailable - The Python API is temporarily down. Please try again in a few moments. We recommend using the basic search filters while the service is being restored."
             };
+        }
+
+        // ⭐ NEW: Unified scoring method with category support
+        // For categories: employee needs ANY skill from the category to match (weight 1)
+        // For explicit skills: employee needs that specific skill to match (weight 1)
+        private (decimal MatchPercentage, bool MeetsRequirements) CalculateUnifiedMatchScoreWithCategories(
+            Employee employee,
+            List<string> mandatorySkillNames,
+            Dictionary<string, List<string>> categorySkillsByCategory,
+            List<string> optionalSkillNames,
+            decimal? minYears,
+            string experienceOperator,
+            bool skillsAreOr = false)
+        {
+            Console.WriteLine($"🔍 UNIFIED SCORE CALC WITH CATEGORIES: {employee.FullName}");
+            Console.WriteLine($"   Mandatory Skills: {string.Join(", ", mandatorySkillNames)}");
+            Console.WriteLine($"   Mandatory Categories: {string.Join(", ", categorySkillsByCategory.Keys)}");
+            Console.WriteLine($"   Optional: {string.Join(", ", optionalSkillNames)}");
+            Console.WriteLine($"   Min Years: {minYears}");
+            Console.WriteLine($"   Skill Operator: {(skillsAreOr ? "OR" : "AND")}");
+
+            // Total weight = number of explicit skills + number of categories
+            decimal totalMandatoryWeight = mandatorySkillNames.Count + categorySkillsByCategory.Count;
+            decimal earnedMandatoryWeight = 0;
+            bool meetsAllRequirements = true;
+            bool hasAnySkill = false;
+
+            if (totalMandatoryWeight == 0)
+                return (0, true);
+
+            // Process explicit mandatory skills
+            foreach (var skillName in mandatorySkillNames)
+            {
+                var skillNameUpper = skillName.ToUpper();
+                var empSkill = employee.EmployeeSkills
+                    .FirstOrDefault(es => 
+                        es.Skill.SkillName.ToUpper() == skillNameUpper ||
+                        es.Skill.SkillAliases.Any(sa => sa.AliasName.ToUpper() == skillNameUpper)
+                    );
+
+                if (empSkill != null)
+                {
+                    hasAnySkill = true;
+                    
+                    if (minYears.HasValue && minYears.Value > 0)
+                    {
+                        if (empSkill.YearsOfExperience >= minYears.Value)
+                        {
+                            earnedMandatoryWeight += 1;
+                            Console.WriteLine($"   ✅ {skillName}: {empSkill.YearsOfExperience} >= {minYears} → +1");
+                        }
+                        else if (empSkill.YearsOfExperience >= minYears.Value * 0.8m)
+                        {
+                            earnedMandatoryWeight += 0.7m;
+                            Console.WriteLine($"   ⚠️  {skillName}: {empSkill.YearsOfExperience} >= 80% of {minYears} → +0.7");
+                        }
+                        else
+                        {
+                            var ratio = empSkill.YearsOfExperience / minYears.Value;
+                            var points = ratio * 0.5m;
+                            earnedMandatoryWeight += points;
+                            Console.WriteLine($"   ⚠️  {skillName}: {empSkill.YearsOfExperience}/{minYears} = {ratio:P0} → +{points:F2}");
+                        }
+                    }
+                    else
+                    {
+                        earnedMandatoryWeight += 1;
+                        Console.WriteLine($"   ✅ {skillName}: no requirement → +1");
+                    }
+                }
+                else
+                {
+                    meetsAllRequirements = false;
+                    Console.WriteLine($"   ❌ {skillName}: missing → +0");
+                }
+            }
+
+            // Process mandatory categories - employee needs ANY skill from each category
+            foreach (var categoryEntry in categorySkillsByCategory)
+            {
+                var categoryName = categoryEntry.Key;
+                var categorySkillList = categoryEntry.Value;
+                
+                // Check if employee has ANY skill from this category
+                var matchedCategorySkills = employee.EmployeeSkills
+                    .Where(es => categorySkillList.Any(cs => 
+                        cs.ToUpper() == es.Skill.SkillName.ToUpper() ||
+                        es.Skill.SkillAliases.Any(sa => cs.ToUpper() == sa.AliasName.ToUpper())
+                    ))
+                    .ToList();
+
+                if (matchedCategorySkills.Any())
+                {
+                    hasAnySkill = true;
+                    
+                    // Find the best matching skill from this category (highest experience)
+                    var bestMatch = matchedCategorySkills.OrderByDescending(es => es.YearsOfExperience).First();
+                    var bestSkillName = bestMatch.Skill.SkillName;
+                    
+                    if (minYears.HasValue && minYears.Value > 0)
+                    {
+                        if (bestMatch.YearsOfExperience >= minYears.Value)
+                        {
+                            earnedMandatoryWeight += 1;
+                            Console.WriteLine($"   ✅ {categoryName} (via {bestSkillName}): {bestMatch.YearsOfExperience} >= {minYears} → +1");
+                        }
+                        else if (bestMatch.YearsOfExperience >= minYears.Value * 0.8m)
+                        {
+                            earnedMandatoryWeight += 0.7m;
+                            Console.WriteLine($"   ⚠️  {categoryName} (via {bestSkillName}): {bestMatch.YearsOfExperience} >= 80% of {minYears} → +0.7");
+                        }
+                        else
+                        {
+                            var ratio = bestMatch.YearsOfExperience / minYears.Value;
+                            var points = ratio * 0.5m;
+                            earnedMandatoryWeight += points;
+                            Console.WriteLine($"   ⚠️  {categoryName} (via {bestSkillName}): {bestMatch.YearsOfExperience}/{minYears} = {ratio:P0} → +{points:F2}");
+                        }
+                    }
+                    else
+                    {
+                        earnedMandatoryWeight += 1;
+                        Console.WriteLine($"   ✅ {categoryName} (via {bestSkillName}): no requirement → +1");
+                    }
+                }
+                else
+                {
+                    meetsAllRequirements = false;
+                    Console.WriteLine($"   ❌ {categoryName}: no matching skills from category → +0");
+                }
+            }
+
+            // Calculate final percentage
+            decimal matchPercentage;
+            if (skillsAreOr)
+            {
+                matchPercentage = hasAnySkill ? 100 : 0;
+                Console.WriteLine($"   🔀 OR OPERATOR: Employee has {(hasAnySkill ? "at least one" : "none")} of the required skills/categories → {matchPercentage}%");
+            }
+            else
+            {
+                matchPercentage = totalMandatoryWeight > 0 
+                    ? Math.Round((earnedMandatoryWeight / totalMandatoryWeight) * 100, 2) 
+                    : 0;
+            }
+
+            Console.WriteLine($"   SCORE: {earnedMandatoryWeight}/{totalMandatoryWeight} = {matchPercentage}%");
+            Console.WriteLine($"   Optional skills ({string.Join(", ", optionalSkillNames)}) IGNORED in scoring");
+
+            return (matchPercentage, meetsAllRequirements);
         }
 
         // ⭐ NEW: Unified scoring method matching EmployeeService logic
