@@ -296,7 +296,7 @@ namespace TalentMarketPlace.Services
                 // ⭐ Apply MANDATORY skill filter (employees MUST have at least one mandatory skill)
                 // Case-insensitive matching to handle variations like "SQL Server" vs "sql server"
                 // Also check skill aliases to handle normalized names (e.g., "SQL" matches "SQL Server")
-                if (hasSkills)
+                if (requiredSkills.Any())
                 {
                     Console.WriteLine($"🔍 DEBUG: Looking for required skills: {string.Join(", ", requiredSkills)}");
                     
@@ -308,6 +308,8 @@ namespace TalentMarketPlace.Services
                             es.Skill.SkillAliases.Any(sa => rs.ToUpper() == sa.AliasName.ToUpper())
                         )
                     ));
+                    Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
+                }
                     Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
                 }
                 
