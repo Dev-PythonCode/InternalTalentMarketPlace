@@ -194,6 +194,9 @@ namespace TalentMarketPlace.Services
                 var mandatoryCategories = parseResult.Parsed.MandatoryCategories?.ToList() ?? new List<string>();
                 var expandedCategorySkills = parseResult.Parsed.CategorySkills ?? new List<string>();
                 
+                Console.WriteLine($"🔍 DEBUG: mandatoryCategories count: {mandatoryCategories.Count}");
+                Console.WriteLine($"🔍 DEBUG: expandedCategorySkills count: {expandedCategorySkills.Count}");
+                
                 // Store category skills separately - don't add them all to requiredSkills
                 // They will be handled specially in filtering and scoring
                 var categorySkillsByCategory = new Dictionary<string, List<string>>();
@@ -206,9 +209,16 @@ namespace TalentMarketPlace.Services
                     // In a more sophisticated version, we'd map each category to its specific skills
                     foreach (var category in mandatoryCategories)
                     {
-                        categorySkillsByCategory[category] = expandedCategorySkills.ToList();
+                        // Filter out non-category entries (like "any cloud technology")
+                        if (!category.ToLower().Contains("any ") && !category.ToLower().Contains(" skill"))
+                        {
+                            categorySkillsByCategory[category] = expandedCategorySkills.ToList();
+                            Console.WriteLine($"🔍 Added category: {category} with {expandedCategorySkills.Count} skills");
+                        }
                     }
                 }
+                
+                Console.WriteLine($"🔍 DEBUG: categorySkillsByCategory count: {categorySkillsByCategory.Count}");
                 
                 // If Python API didn't return separated skills, fall back to old behavior
                 if (!requiredSkills.Any() && !categorySkills.Any() && !mandatoryCategories.Any())
