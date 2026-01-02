@@ -32,6 +32,9 @@ namespace TalentMarketPlace.Data
         // New DbSets for email functionality
         public DbSet<EmailHistory> EmailHistory { get; set; }
         public DbSet<ScheduledEmail> ScheduledEmails { get; set; }
+        
+        // ⭐ NEW: Level-based reminder settings
+        public DbSet<LevelReminderSetting> LevelReminderSettings { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -64,6 +67,11 @@ namespace TalentMarketPlace.Data
 
             modelBuilder.Entity<SkillAlias>()
                 .HasIndex(sa => sa.AliasName)
+                .IsUnique();
+
+            // ⭐ NEW: Unique constraint on EmployeeLevel (no duplicates)
+            modelBuilder.Entity<LevelReminderSetting>()
+                .HasIndex(lrs => lrs.EmployeeLevel)
                 .IsUnique();
 
             // ============================================

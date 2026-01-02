@@ -44,6 +44,10 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // Add these two lines:
 builder.Services.AddScoped<IScheduledEmailService, ScheduledEmailService>();
 builder.Services.AddHostedService<ScheduledEmailBackgroundService>();
+
+// ⭐ NEW: Level-based reminder service
+builder.Services.AddScoped<ILevelReminderService, LevelReminderService>();
+
 // Add Services
 Console.WriteLine($"🔧 Registering application services...");
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
