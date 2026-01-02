@@ -2,7 +2,7 @@
 @using TalentMarketPlace.Services.Interfaces
 @inject IEmployeeService EmployeeService
 
-<MudDialog>
+<MudDialog DisableSidePadding="false">
     <TitleContent>
         <MudText Typo="Typo.h6">
             <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
@@ -99,27 +99,21 @@
                                 @if (requiredExp.HasValue)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        <strong>@skill.YearsOfExperience.ToString("0.#") / @requiredExp.Value.ToString("0.#") years</strong>
+                                        @skill.YearsOfExperience.ToString("0.00") / @requiredExp.Value.ToString("0.00") years
                                     </MudText>
                                 }
                                 else
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Experience: <strong>@skill.YearsOfExperience.ToString("0.#") years</strong>
+                                        Experience: @skill.YearsOfExperience.ToString("0.00") years
                                     </MudText>
                                 }
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudText Typo="Typo.caption" Style="color: #4caf50;">
                                     Full Match
                                 </MudText>
                                 <MudText Typo="Typo.caption" Style="font-size: 11px; color: #666;">
                                     Proficiency: @skill.ProficiencyLevel
                                 </MudText>
-                                @if (skill.LastUsedDate.HasValue)
-                                {
-                                    <MudText Typo="Typo.caption" Style="font-size: 11px; color: #666;">
-                                        Last used: @skill.LastUsedDate.Value.ToString("MMM yyyy")
-                                    </MudText>
-                                }
                             </MudPaper>
                         </MudItem>
                     }
@@ -147,27 +141,21 @@
                                 @if (requiredExp.HasValue)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        <strong>@skill.YearsOfExperience.ToString("0.#") / @requiredExp.Value.ToString("0.#") years</strong>
+                                        @skill.YearsOfExperience.ToString("0.00") / @requiredExp.Value.ToString("0.00") years
                                     </MudText>
                                 }
                                 else
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Experience: <strong>@skill.YearsOfExperience.ToString("0.#") years</strong>
+                                        Experience: @skill.YearsOfExperience.ToString("0.00") years
                                     </MudText>
                                 }
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                <MudText Typo="Typo.caption" Style="color: #ff9800;">
                                     Partial Match
                                 </MudText>
                                 <MudText Typo="Typo.caption" Style="font-size: 11px; color: #666;">
                                     Proficiency: @skill.ProficiencyLevel
                                 </MudText>
-                                @if (skill.LastUsedDate.HasValue)
-                                {
-                                    <MudText Typo="Typo.caption" Style="font-size: 11px; color: #666;">
-                                        Last used: @skill.LastUsedDate.Value.ToString("MMM yyyy")
-                                    </MudText>
-                                }
                             </MudPaper>
                         </MudItem>
                     }
@@ -195,7 +183,13 @@
                                 @if (requiredExp.HasValue)
                                 {
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        <strong>0 / @requiredExp.Value.ToString("0.#") years</strong>
+                                        0 / @requiredExp.Value.ToString("0.00") years
+                                    </MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Not in employee profile
                                     </MudText>
                                 }
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -246,6 +240,9 @@
 </MudDialog>
 
 @code {
+    [CascadingParameter]
+    private MudBlazor.IMudDialogInstance MudDialog { get; set; } = null!;
+    
     [Parameter]
     public int EmployeeId { get; set; }
 
@@ -350,6 +347,6 @@
 
     private void Close()
     {
-        // This method can be left empty as MudBlazor DialogService handles closing
+        MudDialog.Close(DialogResult.Ok(true));
     }
 }
