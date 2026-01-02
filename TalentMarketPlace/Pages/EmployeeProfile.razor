@@ -6,7 +6,7 @@
 @if (_employee != null)
 {
     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" 
-               OnClick="@(() => Navigation.NavigateTo("/search-results"))" Class="mb-3">
+               OnClick="BackToResults" Class="mb-3">
         Back to Results
     </MudButton>
 
@@ -197,6 +197,9 @@ else
     [Parameter]
     public int EmployeeId { get; set; }
 
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
     private Employee? _employee;
     private bool _isLoading = true;
 
@@ -213,6 +216,18 @@ else
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private void BackToResults()
+    {
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            Navigation.NavigateTo(ReturnUrl);
+        }
+        else
+        {
+            Navigation.NavigateTo("/search-results");
         }
     }
 
