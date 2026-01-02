@@ -310,8 +310,6 @@ namespace TalentMarketPlace.Services
                     ));
                     Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
                 }
-                    Console.WriteLine($"🔍 Mandatory skill filter applied: {string.Join(", ", requiredSkills)}");
-                }
                 
                 // ⭐ Apply MANDATORY CATEGORY filter (employees MUST have at least ONE skill from category)
                 if (categorySkillsByCategory.Any())
