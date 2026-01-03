@@ -5,12 +5,16 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
+
 <MudThemeProvider Theme="_theme" />
 <MudPopoverProvider/>
 <MudDialogProvider />
 <MudSnackbarProvider />
 
+
 <div class="ai-light-wrapper @_selectedRole.ToLower()">
+
+
 
 
     <!-- LEFT AI PANEL -->
@@ -20,37 +24,59 @@
                      Size="Size.Large"
                      Class="ai-light-icon" />
 
-            <MudText Typo="Typo.h2" Class="ai-light-title">
-                OneRRD
-            </MudText>            
+
+            <div class="ai-light-title">
+                <span class="brand-one">One</span><span class="brand-rrd">RRD</span>
+            </div>
+
 
             @* <MudText Typo="Typo.subtitle1" Class="ai-light-subtitle">
                 Intelligent Internal Talent Marketplace
             </MudText> *@
 
-            <MudText Typo="Typo.caption" Class="ai-typing-text mb-5">
+
+            <div class="spacer-large"></div>
+
+            <MudText Typo="Typo.caption" Class="ai-typing-text mb-6">
                 @_aiTypingText
             </MudText>
 
-            <MudText Typo="Typo.body2" Class="ai-light-desc">
-                AI-driven skill matching • Career pathways • Talent insights
-            </MudText>
+
+            <div class="ai-light-features">
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Biotech" Class="feature-icon" />
+                    <span>AI-driven skill matching</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="feature-icon" />
+                    <span>Career pathways</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Insights" Class="feature-icon" />
+                    <span>Talent insights</span>
+                </div>
+            </div>
         </div>
+
 
         <div class="ai-wave"></div>
     </div>
+
 
     <!-- LOGIN FORM -->
     <div class="ai-light-form">
         <MudPaper Elevation="4" Class="pa-8 ai-light-card">
 
-            <MudText Typo="Typo.h5" Class="mb-2">
+
+            <MudText Typo="Typo.h5" Class="mb-2 welcome-text">
                 Welcome!
             </MudText>
+
 
             <MudText Typo="Typo.caption" Color="Color.Info" Class="mb-4">
                 Sign in to your AI-powered workspace
             </MudText>
+
 
             <MudButtonGroup Variant="Variant.Outlined" Class="mb-4" Style="width:100%">
                 <MudButton Style="flex:1"
@@ -70,11 +96,13 @@
                 </MudButton>
             </MudButtonGroup>
 
+
             <MudTextField @bind-Value="_email"
                           Label="Email Address"
                           Variant="Variant.Outlined"
                           FullWidth
                           Class="mb-3" />
+
 
             <MudTextField @bind-Value="_password"
                           Label="Password"
@@ -82,6 +110,7 @@
                           InputType="InputType.Password"
                           FullWidth
                           Class="mb-4" />
+
 
             <MudButton FullWidth
                        Variant="Variant.Filled"
@@ -96,6 +125,8 @@
             </MudButton>
 
 
+
+
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
                 <MudAlert Severity="Severity.Error" Class="mt-4">
@@ -103,9 +134,13 @@
                 </MudAlert>
             }
 
+
         </MudPaper>
     </div>
 </div>
+
+
+
 
 
 
@@ -116,9 +151,11 @@
     private string _errorMessage = "";
     private bool _isLoading = false;
 
+
     private string _aiTypingText = "";
     private readonly string _aiMessage = "Empowering Internal Talents...";
     private int _typingIndex = 0;
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -127,6 +164,7 @@
             await StartTypingEffect();
         }
     }
+
 
     private async Task StartTypingEffect()
     {
@@ -139,6 +177,7 @@
         }
     }
 
+
     private MudTheme _theme = new MudTheme()
     {
         PaletteLight = new PaletteLight()
@@ -148,12 +187,14 @@
         }
     };
 
+
     private void SelectRole(string role)
     {
         _selectedRole = role;
         UpdateDefaultEmail();
         StateHasChanged();
     }
+
 
     private void UpdateDefaultEmail()
     {
@@ -166,6 +207,7 @@
         };
     }
 
+
     private async Task HandleLogin()
     {
         if (string.IsNullOrWhiteSpace(_email))
@@ -174,17 +216,20 @@
             return;
         }
 
+
         _isLoading = true;
         _errorMessage = "";
+
 
         try
         {
             var result = await AuthService.LoginAsync(_email, _password);
 
+
             if (result.Success)
             {
                 Snackbar.Add($"Welcome back, {result.Employee?.FullName ?? "User"}!", Severity.Success);
-                
+               
                 var redirectUrl = result.User?.Role switch
                 {
                     "HR" => "/dashboard",
@@ -192,6 +237,7 @@
                     "Employee" => "/job-board",
                     _ => "/dashboard"
                 };
+
 
                 Navigation.NavigateTo(redirectUrl, true);
             }
@@ -212,51 +258,177 @@
     }
 }
 
+
 <style>
+    /* Google Fonts Import for Beautiful Typography */
+    @@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* Beautiful Brand Title Styling */
+    .ai-light-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 5rem;
+        font-weight: 800;
+        margin-top: 24px;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        display: inline-block;
+    }
+
+    @@media (min-width: 1400px) {
+        .ai-light-title {
+            font-size: 6rem;
+        }
+    }
+
+    @@media (min-width: 1800px) {
+        .ai-light-title {
+            font-size: 7rem;
+        }
+    }
+
+    .brand-one {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        text-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        animation: gradientShift 3s ease infinite;
+    }
+
+    .brand-rrd {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        text-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+        animation: gradientShift 3s ease infinite 0.5s;
+    }
+
+    @@keyframes gradientShift {
+        0%, 100% {
+            filter: brightness(1) hue-rotate(0deg);
+        }
+        50% {
+            filter: brightness(1.2) hue-rotate(10deg);
+        }
+    }
+
+    /* Welcome Text Styling */
+    .welcome-text {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Body Text Improvements */
+    .ai-light-desc {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        margin-top: 16px;
+        color: #475569;
+    }
+
+    .ai-typing-text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 1.25rem;
+        color: #1e293b;
+        letter-spacing: 0.01em;
+        margin-top: 40px;
+    }
+
+    .spacer-large {
+        height: 1px;
+    }
+
+    @@media (min-width: 1400px) {
+        .spacer-large {
+            height: 80px;
+        }
+    }
+
+    /* Feature Items with Icons */
+    .ai-light-features {
+        margin-top: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 1rem;
+        color: #475569;
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .feature-item:hover {
+        transform: translateX(8px);
+        color: #1e293b;
+    }
+
+    .feature-icon {
+        font-size: 24px;
+        color: #667eea;
+        filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+    }
 
     .ai-login-btn {
         position: relative;
         overflow: hidden;
         background: linear-gradient(135deg, #a8f163, #066c12);
-        color: white;
+        color: white !important;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        font-size: 0.9rem;
     }
 
-        .ai-login-btn::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient( 120deg, transparent, rgba(255,255,255,0.4), transparent );
-            animation: shimmer 2.5s infinite;
-        }
+    .ai-login-btn .mud-button-label {
+        color: white !important;
+    }
+
+    .ai-login-btn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 200%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 2.5s infinite;
+    }
+
     @@keyframes shimmer {
         0% {
             left: -100%;
         }
-
         100% {
             left: 100%;
         }
     }
 
     /* Role-based AI accent */
-    .hr .ai-light-icon,
-    .hr .ai-login-btn {
+    .hr .ai-light-icon {
         color: #130453;
     }
 
-    .manager .ai-light-icon
-    {
+    .manager .ai-light-icon {
         color: #6082eb;
     }
-    .manager .ai-login-btn {
-        color: #ebecef;
-    }
 
-    .employee .ai-light-icon,
-    .employee .ai-login-btn {
+    .employee .ai-light-icon {
         color: #059669;
     }
 
@@ -264,6 +436,7 @@
         display: flex;
         min-height: 100vh;
         background: #f8fafc;
+        font-family: 'Inter', sans-serif;
     }
 
     /* LEFT PANEL */
@@ -275,25 +448,35 @@
 
     .ai-light-overlay {
         padding: 80px 60px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @@media (min-width: 1400px) {
+        .ai-light-overlay {
+            padding: 100px 80px;
+        }
     }
 
     .ai-light-icon {
         color: #4f46e5;
         font-size: 56px;
+        filter: drop-shadow(0 4px 12px rgba(79, 70, 229, 0.3));
+        animation: iconPulse 2s ease-in-out infinite;
     }
 
-    .ai-light-title {
-        font-weight: 700;
-        margin-top: 12px;
+    @@keyframes iconPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
     }
 
     .ai-light-subtitle {
         opacity: 0.85;
-    }
-
-    .ai-light-desc {
-        margin-top: 16px;
-        color: #475569;
+        font-family: 'Inter', sans-serif;
     }
 
     /* AI WAVE */
@@ -304,6 +487,16 @@
         height: 200px;
         background: url('/images/ai-wave.svg') no-repeat bottom;
         background-size: cover;
+        animation: waveFloat 6s ease-in-out infinite;
+    }
+
+    @@keyframes waveFloat {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(8px);
+        }
     }
 
     /* LOGIN FORM */
@@ -319,6 +512,7 @@
         max-width: 420px;
         border-radius: 16px;
         background: white;
+        font-family: 'Inter', sans-serif;
     }
 
     /* MOBILE */
@@ -326,20 +520,29 @@
         .ai-light-visual {
             display: none;
         }
-    }
 
-    .ai-wave {
-        animation: waveFloat 6s ease-in-out infinite;
-    }
-
-    @@keyframes waveFloat {
-        0%, 100% {
-            transform: translateY(0);
+        .ai-light-title {
+            font-size: 2.5rem;
         }
 
-        50% {
-            transform: translateY(8px);
+        .spacer-large {
+            height: 30px;
         }
     }
 
+    @@media (max-width: 600px) {
+        .ai-light-title {
+            font-size: 2rem;
+        }
+    }
+
+    /* Additional Typography Enhancements */
+    .mud-input-root {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .mud-button-root {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+    }
 </style>
