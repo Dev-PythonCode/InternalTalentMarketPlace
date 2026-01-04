@@ -79,7 +79,7 @@ namespace TalentMarketPlace.Data
 
             // Add diverse skills to employees
             var employeeSkills = new List<EmployeeSkill>();
-            int skillAssignmentId = 1;
+            int skillAssignmentId = 1000; // ⭐ Start from 1000 to avoid conflicts with existing skills
 
             // Define skill pools for different roles
             var skillPools = new Dictionary<string, List<int>>
