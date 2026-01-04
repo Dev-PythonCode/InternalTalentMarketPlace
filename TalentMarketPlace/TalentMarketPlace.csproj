@@ -69,7 +69,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="MudBlazor" Version="8.15.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>

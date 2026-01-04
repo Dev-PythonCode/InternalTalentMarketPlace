@@ -1,9 +1,47 @@
 @inject ISnackbar Snackbar
+@inject HttpClient Http
 @using MudBlazor
+@using System.Text.Json
+@using System.Text
 
 <MudDialog>
     <DialogContent>
         <MudGrid>
+            <!-- ⭐ NEW: AI-Powered Natural Language Input -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-3 mb-3" Style="background-color: #a0c4d0; color: rgb(57, 65, 86);">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Class="mr-1" />
+                        AI-Powered Requirement Creation
+                    </MudText>
+                    <MudGrid>
+                        <MudItem xs="10">
+                            <MudTextField @bind-Value="_nlpPrompt" 
+                                          Placeholder="e.g., Need a senior Python developer with 5 years Django experience in Bangalore" 
+                                          Variant="Variant.Filled" Style="background: white; border-radius: 8px;"
+                                          Immediate="true" Disabled="@_isParsingPrompt"
+                                          Lines="2" />
+                        </MudItem>
+                        <MudItem xs="2" Class="d-flex align-center">
+                            <MudButton Variant="Variant.Filled" Color="Color.Surface" OnClick="ParseRequirementPrompt" 
+                                       FullWidth="true" Style="height: 56px;" Disabled="@_isParsingPrompt">
+                                @if (_isParsingPrompt)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Psychology" />
+                                }
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                    <MudText Typo="Typo.caption" Class="mt-1" Style="opacity: 0.9">
+                        Describe your requirement in natural language and let AI auto-populate the form fields below
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+
             <!-- Title -->
             <MudItem xs="12">
                 <MudTextField @bind-Value="_model.Title" Label="Requirement Title" 
@@ -219,6 +257,10 @@
     private List<SkillRequirementItem> _requiredSkills = new();
     private bool _isSubmitting = false;
 
+    // ⭐ NEW: NLP-related fields
+    private string _nlpPrompt = "";
+    private bool _isParsingPrompt = false;
+
     // Helper class for skill items with Priority instead of IsMandatory + Weightage
     private class SkillRequirementItem
     {
@@ -266,6 +308,199 @@
         {
             AddSkillRow();
         }
+    }
+
+    // ⭐ NEW: Parse natural language requirement description using Python API
+    private async Task ParseRequirementPrompt()
+    {
+        if (string.IsNullOrWhiteSpace(_nlpPrompt))
+        {
+            Snackbar.Add("Please enter a requirement description", Severity.Warning);
+            return;
+        }
+
+        _isParsingPrompt = true;
+        StateHasChanged();
+
+        try
+        {
+            // Call Python API to parse the requirement
+            var requestBody = new { description = _nlpPrompt };
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await Http.PostAsync("http://localhost:5000/parse-requirement", jsonContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var parseResult = JsonSerializer.Deserialize<RequirementParseResult>(jsonResponse, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (parseResult?.Extracted != null)
+                {
+                    // ⭐ DEBUG: Log received data
+                    Console.WriteLine($"📋 Received {parseResult.Extracted.Skills?.Count ?? 0} skills from API");
+                    if (parseResult.Extracted.Skills != null)
+                    {
+                        foreach (var skill in parseResult.Extracted.Skills)
+                        {
+                            Console.WriteLine($"  - {skill.Name}: {skill.Years} years, Mandatory: {skill.IsMandatory}");
+                        }
+                    }
+                    
+                    await ApplyParsedData(parseResult.Extracted);
+                    Snackbar.Add("✅ Requirement parsed successfully! Review the auto-populated fields below.", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Unable to parse requirement. Please fill the form manually.", Severity.Warning);
+                }
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"API Error: {errorText}");
+                Snackbar.Add("Failed to parse requirement. Please try again or fill manually.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing requirement: {ex.Message}");
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isParsingPrompt = false;
+            StateHasChanged();
+        }
+    }
+
+    // ⭐ NEW: Apply parsed data to form fields
+    private async Task ApplyParsedData(ExtractedRequirementData extracted)
+    {
+        try
+        {
+            // Auto-populate location
+            if (!string.IsNullOrWhiteSpace(extracted.Location))
+            {
+                _model.Location = extracted.Location;
+            }
+
+            // Auto-populate description from the prompt
+            if (string.IsNullOrWhiteSpace(_model.Description))
+            {
+                _model.Description = _nlpPrompt;
+            }
+
+            // Generate title from roles and seniority
+            if (extracted.Roles?.Any() == true && string.IsNullOrWhiteSpace(_model.Title))
+            {
+                var roleTitle = string.Join(" ", extracted.Roles);
+                if (!string.IsNullOrWhiteSpace(extracted.Seniority))
+                {
+                    roleTitle = $"{extracted.Seniority} {roleTitle}";
+                }
+                _model.Title = char.ToUpper(roleTitle[0]) + roleTitle.Substring(1);
+            }
+
+            // Auto-populate skills
+            if (extracted.Skills?.Any() == true)
+            {
+                // Clear existing skills (except the first empty one if it's still empty)
+                if (_requiredSkills.Count == 1 && _requiredSkills[0].SkillId == 0)
+                {
+                    _requiredSkills.Clear();
+                }
+                else
+                {
+                    _requiredSkills.Clear();
+                }
+
+                foreach (var extractedSkill in extracted.Skills)
+                {
+                    // Find matching skill in available skills (case-insensitive)
+                    var matchingSkill = AvailableSkills.FirstOrDefault(s => 
+                        s.SkillName.Equals(extractedSkill.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (matchingSkill != null)
+                    {
+                        // ⭐ IMPROVED: Use extracted data directly, default to Mandatory if not specified
+                        var priority = extractedSkill.IsMandatory ? "Mandatory" : "NiceToHave";
+                        var years = extractedSkill.Years > 0 ? (decimal)extractedSkill.Years : 0m;
+
+                        Console.WriteLine($"✅ Adding skill: {matchingSkill.SkillName} (ID: {matchingSkill.SkillId})");
+                        Console.WriteLine($"   Years: {years}, Priority: {priority}, Level: {DetermineSkillLevel(years)}");
+
+                        _requiredSkills.Add(new SkillRequirementItem
+                        {
+                            SkillId = matchingSkill.SkillId,
+                            MinYearsRequired = years,
+                            Priority = priority,
+                            ProficiencyLevel = DetermineSkillLevel(years)
+                        });
+                    }
+                    else
+                    {
+                        Console.WriteLine($"⚠️ Skill '{extractedSkill.Name}' not found in available skills");
+                    }
+                }
+
+                // If no skills were matched, add one empty row
+                if (!_requiredSkills.Any())
+                {
+                    AddSkillRow();
+                    Snackbar.Add("⚠️ No matching skills found in database. Please add skills manually.", Severity.Warning);
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying parsed data: {ex.Message}");
+            Snackbar.Add("Error applying parsed data", Severity.Error);
+        }
+    }
+
+    // ⭐ NEW: Helper to determine skill proficiency level based on years
+    private string DetermineSkillLevel(decimal years)
+    {
+        if (years >= 5) return "Expert";
+        if (years >= 3) return "Advanced";
+        if (years >= 1) return "Intermediate";
+        return "Beginner";
+    }
+
+    // ⭐ NEW: Data models for API response
+    private class RequirementParseResult
+    {
+        public string OriginalDescription { get; set; } = "";
+        public ExtractedRequirementData? Extracted { get; set; }
+    }
+
+    private class ExtractedRequirementData
+    {
+        public List<ExtractedSkill>? Skills { get; set; }
+        public string? Location { get; set; }
+        public int? MinYearsExperience { get; set; }
+        public string? ExperienceContext { get; set; }
+        public List<string>? Roles { get; set; }
+        public string? Seniority { get; set; }
+        public int SkillCount { get; set; }
+        public int MandatoryCount { get; set; }
+    }
+
+    private class ExtractedSkill
+    {
+        public string Name { get; set; } = "";
+        public int Years { get; set; }
+        public bool IsMandatory { get; set; }
     }
 
     private void SelectPriority(string priority)

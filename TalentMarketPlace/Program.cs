@@ -7,6 +7,9 @@ using TalentMarketPlace.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set up URLs with custom hostname - explicitly use IPv4
+builder.WebHost.UseUrls("http://127.0.0.1:5242", "http://onerrd:5242");
+
 // Get Python API URL early for logging
 var pythonApiUrl = builder.Configuration["PythonAI:ApiUrl"] ?? "http://localhost:5000";
 Console.WriteLine($"🔧 Configuration: Python API URL = {pythonApiUrl}");
@@ -51,14 +54,29 @@ builder.Services.AddScoped<ILevelReminderService, LevelReminderService>();
 // Add Services
 Console.WriteLine($"🔧 Registering application services...");
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<ISkillService, SkillService>();
+
+// ⭐ TEMPORARY: Use MockSkillService for Mac testing (no SQL Server)
+var useMockAuth = builder.Configuration.GetValue<bool>("UseMockAuth", true); // Set to false in production
+if (useMockAuth)
+{
+    Console.WriteLine("⚠️  USING MOCK SERVICES (No database required)");
+    builder.Services.AddScoped<ISkillService, MockSkillService>();
+    builder.Services.AddScoped<IAuthService, MockAuthService>();
+    builder.Services.AddScoped<MockAuthStateProvider>();
+}
+else
+{
+    Console.WriteLine("🔐 Using real services (Database required)");
+    builder.Services.AddScoped<ISkillService, SkillService>();
+    builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<AuthStateProvider>();
+}
+
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IRequirementService, RequirementService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPythonApiService, PythonApiService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<AuthStateProvider>();
 builder.Services.AddScoped<ChatSessionService>();
 builder.Services.AddScoped<IChatRequirementService, ChatRequirementService>();
 builder.Services.AddScoped<IChatRequirementServiceV2, ChatRequirementServiceV2>();
