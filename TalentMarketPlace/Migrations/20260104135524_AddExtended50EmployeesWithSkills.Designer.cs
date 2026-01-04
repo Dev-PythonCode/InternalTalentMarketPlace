@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TalentMarketPlace.Data;
 
@@ -11,9 +12,11 @@ using TalentMarketPlace.Data;
 namespace TalentMarketPlace.Migrations
 {
     [DbContext(typeof(TalentMarketplaceDbContext))]
-    partial class TalentMarketplaceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260104135524_AddExtended50EmployeesWithSkills")]
+    partial class AddExtended50EmployeesWithSkills
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

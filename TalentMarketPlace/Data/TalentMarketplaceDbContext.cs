@@ -255,6 +255,9 @@ namespace TalentMarketPlace.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
+            // ⭐ NEW: Seed 50+ employees with skills
+            SeedEmployeesWithSkills.SeedExtendedData(modelBuilder);
+
             // Seed Skill Categories
             modelBuilder.Entity<SkillCategory>().HasData(
                 new SkillCategory { CategoryId = 1, CategoryName = "Programming Languages", DisplayOrder = 1 },
